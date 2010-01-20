@@ -51,6 +51,10 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
     NSString *boardPosition = (NSString *) MDItemCopyAttribute(metadata, CFSTR("com_breedingpinetrees_sgf_boardposition"));
     [boardPosition autorelease];
     CFRelease(metadata);
+    if (!boardPosition || ![boardPosition length]) {
+        [pool drain];
+        return noErr;
+    }
     
     CGContextRef cgContext = QLThumbnailRequestCreateContext(thumbnail, maxSize, false, NULL);
     if (cgContext) {

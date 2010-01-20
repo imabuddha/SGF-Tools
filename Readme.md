@@ -2,6 +2,9 @@
 
 ## Version history
 
+* 1.4.3
+    * revert to finder's default icon for QuickLook when metadata not available
+
 * 1.4.2
     * very minor improvement of collection thumbnail appearance
     * optimized shaded stone drawing

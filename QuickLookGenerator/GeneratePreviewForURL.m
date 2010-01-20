@@ -46,8 +46,12 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
     CFRelease(attributeNames);
     CFRelease(metadata);
     
-    NSString *boardPosition = (NSString *) [attributes objectForKey:@"com_breedingpinetrees_sgf_boardposition"];
 	BOOL isCollection = [[attributes objectForKey:@"com_breedingpinetrees_sgf_iscollection"] boolValue];
+    NSString *boardPosition = (NSString *) [attributes objectForKey:@"com_breedingpinetrees_sgf_boardposition"];
+    if (!boardPosition || ![boardPosition length]) {
+        [pool drain];
+        return noErr;
+    }
     
 	NSString *qlnib;
 	if (isCollection) {
