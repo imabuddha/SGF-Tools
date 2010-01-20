@@ -161,8 +161,13 @@
 }
 
 - (void) createShadedStoneGradient:(NSGradient**) pstoneGradient forColor:(NSColor*)color {
-    *pstoneGradient = [[NSGradient alloc] initWithStartingColor:[color blendedColorWithFraction:0.3 ofColor:[NSColor whiteColor]]
-                                                    endingColor:[color blendedColorWithFraction:0.03 ofColor:[NSColor whiteColor]]];
+    if (color != [NSColor blackColor]) {
+        *pstoneGradient = [[NSGradient alloc] initWithStartingColor:[NSColor whiteColor]  
+                                                        endingColor:[color blendedColorWithFraction:0.03 ofColor:[NSColor whiteColor]]];
+    } else {
+        *pstoneGradient = [[NSGradient alloc] initWithStartingColor:[color blendedColorWithFraction:0.3 ofColor:[NSColor whiteColor]]
+                                                        endingColor:[color blendedColorWithFraction:0.03 ofColor:[NSColor whiteColor]]];
+    }
 }
 
 - (void) drawShadedStoneAtPoint:(NSPoint)point

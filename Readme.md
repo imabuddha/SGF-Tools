@@ -2,6 +2,9 @@
 
 ## Version history
 
+* 1.4.4
+    * Now with whiter whites!
+    
 * 1.4.3
     * revert to finder's default icon for QuickLook when metadata not available
 
