@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CompatibleVersion</key>
+	<integer>1</integer>
+	<key>RawQuery</key>
+	<string>(true) &amp;&amp; ((((kMDItemParticipants = "Go*"cdw) &amp;&amp; (kMDItemParticipants = "Seigen*"cdw)) &amp;&amp; (kMDItemDisplayName = "*.sgf"cd)))</string>
+	<key>RawQueryDict</key>
+	<dict>
+		<key>FinderFilesOnly</key>
+		<true/>
+		<key>RawQuery</key>
+		<string>(true) &amp;&amp; ((((kMDItemParticipants = "Go*"cdw) &amp;&amp; (kMDItemParticipants = "Seigen*"cdw)) &amp;&amp; (kMDItemDisplayName = "*.sgf"cd)))</string>
+		<key>SearchScopes</key>
+		<array>
+			<string>kMDQueryScopeComputer</string>
+		</array>
+		<key>UserFilesOnly</key>
+		<true/>
+	</dict>
+	<key>SearchCriteria</key>
+	<dict>
+		<key>AnyAttributeContains</key>
+		<string></string>
+		<key>FXCriteriaSlices</key>
+		<array>
+			<dict>
+				<key>criteria</key>
+				<array>
+					<string>kMDItemParticipants</string>
+					<integer>120</integer>
+					<integer>104</integer>
+				</array>
+				<key>displayValues</key>
+				<array>
+					<string>Participants</string>
+					<string>matches</string>
+					<string>Go Seigen</string>
+				</array>
+				<key>rowType</key>
+				<integer>0</integer>
+				<key>subrows</key>
+				<array/>
+			</dict>
+			<dict>
+				<key>criteria</key>
+				<array>
+					<string>kMDItemDisplayName</string>
+					<integer>102</integer>
+					<integer>104</integer>
+				</array>
+				<key>displayValues</key>
+				<array>
+					<string>Name</string>
+					<string>ends with</string>
+					<string>.sgf</string>
+				</array>
+				<key>rowType</key>
+				<integer>0</integer>
+				<key>subrows</key>
+				<array/>
+			</dict>
+		</array>
+		<key>FXScope</key>
+		<integer>1396929382</integer>
+		<key>FXScopeArrayOfPaths</key>
+		<array>
+			<string>kMDQueryScopeComputer</string>
+		</array>
+	</dict>
+</dict>
+</plist>
