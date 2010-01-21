@@ -1,47 +1,83 @@
 {\rtf1\ansi\ansicpg1252\cocoartf1038\cocoasubrtf250
 {\fonttbl\f0\fswiss\fcharset0 Helvetica;}
 {\colortbl;\red255\green255\blue255;}
+{\*\listtable{\list\listtemplateid1\listhybrid{\listlevel\levelnfc0\levelnfcn0\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{decimal\}.}{\leveltext\leveltemplateid1\'02\'00.;}{\levelnumbers\'01;}\fi-360\li720\lin720 }{\listname ;}\listid1}}
+{\*\listoverridetable{\listoverride\listid1\listoverridecount0\ls1}}
 \margl1440\margr1440\vieww11960\viewh13260\viewkind0
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\ri1580\ql\qnatural\pardirnatural
 
 \f0\b\fs24 \cf0 The SGF-Tools project is a set of SGF file utilities for Mac OSX.
 \b0   \
 \
-\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\li140\fi40\ri1580\pardirnatural
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\li140\fi40\ri1580\ql\qnatural\pardirnatural
 
 \i \cf0 This project is open source, and is hosted here: 
 \i0 \
-	http://github.com/threeve/SGF-Tools\
+	http://github.com/threeve/SGF-Tools (Official)\
+	http://github.com/imabuddha/SGF-Tools (frequent updates)\
 \
 
-\i Binary releases & source code may be downloaded here: 
+\i Binary releases & source code may also be downloaded here: 
 \i0 \
-	http://github.com/threeve/SGF-Tools/downloads\
-\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\ri1580\qc\pardirnatural
-\cf0 	\
+	http://github.com/imabuddha/SGF-Tools/downloads\
+	\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\li140\fi-140\ri1580\sa120\ql\qnatural\pardirnatural
+
+\b \cf0 Installation:
+\b0 \
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\ri1580\ql\qnatural\pardirnatural
-\cf0 Currently the SGF-Tools project contains a Spotlight metadata importer and a Quicklook preview generator for SGF files.\
+\cf0 To install these tools run the SGF-Tools.pkg OSX installer package.\
 \
-To install these tools run the SGF-Tools.pkg OSX installer package.\
+\pard\tx560\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\ri1580\ql\qnatural\pardirnatural
+\cf0 The SGF-Tools currently contains only system-level plug-ins, so you won't see any new applications. We do have plans to create a special SGF search/view/info-linking app in the future, and also a screen-saver.\
 \
-The SGF.mdimporter indexes all of the sgf properties in SGF game files listed in the file "SGFimporter Prop-Attr Mapping.rtf", allowing for very specific searches.  It also makes the following properties appear in the More Info section of the OSX file Get Info window: Event, Game's name (title), white & black player names & ranks, and the result.\
+The 2 plug-ins in SGF-Tools are:\
+\pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\li720\fi-720\ri1580\sa120\ql\qnatural\pardirnatural
+\ls1\ilvl0\cf0 {\listtext	1.	}An SGF metadata extractor that makes it possible to do searches in Spotlight or Finder for all of the go-related properties.\
+\pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\li720\fi-720\ri1580\ql\qnatural\pardirnatural
+\ls1\ilvl0\cf0 {\listtext	2.	}A Quicklook preview & thumbnail generator which allows Finder to show a board position in large icon view & Coverflow view, a board position & important metadata in Quicklook, and a few key bits of metadata in a file's Get Info window.\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\ri1580\ql\qnatural\pardirnatural
+\cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\li140\fi-140\ri1580\sa120\ql\qnatural\pardirnatural
+
+\b \cf0 Instructions for Use:\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\ri1580\ql\qnatural\pardirnatural
+
+\b0 \cf0 To use the search capability in Spotlight, just do as you would for any other file type: Click the magnifying glass in the upper-right corner of your screen and enter the values you want to find.\
+\pard\tx560\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\ri1580\ql\qnatural\pardirnatural
+\cf0 \
+To do more complex searches, open a finder window, begin a search by entering a term in the search field in the upper right window corner, and add terms using the controls that appear.\
 \
-To get the custom attributes to appear in the list of other available search attributes you may have to do a restart.  Before the restart these attributes are indexed & will match a general search or raw query, however that's not nearly as convenient. ;-)\
+You can find more information about doing OSX searches in Apple's help documents, or in Kirk's Macworld articles:\
+      http://www.macworld.com/article/1328...potlight3.html\
+      http://www.macworld.com/article/1327...potlight2.html\
 \
-The SGF.qlgenerator makes it possible to see various properties without having to open the SGF file.  (board position preview coming soon)\
+For a full list of the SGF metadata that you can use, see the "
+\i SGFimporter Prop-Attr Mapping.rtf"
+\i0  document.\
 \
-Let us know if you encounter any problems, have questions, or would like to make suggestions.\
+To see the board position preview, use the icon or coverflow views in the finder.\
+\
+To use Quicklook, select one or more SGF files in Finder, then press the spacebar.\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\ri1580\ql\qnatural\pardirnatural
+\cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\li140\fi-140\ri1580\sa120\ql\qnatural\pardirnatural
+
+\b \cf0 Finally:\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\ri1580\ql\qnatural\pardirnatural
+
+\b0 \cf0 Let us know if you encounter any problems, have questions, or would like to make suggestions.\
 \
 For program version history please see the Readme.md text file.\
 \
 The SGF Tools Developers wish to acknowledge the contributions of the following people:\
 \
-\pard\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\fi140\ri1580\ql\qnatural\pardirnatural
+\pard\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\li2180\fi-2040\ri1580\sa60\ql\qnatural\pardirnatural
 \cf0 Anders Kierulf	
-\i (testing, suggestions & localization strings)
+\i (testing, suggestions, & localization strings)
 \i0 \
 Kirk McElhearn	
-\i (testing & French language localization strings)
+\i (testing, suggestions, & French language localization strings)
 \i0 \
 Frank G. Sion	
 \i (German language localization strings)}
