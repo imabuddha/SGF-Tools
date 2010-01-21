@@ -11,3 +11,7 @@ sgf/sgfparse.h
 sgf/sgfparse.out
 
 *.pkg
+*.dmg
+*.sparsebundle
+testfiles/TouchLib.sgf
+Icon?
