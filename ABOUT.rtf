@@ -38,12 +38,18 @@ The 2 plug-ins in SGF-Tools are:\
 \ls1\ilvl0\cf0 {\listtext	2.	}A Quicklook preview & thumbnail generator which allows Finder to show a board position in large icon view & Coverflow view, a board position & important metadata in Quicklook, and a few key bits of metadata in a file's Get Info window.\
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\ri1580\ql\qnatural\pardirnatural
 \cf0 \
+The enhanced searching capabilities, icon/Coverflow board images, and Quicklook rely on the spotlight metadata being present. This should be generated automatically for all SGF files (except those in folders listed in Spotlight's privacy settings) soon after installation, and every time an SGF file created or edited. If you have many SGF files on your computer (say from GoGoD) this can take several minutes.\
+\
+However, due to a bug in Apple's mdimport (spotlight metadata importer) program, sometimes existing SGF files aren't indexed when SGF-Tools is installed.  If you don't see your SGF files in search results, or board position icons, etc., you can run the 
+\i forceImport
+\i0  script located in the install disk.  You won't see anything happen when you run it, and it will take at least several minutes, maybe much longer, but it will find and re-index every sgf file on your computer.\
+\
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\li140\fi-140\ri1580\sa120\ql\qnatural\pardirnatural
 
-\b \cf0 Instructions for Use:\
+\b \cf0 Instructions for Use:
+\b0 \
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\ri1580\ql\qnatural\pardirnatural
-
-\b0 \cf0 To use the search capability in Spotlight, just do as you would for any other file type: Click the magnifying glass in the upper-right corner of your screen and enter the values you want to find.\
+\cf0 To use the search capability in Spotlight, just do as you would for any other file type: Click the magnifying glass in the upper-right corner of your screen and enter the values you want to find.\
 \pard\tx560\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\ri1580\ql\qnatural\pardirnatural
 \cf0 \
 To do more complex searches, open a finder window, begin a search by entering a term in the search field in the upper right window corner, and add terms using the controls that appear.\
