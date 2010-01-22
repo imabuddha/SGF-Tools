@@ -1,0 +1,1 @@
+find / -iname "*.sgf" -print0 2>/dev/null | xargs -0 mdimport &
