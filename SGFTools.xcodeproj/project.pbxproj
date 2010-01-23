@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 45;
+	objectVersion = 46;
 	objects = {
 
 /* Begin PBXAggregateTarget section */
@@ -125,6 +125,9 @@
 		2C05A19B06CAA52B00D84F6F /* GetMetadataForFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GetMetadataForFile.m; sourceTree = "<group>"; };
 		520F868110E1766000E6C4BB /* AUTHORS.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = AUTHORS.txt; sourceTree = "<group>"; };
 		520F868210E1766000E6C4BB /* LICENSE.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
+		525F73DF110A746B00F1905A /* Project-Release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = "Project-Release.xcconfig"; sourceTree = "<group>"; };
+		525F73E0110A746B00F1905A /* Project-Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = "Project-Debug.xcconfig"; sourceTree = "<group>"; };
+		525F73E1110A746B00F1905A /* Project-Base.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = "Project-Base.xcconfig"; sourceTree = "<group>"; };
 		5260BFA9110621080039CD6F /* boardFill.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = boardFill.png; sourceTree = "<group>"; };
 		52993D3E10F8750300914AC9 /* German */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = German; path = QuickLookGenerator/German.lproj/SGFCollectionPreview.xib; sourceTree = "<group>"; };
 		52993D3F10F8750800914AC9 /* Japanese */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Japanese; path = QuickLookGenerator/Japanese.lproj/SGFCollectionPreview.xib; sourceTree = "<group>"; };
@@ -186,10 +189,6 @@
 		968B49F710F12A71005DC450 /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/SGFPreview.xib; sourceTree = "<group>"; };
 		968B49FA10F12D1A005DC450 /* SGFPreviewViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SGFPreviewViewController.h; sourceTree = "<group>"; };
 		968B49FB10F12D1A005DC450 /* SGFPreviewViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SGFPreviewViewController.m; sourceTree = "<group>"; };
-		96BB9C2F10E07EC700F46049 /* Project-Base.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Project-Base.xcconfig"; path = "Config/Project-Base.xcconfig"; sourceTree = "<group>"; };
-		96BB9C3010E07EC700F46049 /* Project-Coverage.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Project-Coverage.xcconfig"; path = "Config/Project-Coverage.xcconfig"; sourceTree = "<group>"; };
-		96BB9C3110E07EC700F46049 /* Project-Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Project-Debug.xcconfig"; path = "Config/Project-Debug.xcconfig"; sourceTree = "<group>"; };
-		96BB9C3210E07EC700F46049 /* Project-Release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Project-Release.xcconfig"; path = "Config/Project-Release.xcconfig"; sourceTree = "<group>"; };
 		96BB9CC810E0842600F46049 /* Readme.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Readme.md; sourceTree = "<group>"; };
 		C86B05260671AA6E00DD9006 /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = /System/Library/Frameworks/CoreServices.framework; sourceTree = "<absolute>"; };
 		C88FB7D7067446EC006EBB30 /* schema.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = schema.xml; sourceTree = "<group>"; };
@@ -230,8 +229,8 @@
 		089C166AFE841209C02AAC07 /* SGFImporter */ = {
 			isa = PBXGroup;
 			children = (
-				96BB9C2D10E07EBA00F46049 /* Config */,
-				52D8BBD510DDE5460026CAF5 /* Documentation */,
+				525F73DE110A744000F1905A /* Config */,
+				52D8BBD510DDE5460026CAF5 /* Documents */,
 				9665B8D61012B917007F87B4 /* SGF Parser */,
 				08FB77AFFE84173DC02AAC07 /* SpotlightImporter */,
 				968B493F10F05CC4005DC450 /* QuickLookGenerator */,
@@ -283,7 +282,17 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		52D8BBD510DDE5460026CAF5 /* Documentation */ = {
+		525F73DE110A744000F1905A /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				525F73DF110A746B00F1905A /* Project-Release.xcconfig */,
+				525F73E0110A746B00F1905A /* Project-Debug.xcconfig */,
+				525F73E1110A746B00F1905A /* Project-Base.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		52D8BBD510DDE5460026CAF5 /* Documents */ = {
 			isa = PBXGroup;
 			children = (
 				52AF338B10F4B42E00E5E671 /* ABOUT.rtf */,
@@ -293,7 +302,7 @@
 				52D8BBC210DDE3C00026CAF5 /* SGFimporter Prop-Attr Mapping.rtf */,
 				96BB9CC810E0842600F46049 /* Readme.md */,
 			);
-			name = Documentation;
+			path = Documents;
 			sourceTree = "<group>";
 		};
 		52D8BC6810DECCE30026CAF5 /* Test Files */ = {
@@ -341,17 +350,6 @@
 				968B49FB10F12D1A005DC450 /* SGFPreviewViewController.m */,
 			);
 			path = QuickLookGenerator;
-			sourceTree = "<group>";
-		};
-		96BB9C2D10E07EBA00F46049 /* Config */ = {
-			isa = PBXGroup;
-			children = (
-				96BB9C2F10E07EC700F46049 /* Project-Base.xcconfig */,
-				96BB9C3010E07EC700F46049 /* Project-Coverage.xcconfig */,
-				96BB9C3110E07EC700F46049 /* Project-Debug.xcconfig */,
-				96BB9C3210E07EC700F46049 /* Project-Release.xcconfig */,
-			);
-			name = Config;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -432,7 +430,7 @@
 		089C1669FE841209C02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = 70138C880896BE9A00968C2F /* Build configuration list for PBXProject "SGFTools" */;
-			compatibilityVersion = "Xcode 3.1";
+			compatibilityVersion = "Xcode 3.2";
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				English,
@@ -662,7 +660,7 @@
 		};
 		70138C890896BE9A00968C2F /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 96BB9C3110E07EC700F46049 /* Project-Debug.xcconfig */;
+			baseConfigurationReference = 525F73E0110A746B00F1905A /* Project-Debug.xcconfig */;
 			buildSettings = {
 				GCC_OPTIMIZATION_LEVEL = 0;
 				ONLY_ACTIVE_ARCH = YES;
@@ -671,10 +669,15 @@
 		};
 		70138C8A0896BE9A00968C2F /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 96BB9C3210E07EC700F46049 /* Project-Release.xcconfig */;
+			baseConfigurationReference = 525F73DF110A746B00F1905A /* Project-Release.xcconfig */;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
-				"ARCHS[sdk=macosx10.5]" = "$(ARCHS_STANDARD_32_64_BIT)";
+				"ARCHS[sdk=macosx10.6]" = "$(ARCHS_STANDARD_32_64_BIT)";
+				DEPLOYMENT_POSTPROCESSING = YES;
+				INSTALL_GROUP = admin;
+				INSTALL_OWNER = root;
+				ONLY_ACTIVE_ARCH = NO;
+				VALID_ARCHS = "i386 x86_64";
 			};
 			name = Release;
 		};
