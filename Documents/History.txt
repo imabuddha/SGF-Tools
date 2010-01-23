@@ -1,4 +1,10 @@
-## Version history
+## Version history 
+
+    Note: version numbers are for the SGF-Tools project, individual components'
+    version numbers may not match.
+
+* 1.5
+    * Added StoneSavour screen saver
 
 * 1.4.4
     * Now with whiter whites!

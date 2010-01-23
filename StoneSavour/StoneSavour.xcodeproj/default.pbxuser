@@ -1,0 +1,155 @@
+// !$*UTF8*$!
+{
+	089C1669FE841209C02AAC07 /* Project object */ = {
+		activeBuildConfigurationName = Debug;
+		activeTarget = 8D255AC50486D3F9007BF209 /* StoneSavour */;
+		addToTargets = (
+			8D255AC50486D3F9007BF209 /* StoneSavour */,
+		);
+		codeSenseManager = 52FE0AB9110B662100889E01 /* Code sense */;
+		perUserDictionary = {
+			PBXConfiguration.PBXFileTableDataSource3.PBXFileTableDataSource = {
+				PBXFileTableDataSourceColumnSortingDirectionKey = "-1";
+				PBXFileTableDataSourceColumnSortingKey = PBXFileDataSource_Filename_ColumnID;
+				PBXFileTableDataSourceColumnWidthsKey = (
+					20,
+					1367,
+					20,
+					48,
+					43,
+					43,
+					20,
+				);
+				PBXFileTableDataSourceColumnsKey = (
+					PBXFileDataSource_FiletypeID,
+					PBXFileDataSource_Filename_ColumnID,
+					PBXFileDataSource_Built_ColumnID,
+					PBXFileDataSource_ObjectSize_ColumnID,
+					PBXFileDataSource_Errors_ColumnID,
+					PBXFileDataSource_Warnings_ColumnID,
+					PBXFileDataSource_Target_ColumnID,
+				);
+			};
+			PBXPerProjectTemplateStateSaveDate = 285966400;
+			PBXWorkspaceStateSaveDate = 285966400;
+		};
+		perUserProjectItems = {
+			52FE0BA1110B842C00889E01 /* PBXTextBookmark */ = 52FE0BA1110B842C00889E01 /* PBXTextBookmark */;
+			52FE0BA2110B842C00889E01 /* PBXTextBookmark */ = 52FE0BA2110B842C00889E01 /* PBXTextBookmark */;
+			52FE0BA3110B842C00889E01 /* PBXTextBookmark */ = 52FE0BA3110B842C00889E01 /* PBXTextBookmark */;
+		};
+		sourceControlManager = 52FE0AB8110B662100889E01 /* Source Control */;
+		userBuildSettings = {
+		};
+	};
+	089C167EFE841241C02AAC07 /* English */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1545, 941}}";
+			sepNavSelRange = "{87, 0}";
+			sepNavVisRange = "{0, 114}";
+		};
+	};
+	32DBCFA80370C50100C91783 /* StoneSavour_Prefix.pch */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {962, 711}}";
+			sepNavSelRange = "{0, 0}";
+			sepNavVisRange = "{0, 194}";
+		};
+	};
+	52FE0AB8110B662100889E01 /* Source Control */ = {
+		isa = PBXSourceControlManager;
+		fallbackIsa = XCSourceControlManager;
+		isSCMEnabled = 0;
+		scmConfiguration = {
+			repositoryNamesForRoots = {
+				"" = "";
+			};
+		};
+	};
+	52FE0AB9110B662100889E01 /* Code sense */ = {
+		isa = PBXCodeSenseManager;
+		indexTemplatePath = "";
+	};
+	52FE0B71110B806E00889E01 /* SGFGoban.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1545, 1539}}";
+			sepNavSelRange = "{18, 1254}";
+			sepNavVisRange = "{0, 1689}";
+		};
+	};
+	52FE0B86110B80B600889E01 /* Authors.txt */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {886, 711}}";
+			sepNavSelRange = "{0, 0}";
+			sepNavVisRange = "{0, 220}";
+		};
+	};
+	52FE0B89110B80B600889E01 /* History.txt */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {886, 2052}}";
+			sepNavSelRange = "{20, 0}";
+			sepNavVisRange = "{0, 945}";
+		};
+	};
+	52FE0B8A110B80B600889E01 /* License.txt */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {896, 534}}";
+			sepNavSelRange = "{0, 0}";
+			sepNavVisRange = "{0, 1093}";
+		};
+	};
+	52FE0B8D110B80B600889E01 /* TODO.txt */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {886, 711}}";
+			sepNavSelRange = "{184, 0}";
+			sepNavVisRange = "{0, 527}";
+		};
+	};
+	52FE0BA1110B842C00889E01 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = F50079790118B23001CA0E54 /* StoneSavourView.h */;
+		name = "StoneSavourView.h: 3";
+		rLen = 1215;
+		rLoc = 25;
+		rType = 0;
+		vrLen = 1336;
+		vrLoc = 0;
+	};
+	52FE0BA2110B842C00889E01 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = F500797A0118B23001CA0E54 /* StoneSavourView.m */;
+		name = "StoneSavourView.m: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 726;
+		vrLoc = 0;
+	};
+	52FE0BA3110B842C00889E01 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = F500797A0118B23001CA0E54 /* StoneSavourView.m */;
+		name = "StoneSavourView.m: 29";
+		rLen = 0;
+		rLoc = 1240;
+		rType = 0;
+		vrLen = 686;
+		vrLoc = 1143;
+	};
+	8D255AC50486D3F9007BF209 /* StoneSavour */ = {
+		activeExec = 0;
+	};
+	F50079790118B23001CA0E54 /* StoneSavourView.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1545, 941}}";
+			sepNavSelRange = "{25, 1215}";
+			sepNavVisRange = "{0, 1336}";
+		};
+	};
+	F500797A0118B23001CA0E54 /* StoneSavourView.m */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1545, 1425}}";
+			sepNavSelRange = "{1240, 0}";
+			sepNavVisRange = "{1143, 686}";
+		};
+	};
+}
