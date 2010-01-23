@@ -1,7 +1,6 @@
 # General
 
 * create custom sgf search/view app
-* create screen saver
 
 ~~~~~~~~~~~~~~~~~~~~
 # Installer
@@ -21,4 +20,5 @@
 # quicklook generator
 
 
-
+~~~~~~~~~~~~~~~~~~~~~
+# StoneSavour screen saver
