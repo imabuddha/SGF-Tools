@@ -1,5 +1,3 @@
-# See the ABOUT.rtf file for the project description and brief directions for installation/use.
-
 ## Version history
 
 * 1.4.4
