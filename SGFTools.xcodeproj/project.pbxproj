@@ -87,14 +87,14 @@
 			isa = PBXContainerItemProxy;
 			containerPortal = 52FE0B46110B7F3B00889E01 /* StoneSavour.xcodeproj */;
 			proxyType = 2;
-			remoteGlobalIDString = 8D255AD30486D3F9007BF209 /* StoneSavour.saver */;
+			remoteGlobalIDString = 8D255AD30486D3F9007BF209;
 			remoteInfo = StoneSavour;
 		};
 		52FE0B51110B7F6E00889E01 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 52FE0B46110B7F3B00889E01 /* StoneSavour.xcodeproj */;
 			proxyType = 1;
-			remoteGlobalIDString = 8D255AC50486D3F9007BF209 /* StoneSavour */;
+			remoteGlobalIDString = 8D255AC50486D3F9007BF209;
 			remoteInfo = StoneSavour;
 		};
 		9665B8CE1012B6EC007F87B4 /* PBXContainerItemProxy */ = {
@@ -147,9 +147,6 @@
 		521A4663110B598100041DD5 /* SGFGoban.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SGFGoban.h; sourceTree = "<group>"; };
 		521A4664110B598100041DD5 /* SGFGoban.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SGFGoban.m; sourceTree = "<group>"; };
 		521A466D110B5AC900041DD5 /* boardFill.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = boardFill.png; sourceTree = "<group>"; };
-		525F73DF110A746B00F1905A /* Project-Release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = "Project-Release.xcconfig"; sourceTree = "<group>"; };
-		525F73E0110A746B00F1905A /* Project-Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = "Project-Debug.xcconfig"; sourceTree = "<group>"; };
-		525F73E1110A746B00F1905A /* Project-Base.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = "Project-Base.xcconfig"; sourceTree = "<group>"; };
 		52993D3E10F8750300914AC9 /* German */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = German; path = QuickLookGenerator/German.lproj/SGFCollectionPreview.xib; sourceTree = "<group>"; };
 		52993D3F10F8750800914AC9 /* Japanese */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Japanese; path = QuickLookGenerator/Japanese.lproj/SGFCollectionPreview.xib; sourceTree = "<group>"; };
 		52993D4010F8751000914AC9 /* zh_CN */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = zh_CN; path = QuickLookGenerator/zh_CN.lproj/SGFCollectionPreview.xib; sourceTree = "<group>"; };
@@ -244,7 +241,6 @@
 			children = (
 				52FE0B46110B7F3B00889E01 /* StoneSavour.xcodeproj */,
 				521A465A110B588200041DD5 /* common */,
-				525F73DE110A744000F1905A /* Config */,
 				52D8BBD510DDE5460026CAF5 /* Documents */,
 				9665B8D61012B917007F87B4 /* SGF Parser */,
 				08FB77AFFE84173DC02AAC07 /* SpotlightImporter */,
@@ -303,16 +299,6 @@
 				521A4664110B598100041DD5 /* SGFGoban.m */,
 			);
 			path = common;
-			sourceTree = "<group>";
-		};
-		525F73DE110A744000F1905A /* Config */ = {
-			isa = PBXGroup;
-			children = (
-				525F73DF110A746B00F1905A /* Project-Release.xcconfig */,
-				525F73E0110A746B00F1905A /* Project-Debug.xcconfig */,
-				525F73E1110A746B00F1905A /* Project-Base.xcconfig */,
-			);
-			path = Config;
 			sourceTree = "<group>";
 		};
 		52D8BBD510DDE5460026CAF5 /* Documents */ = {
@@ -700,23 +686,52 @@
 		};
 		70138C890896BE9A00968C2F /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 525F73E0110A746B00F1905A /* Project-Debug.xcconfig */;
 			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_VERSION = 4.2;
+				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_CHECK_SWITCH_STATEMENTS = YES;
+				GCC_WARN_INITIALIZER_NOT_FULLY_BRACKETED = YES;
+				GCC_WARN_MISSING_PARENTHESES = YES;
+				GCC_WARN_UNKNOWN_PRAGMAS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_LABEL = YES;
+				GCC_WARN_UNUSED_VALUE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx10.6;
+				VALID_ARCHS = "i386 x86_64";
 			};
 			name = Debug;
 		};
 		70138C8A0896BE9A00968C2F /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 525F73DF110A746B00F1905A /* Project-Release.xcconfig */;
 			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
-				"ARCHS[sdk=macosx10.6]" = "$(ARCHS_STANDARD_32_64_BIT)";
 				DEPLOYMENT_POSTPROCESSING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_VERSION = 4.2;
+				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_CHECK_SWITCH_STATEMENTS = YES;
+				GCC_WARN_INITIALIZER_NOT_FULLY_BRACKETED = YES;
+				GCC_WARN_MISSING_PARENTHESES = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNKNOWN_PRAGMAS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_LABEL = YES;
+				GCC_WARN_UNUSED_VALUE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
 				INSTALL_GROUP = admin;
 				INSTALL_OWNER = root;
 				ONLY_ACTIVE_ARCH = NO;
+				SDKROOT = macosx10.6;
 				VALID_ARCHS = "i386 x86_64";
 			};
 			name = Release;
