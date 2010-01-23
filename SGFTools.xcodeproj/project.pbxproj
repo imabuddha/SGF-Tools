@@ -125,6 +125,8 @@
 		2C05A19B06CAA52B00D84F6F /* GetMetadataForFile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GetMetadataForFile.m; sourceTree = "<group>"; };
 		520F868110E1766000E6C4BB /* AUTHORS.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = AUTHORS.txt; sourceTree = "<group>"; };
 		520F868210E1766000E6C4BB /* LICENSE.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
+		521A4646110B438200041DD5 /* History.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = History.txt; sourceTree = "<group>"; };
+		521A4647110B438200041DD5 /* ReadMe.rtf */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; path = ReadMe.rtf; sourceTree = "<group>"; };
 		525F73DF110A746B00F1905A /* Project-Release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = "Project-Release.xcconfig"; sourceTree = "<group>"; };
 		525F73E0110A746B00F1905A /* Project-Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = "Project-Debug.xcconfig"; sourceTree = "<group>"; };
 		525F73E1110A746B00F1905A /* Project-Base.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = "Project-Base.xcconfig"; sourceTree = "<group>"; };
@@ -140,7 +142,6 @@
 		529B25981100CCF100C1ABB9 /* SGFDrawBoard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SGFDrawBoard.h; sourceTree = "<group>"; };
 		529B25991100CCF100C1ABB9 /* SGFDrawBoard.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SGFDrawBoard.m; sourceTree = "<group>"; };
 		52AF338910F4A6DE00E5E671 /* postinstall.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = postinstall.sh; sourceTree = "<group>"; };
-		52AF338B10F4B42E00E5E671 /* ABOUT.rtf */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; path = ABOUT.rtf; sourceTree = "<group>"; };
 		52D8BBC210DDE3C00026CAF5 /* SGFimporter Prop-Attr Mapping.rtf */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; path = "SGFimporter Prop-Attr Mapping.rtf"; sourceTree = "<group>"; };
 		52D8BC6910DECD040026CAF5 /* johnVsGnu.sgf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = johnVsGnu.sgf; path = testfiles/johnVsGnu.sgf; sourceTree = "<group>"; };
 		52D8BC6A10DECD040026CAF5 /* test.sgf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = test.sgf; path = testfiles/test.sgf; sourceTree = "<group>"; };
@@ -189,7 +190,6 @@
 		968B49F710F12A71005DC450 /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/SGFPreview.xib; sourceTree = "<group>"; };
 		968B49FA10F12D1A005DC450 /* SGFPreviewViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SGFPreviewViewController.h; sourceTree = "<group>"; };
 		968B49FB10F12D1A005DC450 /* SGFPreviewViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SGFPreviewViewController.m; sourceTree = "<group>"; };
-		96BB9CC810E0842600F46049 /* Readme.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Readme.md; sourceTree = "<group>"; };
 		C86B05260671AA6E00DD9006 /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = /System/Library/Frameworks/CoreServices.framework; sourceTree = "<absolute>"; };
 		C88FB7D7067446EC006EBB30 /* schema.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = schema.xml; sourceTree = "<group>"; };
 		C88FB7DB0674470F006EBB30 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/schema.strings; sourceTree = "<group>"; };
@@ -295,12 +295,12 @@
 		52D8BBD510DDE5460026CAF5 /* Documents */ = {
 			isa = PBXGroup;
 			children = (
-				52AF338B10F4B42E00E5E671 /* ABOUT.rtf */,
+				521A4646110B438200041DD5 /* History.txt */,
+				521A4647110B438200041DD5 /* ReadMe.rtf */,
 				52EBD25110F0572E000C9DC2 /* TODO.txt */,
 				520F868110E1766000E6C4BB /* AUTHORS.txt */,
 				520F868210E1766000E6C4BB /* LICENSE.txt */,
 				52D8BBC210DDE3C00026CAF5 /* SGFimporter Prop-Attr Mapping.rtf */,
-				96BB9CC810E0842600F46049 /* Readme.md */,
 			);
 			path = Documents;
 			sourceTree = "<group>";
