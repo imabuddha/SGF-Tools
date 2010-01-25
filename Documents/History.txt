@@ -1,5 +1,8 @@
 ## Version history
 
+* 1.4.5
+    * Changed importer postinstall script to use the method from forceImport
+
 * 1.4.4
     * Now with whiter whites!
     
