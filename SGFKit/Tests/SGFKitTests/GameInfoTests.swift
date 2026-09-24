@@ -188,7 +188,7 @@ struct GameInfoTests {
         #expect(info.gameTypeName == name)
     }
 
-    @Test(arguments: ["0", "41", "x"])
+    @Test(arguments: ["0", "41", "x", "-9223372036854775808", "9223372036854775807"])
     func unknownGameTypes(value: String) throws {
         let info = GameInfo(game: try firstGame("(;GM[\(value)])"))
         #expect(info.gameTypeName == nil)

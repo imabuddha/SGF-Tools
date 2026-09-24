@@ -194,7 +194,8 @@ public struct GameInfo: Sendable, Hashable {
             "Tripples", "Chase", "Tumbling Down", "Sahara", "Byte",
             "Focus", "Dvonn", "Tamsk", "Gipf", "Kropki",
         ]
-        return names.indices.contains(gameType - 1) ? names[gameType - 1] : nil
+        // Checked before subtracting, which would overflow for the smallest Int.
+        return (1 ... names.count).contains(gameType) ? names[gameType - 1] : nil
     }
 }
 
