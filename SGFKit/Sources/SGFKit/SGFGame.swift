@@ -58,9 +58,7 @@ public struct SGFGame: Sendable {
     }
 
     /// The nodes of ``mainLine``, one at a time.
-    private var mainLineNodes: UnfoldFirstSequence<SGFNode> {
-        sequence(first: nodes[0]) { [nodes] node in node.childIDs.first.map { nodes[$0] } }
-    }
+    private var mainLineNodes: MainLineNodes { MainLineNodes(nodes: nodes) }
 
     /// The position after the first `moveCount` moves of the main line.
     ///
@@ -86,6 +84,21 @@ public struct SGFGame: Sendable {
             }
         }
         return board
+    }
+}
+
+/// The nodes of a game's main line, one at a time: the root, its first child, that node's first
+/// child, and so on. (A struct rather than `sequence(first:next:)`, whose closure made walking
+/// the main line nearly twice as slow.)
+private struct MainLineNodes: Sequence, IteratorProtocol {
+    let nodes: [SGFNode]
+    var nextID: SGFNode.ID? = 0
+
+    mutating func next() -> SGFNode? {
+        guard let id = nextID else { return nil }
+        let node = nodes[id]
+        nextID = node.childIDs.first
+        return node
     }
 }
 
