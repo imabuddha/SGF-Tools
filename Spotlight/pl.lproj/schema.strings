@@ -1,0 +1,73 @@
+/* Polish */
+
+"com_breedingpinetrees_sgf_result" = "Wynik";
+"com_breedingpinetrees_sgf_result.Description" = "Wynik";
+
+"com_breedingpinetrees_sgf_event" = "Spotkanie";
+"com_breedingpinetrees_sgf_event.Description" = "Spotkanie";
+
+"com_breedingpinetrees_sgf_white" = "Białe";
+"com_breedingpinetrees_sgf_white.Description" = "Białe";
+
+"com_breedingpinetrees_sgf_black" = "Czarne";
+"com_breedingpinetrees_sgf_black.Description" = "Czarne";
+
+"com_breedingpinetrees_sgf_handicap" = "Handicap";
+"com_breedingpinetrees_sgf_handicap.Description" = "Handicap";
+
+"com_breedingpinetrees_sgf_komi" = "Komi";
+"com_breedingpinetrees_sgf_komi.Description" = "Komi";
+
+"com_breedingpinetrees_sgf_size" = "Rozmiar planszy";
+"com_breedingpinetrees_sgf_size.Description" = "Rozmiar planszy";
+
+"com_breedingpinetrees_sgf_gametype" = "Gra";
+"com_breedingpinetrees_sgf_gametype.Description" = "Gra";
+
+"com_breedingpinetrees_sgf_whiterank" = "Ranking Białych";
+"com_breedingpinetrees_sgf_whiterank.Description" = "Ranking Białych";
+
+"com_breedingpinetrees_sgf_blackrank" = "Ranking Czarnych";
+"com_breedingpinetrees_sgf_blackrank.Description" = "Ranking Czarnych";
+
+"com_breedingpinetrees_sgf_blackteam" = "Drużyna Czarnych";
+"com_breedingpinetrees_sgf_blackteam.Description" = "Drużyna Czarnych";
+
+"com_breedingpinetrees_sgf_whiteteam" = "Drużyna Białych";
+"com_breedingpinetrees_sgf_whiteteam.Description" = "Drużyna Białych";
+
+"com_breedingpinetrees_sgf_opening" = "Otwarcie";
+"com_breedingpinetrees_sgf_opening.Description" = "Otwarcie";
+
+"com_breedingpinetrees_sgf_overtime" = "Czas Dodatkowy";
+"com_breedingpinetrees_sgf_overtime.Description" = "Czas Dodatkowy";
+
+"com_breedingpinetrees_sgf_round" = "Runda";
+"com_breedingpinetrees_sgf_round.Description" = "Runda";
+
+"com_breedingpinetrees_sgf_ruleset" = "Zasady";
+"com_breedingpinetrees_sgf_ruleset.Description" = "Zasady";
+
+"com_breedingpinetrees_sgf_oldhandicap" = "Stary Handicap";
+"com_breedingpinetrees_sgf_oldhandicap.Description" = "Stary Handicap";
+
+"com_breedingpinetrees_sgf_dateplayed" = "Data";
+"com_breedingpinetrees_sgf_dateplayed.Description" = "Data";
+
+"com_breedingpinetrees_sgf_yearplayed" = "Year Played";
+"com_breedingpinetrees_sgf_yearplayed.Description" = "Year in which the game was played";
+
+"com_breedingpinetrees_sgf_winner" = "Zwycięzca";
+"com_breedingpinetrees_sgf_winner.Description" = "Zwycięzca";
+
+"com_breedingpinetrees_sgf_loser" = "Pokonany";
+"com_breedingpinetrees_sgf_loser.Description" = "Pokonany";
+
+"com_breedingpinetrees_sgf_iscollection" = "Kolekcja";
+"com_breedingpinetrees_sgf_iscollection.Description" = "Kolekcja";
+
+"com_breedingpinetrees_sgf_numgames" = "Ilość gier";
+"com_breedingpinetrees_sgf_numgames.Description" = "Ilość gier";
+
+"com_breedingpinetrees_sgf_moves" = "Ilość ruchów";
+"com_breedingpinetrees_sgf_moves.Description" = "Ilość ruchów";

@@ -1,0 +1,73 @@
+/* Swedish */
+
+"com_breedingpinetrees_sgf_result" = "Resultat";
+"com_breedingpinetrees_sgf_result.Description" = "Resultat";
+
+"com_breedingpinetrees_sgf_event" = "Evenemang";
+"com_breedingpinetrees_sgf_event.Description" = "Evenemang";
+
+"com_breedingpinetrees_sgf_white" = "Vit";
+"com_breedingpinetrees_sgf_white.Description" = "Vit";
+
+"com_breedingpinetrees_sgf_black" = "Svart";
+"com_breedingpinetrees_sgf_black.Description" = "Svart";
+
+"com_breedingpinetrees_sgf_handicap" = "Handikapp";
+"com_breedingpinetrees_sgf_handicap.Description" = "Handikapp";
+
+"com_breedingpinetrees_sgf_komi" = "Komi";
+"com_breedingpinetrees_sgf_komi.Description" = "Komi";
+
+"com_breedingpinetrees_sgf_size" = "Brädets storlek";
+"com_breedingpinetrees_sgf_size.Description" = "Brädets storlek";
+
+"com_breedingpinetrees_sgf_gametype" = "Game Type";
+"com_breedingpinetrees_sgf_gametype.Description" = "Type of game played";
+
+"com_breedingpinetrees_sgf_whiterank" = "Vits rang";
+"com_breedingpinetrees_sgf_whiterank.Description" = "Vits rang";
+
+"com_breedingpinetrees_sgf_blackrank" = "Svarts rang";
+"com_breedingpinetrees_sgf_blackrank.Description" = "Svarts rang";
+
+"com_breedingpinetrees_sgf_blackteam" = "Svarta laget";
+"com_breedingpinetrees_sgf_blackteam.Description" = "Svarta laget";
+
+"com_breedingpinetrees_sgf_whiteteam" = "Vita laget";
+"com_breedingpinetrees_sgf_whiteteam.Description" = "Vita laget";
+
+"com_breedingpinetrees_sgf_opening" = "Öppning";
+"com_breedingpinetrees_sgf_opening.Description" = "Öppning";
+
+"com_breedingpinetrees_sgf_overtime" = "Övertid";
+"com_breedingpinetrees_sgf_overtime.Description" = "Övertid";
+
+"com_breedingpinetrees_sgf_round" = "Omgång";
+"com_breedingpinetrees_sgf_round.Description" = "Omgång";
+
+"com_breedingpinetrees_sgf_ruleset" = "Regler";
+"com_breedingpinetrees_sgf_ruleset.Description" = "Regler";
+
+"com_breedingpinetrees_sgf_oldhandicap" = "Old Handikapp";
+"com_breedingpinetrees_sgf_oldhandicap.Description" = "Old style handicap arrangements";
+
+"com_breedingpinetrees_sgf_dateplayed" = "Datum";
+"com_breedingpinetrees_sgf_dateplayed.Description" = "Datum";
+
+"com_breedingpinetrees_sgf_yearplayed" = "Year Played";
+"com_breedingpinetrees_sgf_yearplayed.Description" = "Year in which the game was played";
+
+"com_breedingpinetrees_sgf_winner" = "Winner";
+"com_breedingpinetrees_sgf_winner.Description" = "Player who won the game";
+
+"com_breedingpinetrees_sgf_loser" = "Loser";
+"com_breedingpinetrees_sgf_loser.Description" = "Player who lost the game";
+
+"com_breedingpinetrees_sgf_iscollection" = "Collection";
+"com_breedingpinetrees_sgf_iscollection.Description" = "True if the file contains more than one game record";
+
+"com_breedingpinetrees_sgf_numgames" = "Antal matcher";
+"com_breedingpinetrees_sgf_numgames.Description" = "Antal matcher";
+
+"com_breedingpinetrees_sgf_moves" = "Antal drag";
+"com_breedingpinetrees_sgf_moves.Description" = "Antal drag";

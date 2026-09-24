@@ -1,0 +1,73 @@
+/* Chinese */
+
+"com_breedingpinetrees_sgf_result" = "对局结果";
+"com_breedingpinetrees_sgf_result.Description" = "对局结果";
+
+"com_breedingpinetrees_sgf_event" = "赛事";
+"com_breedingpinetrees_sgf_event.Description" = "赛事";
+
+"com_breedingpinetrees_sgf_white" = "白";
+"com_breedingpinetrees_sgf_white.Description" = "白";
+
+"com_breedingpinetrees_sgf_black" = "黑";
+"com_breedingpinetrees_sgf_black.Description" = "黑";
+
+"com_breedingpinetrees_sgf_handicap" = "让子";
+"com_breedingpinetrees_sgf_handicap.Description" = "让子";
+
+"com_breedingpinetrees_sgf_komi" = "贴目";
+"com_breedingpinetrees_sgf_komi.Description" = "贴目";
+
+"com_breedingpinetrees_sgf_size" = "棋盘大小";
+"com_breedingpinetrees_sgf_size.Description" = "棋盘大小";
+
+"com_breedingpinetrees_sgf_gametype" = "Game Type";
+"com_breedingpinetrees_sgf_gametype.Description" = "Type of game played";
+
+"com_breedingpinetrees_sgf_whiterank" = "白方段位";
+"com_breedingpinetrees_sgf_whiterank.Description" = "白方段位";
+
+"com_breedingpinetrees_sgf_blackrank" = "黑方段位";
+"com_breedingpinetrees_sgf_blackrank.Description" = "黑方段位";
+
+"com_breedingpinetrees_sgf_blackteam" = "黑队";
+"com_breedingpinetrees_sgf_blackteam.Description" = "黑队";
+
+"com_breedingpinetrees_sgf_whiteteam" = "白队";
+"com_breedingpinetrees_sgf_whiteteam.Description" = "白队";
+
+"com_breedingpinetrees_sgf_opening" = "Opening";
+"com_breedingpinetrees_sgf_opening.Description" = "Information about the opening played";
+
+"com_breedingpinetrees_sgf_overtime" = "超时";
+"com_breedingpinetrees_sgf_overtime.Description" = "超时";
+
+"com_breedingpinetrees_sgf_round" = "回合";
+"com_breedingpinetrees_sgf_round.Description" = "回合";
+
+"com_breedingpinetrees_sgf_ruleset" = "规则";
+"com_breedingpinetrees_sgf_ruleset.Description" = "规则";
+
+"com_breedingpinetrees_sgf_oldhandicap" = "古让子";
+"com_breedingpinetrees_sgf_oldhandicap.Description" = "古让子";
+
+"com_breedingpinetrees_sgf_dateplayed" = "日期";
+"com_breedingpinetrees_sgf_dateplayed.Description" = "日期";
+
+"com_breedingpinetrees_sgf_yearplayed" = "年";
+"com_breedingpinetrees_sgf_yearplayed.Description" = "年";
+
+"com_breedingpinetrees_sgf_winner" = "Winner";
+"com_breedingpinetrees_sgf_winner.Description" = "Player who won the game";
+
+"com_breedingpinetrees_sgf_loser" = "Loser";
+"com_breedingpinetrees_sgf_loser.Description" = "Player who lost the game";
+
+"com_breedingpinetrees_sgf_iscollection" = "Collection";
+"com_breedingpinetrees_sgf_iscollection.Description" = "True if the file contains more than one game record";
+
+"com_breedingpinetrees_sgf_numgames" = "对局数";
+"com_breedingpinetrees_sgf_numgames.Description" = "对局数";
+
+"com_breedingpinetrees_sgf_moves" = "手数";
+"com_breedingpinetrees_sgf_moves.Description" = "手数";

@@ -1,0 +1,73 @@
+/* Russian */
+
+"com_breedingpinetrees_sgf_result" = "Результат";
+"com_breedingpinetrees_sgf_result.Description" = "Результат";
+
+"com_breedingpinetrees_sgf_event" = "Событие";
+"com_breedingpinetrees_sgf_event.Description" = "Событие";
+
+"com_breedingpinetrees_sgf_white" = "Белые";
+"com_breedingpinetrees_sgf_white.Description" = "Белые";
+
+"com_breedingpinetrees_sgf_black" = "Черные";
+"com_breedingpinetrees_sgf_black.Description" = "Черные";
+
+"com_breedingpinetrees_sgf_handicap" = "Фора";
+"com_breedingpinetrees_sgf_handicap.Description" = "Фора";
+
+"com_breedingpinetrees_sgf_komi" = "Коми";
+"com_breedingpinetrees_sgf_komi.Description" = "Коми";
+
+"com_breedingpinetrees_sgf_size" = "Размер доски";
+"com_breedingpinetrees_sgf_size.Description" = "Размер доски";
+
+"com_breedingpinetrees_sgf_gametype" = "Партия";
+"com_breedingpinetrees_sgf_gametype.Description" = "Партия";
+
+"com_breedingpinetrees_sgf_whiterank" = "Уровень белых";
+"com_breedingpinetrees_sgf_whiterank.Description" = "Уровень белых";
+
+"com_breedingpinetrees_sgf_blackrank" = "Уровень черных";
+"com_breedingpinetrees_sgf_blackrank.Description" = "Уровень черных";
+
+"com_breedingpinetrees_sgf_blackteam" = "Команда черных";
+"com_breedingpinetrees_sgf_blackteam.Description" = "Команда черных";
+
+"com_breedingpinetrees_sgf_whiteteam" = "Команда белых";
+"com_breedingpinetrees_sgf_whiteteam.Description" = "Команда белых";
+
+"com_breedingpinetrees_sgf_opening" = "Открытие";
+"com_breedingpinetrees_sgf_opening.Description" = "Открытие";
+
+"com_breedingpinetrees_sgf_overtime" = "Овертайм (бёёми)";
+"com_breedingpinetrees_sgf_overtime.Description" = "Овертайм (бёёми)";
+
+"com_breedingpinetrees_sgf_round" = "Раунд";
+"com_breedingpinetrees_sgf_round.Description" = "Раунд";
+
+"com_breedingpinetrees_sgf_ruleset" = "Правила";
+"com_breedingpinetrees_sgf_ruleset.Description" = "Правила";
+
+"com_breedingpinetrees_sgf_oldhandicap" = "Старая фора";
+"com_breedingpinetrees_sgf_oldhandicap.Description" = "Старая фора";
+
+"com_breedingpinetrees_sgf_dateplayed" = "Дата";
+"com_breedingpinetrees_sgf_dateplayed.Description" = "Дата";
+
+"com_breedingpinetrees_sgf_yearplayed" = "Year Played";
+"com_breedingpinetrees_sgf_yearplayed.Description" = "Year in which the game was played";
+
+"com_breedingpinetrees_sgf_winner" = "Победитель";
+"com_breedingpinetrees_sgf_winner.Description" = "Победитель";
+
+"com_breedingpinetrees_sgf_loser" = "Проигравший";
+"com_breedingpinetrees_sgf_loser.Description" = "Проигравший";
+
+"com_breedingpinetrees_sgf_iscollection" = "Коллекция";
+"com_breedingpinetrees_sgf_iscollection.Description" = "Коллекция";
+
+"com_breedingpinetrees_sgf_numgames" = "Количество партий";
+"com_breedingpinetrees_sgf_numgames.Description" = "Количество партий";
+
+"com_breedingpinetrees_sgf_moves" = "Количество ходов";
+"com_breedingpinetrees_sgf_moves.Description" = "Количество ходов";

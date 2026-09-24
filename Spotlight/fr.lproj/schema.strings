@@ -1,0 +1,73 @@
+/* French */
+
+"com_breedingpinetrees_sgf_result" = "Résultat";
+"com_breedingpinetrees_sgf_result.Description" = "Résultat de la partie";
+
+"com_breedingpinetrees_sgf_event" = "Evénement";
+"com_breedingpinetrees_sgf_event.Description" = "Evénement ou tournoi ou la partie a été joué";
+
+"com_breedingpinetrees_sgf_white" = "Blanc";
+"com_breedingpinetrees_sgf_white.Description" = "Joueur blanc";
+
+"com_breedingpinetrees_sgf_black" = "Noir";
+"com_breedingpinetrees_sgf_black.Description" = "Joueur noir";
+
+"com_breedingpinetrees_sgf_handicap" = "Handicap";
+"com_breedingpinetrees_sgf_handicap.Description" = "Nombre de pierres d'handicap donné au joueur noir";
+
+"com_breedingpinetrees_sgf_komi" = "Komi";
+"com_breedingpinetrees_sgf_komi.Description" = "Points de komi donné au joueur blanc";
+
+"com_breedingpinetrees_sgf_size" = "Taille de goban";
+"com_breedingpinetrees_sgf_size.Description" = "Taille de goban";
+
+"com_breedingpinetrees_sgf_gametype" = "Partie";
+"com_breedingpinetrees_sgf_gametype.Description" = "Type de partie";
+
+"com_breedingpinetrees_sgf_whiterank" = "Niveau Blanc";
+"com_breedingpinetrees_sgf_whiterank.Description" = "Niveau Blanc";
+
+"com_breedingpinetrees_sgf_blackrank" = "Niveau Noir";
+"com_breedingpinetrees_sgf_blackrank.Description" = "Niveau Noir";
+
+"com_breedingpinetrees_sgf_blackteam" = "Equipe Noire";
+"com_breedingpinetrees_sgf_blackteam.Description" = "Nom de l'équipe noire s'il s'agissait d'une partie à équipes";
+
+"com_breedingpinetrees_sgf_whiteteam" = "Equipe Blanche";
+"com_breedingpinetrees_sgf_whiteteam.Description" = "Nom de l'équipe blanche s'il s'agissait d'une partie à équipes";
+
+"com_breedingpinetrees_sgf_opening" = "Ouverture";
+"com_breedingpinetrees_sgf_opening.Description" = "Information sur l'ouverture utilisé";
+
+"com_breedingpinetrees_sgf_overtime" = "Temps additionnel";
+"com_breedingpinetrees_sgf_overtime.Description" = "Méthode de temps additionnel";
+
+"com_breedingpinetrees_sgf_round" = "Tour";
+"com_breedingpinetrees_sgf_round.Description" = "Numéro et type de tour";
+
+"com_breedingpinetrees_sgf_ruleset" = "Règles";
+"com_breedingpinetrees_sgf_ruleset.Description" = "Règles utilisés";
+
+"com_breedingpinetrees_sgf_oldhandicap" = "Ancien Handicap";
+"com_breedingpinetrees_sgf_oldhandicap.Description" = "Ancien disposition de l'handicap";
+
+"com_breedingpinetrees_sgf_dateplayed" = "Date";
+"com_breedingpinetrees_sgf_dateplayed.Description" = "Date à laquelle la partie a été joué";
+
+"com_breedingpinetrees_sgf_yearplayed" = "Année de la partie";
+"com_breedingpinetrees_sgf_yearplayed.Description" = "Année dans laquelle la partie a été joué";
+
+"com_breedingpinetrees_sgf_winner" = "Gagnant";
+"com_breedingpinetrees_sgf_winner.Description" = "Gagnant de la partie";
+
+"com_breedingpinetrees_sgf_loser" = "Perdant";
+"com_breedingpinetrees_sgf_loser.Description" = "Perdant de la partie";
+
+"com_breedingpinetrees_sgf_iscollection" = "Collection";
+"com_breedingpinetrees_sgf_iscollection.Description" = "Vrai si le fichier contient plusieurs parties";
+
+"com_breedingpinetrees_sgf_numgames" = "Parties";
+"com_breedingpinetrees_sgf_numgames.Description" = "Nombre de parties";
+
+"com_breedingpinetrees_sgf_moves" = "Coups";
+"com_breedingpinetrees_sgf_moves.Description" = "Nombre de coups joués";

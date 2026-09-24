@@ -1,0 +1,73 @@
+/* Korean */
+
+"com_breedingpinetrees_sgf_result" = "결과";
+"com_breedingpinetrees_sgf_result.Description" = "결과";
+
+"com_breedingpinetrees_sgf_event" = "이벤트";
+"com_breedingpinetrees_sgf_event.Description" = "이벤트";
+
+"com_breedingpinetrees_sgf_white" = "백";
+"com_breedingpinetrees_sgf_white.Description" = "백";
+
+"com_breedingpinetrees_sgf_black" = "흑";
+"com_breedingpinetrees_sgf_black.Description" = "흑";
+
+"com_breedingpinetrees_sgf_handicap" = "접바둑";
+"com_breedingpinetrees_sgf_handicap.Description" = "접바둑";
+
+"com_breedingpinetrees_sgf_komi" = "덤";
+"com_breedingpinetrees_sgf_komi.Description" = "덤";
+
+"com_breedingpinetrees_sgf_size" = "바둑판 크기";
+"com_breedingpinetrees_sgf_size.Description" = "바둑판 크기";
+
+"com_breedingpinetrees_sgf_gametype" = "게임";
+"com_breedingpinetrees_sgf_gametype.Description" = "게임";
+
+"com_breedingpinetrees_sgf_whiterank" = "백 기력";
+"com_breedingpinetrees_sgf_whiterank.Description" = "백 기력";
+
+"com_breedingpinetrees_sgf_blackrank" = "흑 기력";
+"com_breedingpinetrees_sgf_blackrank.Description" = "흑 기력";
+
+"com_breedingpinetrees_sgf_blackteam" = "흑 팀";
+"com_breedingpinetrees_sgf_blackteam.Description" = "흑 팀";
+
+"com_breedingpinetrees_sgf_whiteteam" = "백 팀";
+"com_breedingpinetrees_sgf_whiteteam.Description" = "백 팀";
+
+"com_breedingpinetrees_sgf_opening" = "열기";
+"com_breedingpinetrees_sgf_opening.Description" = "열기";
+
+"com_breedingpinetrees_sgf_overtime" = "연장 시간";
+"com_breedingpinetrees_sgf_overtime.Description" = "연장 시간";
+
+"com_breedingpinetrees_sgf_round" = "라운드";
+"com_breedingpinetrees_sgf_round.Description" = "라운드";
+
+"com_breedingpinetrees_sgf_ruleset" = "규칙";
+"com_breedingpinetrees_sgf_ruleset.Description" = "규칙";
+
+"com_breedingpinetrees_sgf_oldhandicap" = "기존 접바둑";
+"com_breedingpinetrees_sgf_oldhandicap.Description" = "기존 접바둑";
+
+"com_breedingpinetrees_sgf_dateplayed" = "날짜";
+"com_breedingpinetrees_sgf_dateplayed.Description" = "날짜";
+
+"com_breedingpinetrees_sgf_yearplayed" = "해";
+"com_breedingpinetrees_sgf_yearplayed.Description" = "해";
+
+"com_breedingpinetrees_sgf_winner" = "승자";
+"com_breedingpinetrees_sgf_winner.Description" = "승자";
+
+"com_breedingpinetrees_sgf_loser" = "패자";
+"com_breedingpinetrees_sgf_loser.Description" = "패자";
+
+"com_breedingpinetrees_sgf_iscollection" = "컬렉션";
+"com_breedingpinetrees_sgf_iscollection.Description" = "컬렉션";
+
+"com_breedingpinetrees_sgf_numgames" = "게임 수";
+"com_breedingpinetrees_sgf_numgames.Description" = "게임 수";
+
+"com_breedingpinetrees_sgf_moves" = "행마 수";
+"com_breedingpinetrees_sgf_moves.Description" = "행마 수";

@@ -1,0 +1,73 @@
+/* Japanese */
+
+"com_breedingpinetrees_sgf_result" = "結果";
+"com_breedingpinetrees_sgf_result.Description" = "結果";
+
+"com_breedingpinetrees_sgf_event" = "イベント";
+"com_breedingpinetrees_sgf_event.Description" = "イベント";
+
+"com_breedingpinetrees_sgf_white" = "白";
+"com_breedingpinetrees_sgf_white.Description" = "白選手";
+
+"com_breedingpinetrees_sgf_black" = "黒";
+"com_breedingpinetrees_sgf_black.Description" = "黒選手";
+
+"com_breedingpinetrees_sgf_handicap" = "ハンディキャップ";
+"com_breedingpinetrees_sgf_handicap.Description" = "ハンディキャップ";
+
+"com_breedingpinetrees_sgf_komi" = "こみ";
+"com_breedingpinetrees_sgf_komi.Description" = "こみ";
+
+"com_breedingpinetrees_sgf_size" = "碁盤のサイズ";
+"com_breedingpinetrees_sgf_size.Description" = "碁盤のサイズ";
+
+"com_breedingpinetrees_sgf_gametype" = "ゲーム";
+"com_breedingpinetrees_sgf_gametype.Description" = "ゲーム";
+
+"com_breedingpinetrees_sgf_whiterank" = "白のランク";
+"com_breedingpinetrees_sgf_whiterank.Description" = "白のランク";
+
+"com_breedingpinetrees_sgf_blackrank" = "黒のランク";
+"com_breedingpinetrees_sgf_blackrank.Description" = "黒のランク";
+
+"com_breedingpinetrees_sgf_blackteam" = "黒のチーム";
+"com_breedingpinetrees_sgf_blackteam.Description" = "黒のチーム";
+
+"com_breedingpinetrees_sgf_whiteteam" = "白のチーム";
+"com_breedingpinetrees_sgf_whiteteam.Description" = "白のチーム";
+
+"com_breedingpinetrees_sgf_opening" = "序盤";
+"com_breedingpinetrees_sgf_opening.Description" = "序盤";
+
+"com_breedingpinetrees_sgf_overtime" = "超過時間";
+"com_breedingpinetrees_sgf_overtime.Description" = "超過時間";
+
+"com_breedingpinetrees_sgf_round" = "円形";
+"com_breedingpinetrees_sgf_round.Description" = "円形";
+
+"com_breedingpinetrees_sgf_ruleset" = "ルール";
+"com_breedingpinetrees_sgf_ruleset.Description" = "ルール";
+
+"com_breedingpinetrees_sgf_oldhandicap" = "古いハンディキャップ";
+"com_breedingpinetrees_sgf_oldhandicap.Description" = "古いハンディキャップ";
+
+"com_breedingpinetrees_sgf_dateplayed" = "日付";
+"com_breedingpinetrees_sgf_dateplayed.Description" = "日付";
+
+"com_breedingpinetrees_sgf_yearplayed" = "年";
+"com_breedingpinetrees_sgf_yearplayed.Description" = "年";
+
+"com_breedingpinetrees_sgf_winner" = "勝者";
+"com_breedingpinetrees_sgf_winner.Description" = "勝者";
+
+"com_breedingpinetrees_sgf_loser" = "敗者";
+"com_breedingpinetrees_sgf_loser.Description" = "敗者";
+
+"com_breedingpinetrees_sgf_iscollection" = "コレクション";
+"com_breedingpinetrees_sgf_iscollection.Description" = "コレクション";
+
+"com_breedingpinetrees_sgf_numgames" = "ゲームの番号";
+"com_breedingpinetrees_sgf_numgames.Description" = "ゲームの番号";
+
+"com_breedingpinetrees_sgf_moves" = "手の数";
+"com_breedingpinetrees_sgf_moves.Description" = "手の数";

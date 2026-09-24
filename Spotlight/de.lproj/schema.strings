@@ -1,0 +1,73 @@
+/* German */
+
+"com_breedingpinetrees_sgf_result" = "Ergebnis";
+"com_breedingpinetrees_sgf_result.Description" = "Ergebnis";
+
+"com_breedingpinetrees_sgf_event" = "Ereignis";
+"com_breedingpinetrees_sgf_event.Description" = "Ereignis";
+
+"com_breedingpinetrees_sgf_white" = "Weiß";
+"com_breedingpinetrees_sgf_white.Description" = "Weiß";
+
+"com_breedingpinetrees_sgf_black" = "Schwarz";
+"com_breedingpinetrees_sgf_black.Description" = "Schwarz";
+
+"com_breedingpinetrees_sgf_handicap" = "Vorgabe";
+"com_breedingpinetrees_sgf_handicap.Description" = "Vorgabe";
+
+"com_breedingpinetrees_sgf_komi" = "Komi";
+"com_breedingpinetrees_sgf_komi.Description" = "Komi";
+
+"com_breedingpinetrees_sgf_size" = "Brettgröße";
+"com_breedingpinetrees_sgf_size.Description" = "Brettgröße";
+
+"com_breedingpinetrees_sgf_gametype" = "Partie";
+"com_breedingpinetrees_sgf_gametype.Description" = "Partie";
+
+"com_breedingpinetrees_sgf_whiterank" = "Weißer Rang";
+"com_breedingpinetrees_sgf_whiterank.Description" = "Weißer Rang";
+
+"com_breedingpinetrees_sgf_blackrank" = "Schwarzer Rang";
+"com_breedingpinetrees_sgf_blackrank.Description" = "Schwarzer Rang";
+
+"com_breedingpinetrees_sgf_blackteam" = "Schwarzes Team";
+"com_breedingpinetrees_sgf_blackteam.Description" = "Schwarzes Team";
+
+"com_breedingpinetrees_sgf_whiteteam" = "Weißes Team";
+"com_breedingpinetrees_sgf_whiteteam.Description" = "Weißes Team";
+
+"com_breedingpinetrees_sgf_opening" = "Eröffnung";
+"com_breedingpinetrees_sgf_opening.Description" = "Eröffnung";
+
+"com_breedingpinetrees_sgf_overtime" = "Zusatzzeit";
+"com_breedingpinetrees_sgf_overtime.Description" = "Zusatzzeit";
+
+"com_breedingpinetrees_sgf_round" = "Runde";
+"com_breedingpinetrees_sgf_round.Description" = "Runde";
+
+"com_breedingpinetrees_sgf_ruleset" = "Regeln";
+"com_breedingpinetrees_sgf_ruleset.Description" = "Regeln";
+
+"com_breedingpinetrees_sgf_oldhandicap" = "Alte Vorgabe";
+"com_breedingpinetrees_sgf_oldhandicap.Description" = "Alte Vorgabe";
+
+"com_breedingpinetrees_sgf_dateplayed" = "Datum";
+"com_breedingpinetrees_sgf_dateplayed.Description" = "Datum";
+
+"com_breedingpinetrees_sgf_yearplayed" = "Jahr in dem gespielt wurde";
+"com_breedingpinetrees_sgf_yearplayed.Description" = "Jahr in dem das Spiel gespielt wurde";
+
+"com_breedingpinetrees_sgf_winner" = "Sieger";
+"com_breedingpinetrees_sgf_winner.Description" = "Sieger";
+
+"com_breedingpinetrees_sgf_loser" = "Verlierer";
+"com_breedingpinetrees_sgf_loser.Description" = "Verlierer";
+
+"com_breedingpinetrees_sgf_iscollection" = "Sammlung";
+"com_breedingpinetrees_sgf_iscollection.Description" = "Wahr, falls die Datei mehr als einen Spieldatensatz enthält";
+
+"com_breedingpinetrees_sgf_numgames" = "Spiele";
+"com_breedingpinetrees_sgf_numgames.Description" = "Anzahl der Spieldatensätze";
+
+"com_breedingpinetrees_sgf_moves" = "Züge";
+"com_breedingpinetrees_sgf_moves.Description" = "Anzahl der gespielten Züge";

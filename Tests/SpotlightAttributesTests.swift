@@ -349,4 +349,23 @@ struct SpotlightSchemaTests {
         #expect(names[Name.yearPlayed] == "Year Played")
         #expect(names["\(Name.komi).Description"] == "Amount of komi the white player received")
     }
+
+    /// English and the nine translations of 1.x.
+    @Test func languages() throws {
+        #expect(try Self.languages() == ["de", "en", "fr", "ja", "ko", "pl", "ru", "sv", "zh-Hans", "zh-Hant"])
+    }
+
+    /// Errors in the names of 1.x, fixed in 2.0.
+    @Test func fixedTranslations() throws {
+        #expect(try names(in: "fr")["\(Name.opening).Description"] == "Information sur l'ouverture utilisé")
+
+        let japanese = try names(in: "ja")
+        #expect(japanese[Name.size] == "碁盤のサイズ")
+        #expect(japanese[Name.black] == "黒")
+        #expect(japanese.values.allSatisfy { !$0.contains("黑") }, "the Japanese form of Black, not the Chinese one")
+
+        let swedish = try names(in: "sv")
+        #expect(swedish[Name.opening] == "Öppning")
+        #expect(swedish[Name.ruleset] == "Regler")
+    }
 }
