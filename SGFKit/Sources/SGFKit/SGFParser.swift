@@ -201,7 +201,7 @@ private struct ByteParser {
         }
         let nodes = makeNodes(of: tree, values: decoded.strings)
         let game = SGFGame(nodes: nodes, encoding: decoded.encoding)
-        if let size = nodes[0]["SZ"], BoardSize(sgf: size.value.simpleText) == nil {
+        if let size = nodes[0]["SZ"], game.declaredBoardSize == nil {
             let offset = tree.nodes[0].properties.first { $0.identifier == "SZ" }?.values.first?.lowerBound
             warnings.append(SGFWarning(.invalidBoardSize(size.value.simpleText.trimmingCharacters(in: .whitespaces)),
                                        offset: offset ?? start))

@@ -99,8 +99,7 @@ struct SpotlightAttributes: Equatable {
         values[Name.gameType] = first.gameTypeName.map(Value.string)
         // SZ's first number (the columns of a rectangular board), or 19 for a game of Go
         // without SZ. A board size SGFKit can't read counts as missing.
-        let game = collection.games[0]
-        if first.gameType == 1 || game.root["SZ"].flatMap({ BoardSize(sgf: $0.value.simpleText) }) != nil {
+        if first.gameType == 1 || collection.games[0].declaredBoardSize != nil {
             values[Name.size] = .integer(first.boardSize.columns)
         }
         values[Name.moves] = .integer(first.moveCount)

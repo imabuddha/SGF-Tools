@@ -87,17 +87,22 @@ struct BoardSizeTests {
     }
 
     @Test func gameBoardSizeDefaultsTo19() throws {
-        #expect(try firstGame("(;GM[1];B[aa])").boardSize == .standard)
+        let game = try firstGame("(;GM[1];B[aa])")
+        #expect(game.boardSize == .standard)
+        #expect(game.declaredBoardSize == nil)
     }
 
     @Test func gameBoardSizeFromSZ() throws {
         #expect(try firstGame("(;SZ[9])").boardSize == BoardSize(9))
         #expect(try firstGame("(;SZ[19:13])").boardSize == BoardSize(columns: 19, rows: 13))
+        #expect(try firstGame("(;SZ[19])").declaredBoardSize == .standard)
+        #expect(try firstGame("(;SZ[19:13])").declaredBoardSize == BoardSize(columns: 19, rows: 13))
     }
 
     @Test func invalidSZFallsBackTo19WithAWarning() throws {
         let collection = parse("(;SZ[60];B[aa])")
         #expect(collection.games.first?.boardSize == .standard)
+        #expect(collection.games.first?.declaredBoardSize == nil)
         #expect(collection.warnings.map(\.kind) == [.invalidBoardSize("60")])
     }
 }

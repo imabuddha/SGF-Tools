@@ -14,13 +14,18 @@ public struct SGFGame: Sendable {
     /// The board size from the root's SZ property; 19x19 if it is missing or invalid.
     public let boardSize: BoardSize
 
+    /// The board size the root's SZ property gives, or `nil` if the root has no SZ or its value
+    /// isn't a valid size (see ``BoardSize/init(sgf:)``).
+    public let declaredBoardSize: BoardSize?
+
     /// Creates a game from its nodes, which must be in file order with valid parent and child
     /// IDs. The board size is read from the root's SZ property.
     public init(nodes: [SGFNode], encoding: String.Encoding = .utf8) {
         precondition(!nodes.isEmpty, "A game needs at least a root node.")
         self.nodes = nodes
         self.encoding = encoding
-        boardSize = nodes[0]["SZ"].flatMap { BoardSize(sgf: $0.value.simpleText) } ?? .standard
+        declaredBoardSize = nodes[0]["SZ"].flatMap { BoardSize(sgf: $0.value.simpleText) }
+        boardSize = declaredBoardSize ?? .standard
     }
 
     /// The root node, which holds the game information and any handicap stones.
