@@ -57,8 +57,10 @@ record the finding in `docs/spotlight-notes.md`, whose "This reached every file"
 (`Shared/OpeningPosition.swift:26`) each map the main line through `move(on: boardSize)`, as do
 three tests (`OpeningPositionTests.swift:24`, `GameTests.swift:10`, `SampleSheet.swift:73`), and
 `position(afterMainLineMoves:)` walks the main line with a loop of its own. *Fix:* one walk of the
-main line in `SGFGame`, used by `mainLine`, `position(afterMainLineMoves:)`, and a new
-`mainLineMoves: [Move]`, which the others use. Adds `SGFGame.mainLineMoves` to the public API.
+main line in `SGFGame`, used by `mainLine`, `mainLineMoveCount`, `position(afterMainLineMoves:)`,
+and a new `mainLineMoves: [Move]`, which `OpeningPosition` and the tests use. `GameInfo` keeps
+counting on the main line it has already walked for its fields: a second walk, for
+`mainLineMoves`, measured about a tenth slower. Adds `SGFGame.mainLineMoves` to the public API.
 
 **D2. Whether SZ is valid is decided in three places.** `SGFGame.init` (`SGFGame.swift:23`), the
 parser's invalid-size warning (`SGFParser.swift:204`), and `SpotlightAttributes`
@@ -183,3 +185,56 @@ These come later, as John decided, and are not fixed here:
 5. An implicit root with no `;`.
 
 `GameResult`'s wording also stays as John decided.
+
+## Outcome
+
+Every finding marked *Fix* was fixed, in separate commits for refactors and for behavior changes.
+Before each commit, the suite that its change affects passed; both suites pass at the end. The
+version is now 2.0.4 (5).
+
+**Behavior changes**, all bug fixes:
+
+- B1: a GM of `Int.min` no longer crashes GameInfo, and with it the importer and the preview.
+- B2: `SGFValue.real` is `nil` for a number too large for a `Double`, not infinity.
+- B3: a win's margin is read as an SGF Real: "B+3,5" is "Black won by 3.5 points", and "W+1e2"
+  and "W+0x10" are shown as written instead of as 100 and 16 points.
+- B4: the preview reads a file over 2 MB only to its first game and shows "Games: Several".
+- B5: the README recommends `mdimport -i <folder>` to index existing games.
+
+**Public API:** `SGFGame` gains `mainLineMoves` and `declaredBoardSize`; `SGFValue.real` returns
+`nil` in one more case (B2). Inside the app: `GamePreview.init?(contentsOf:wholeFileLimit:)`,
+`GameSummaryView` for `GameInfoView`, and `Thumbnail.makeImage(size:scale:)` is gone.
+
+**D1 took a second try.** The first version walked the main line with `sequence(first:next:)`,
+and `GameInfo` counted its moves with `mainLineMoves`; together they made the game information of
+4,000 games 29% slower in a release build (41 to 53 ms). The walk is now a small iterator struct,
+a little faster than the old loop, and `GameInfo` counts on its own walk: 40 ms.
+
+**Tests:** SGFKit's package went from 200 tests (170 in SGFKitTests, 30 in SGFRenderingTests) to
+201, and the app's from 56 to 57; three parameterized tests also gained cases. The icon layers
+the tests draw are byte for byte those in `App/AppIcon.icon`.
+
+**Timing**, debug builds as the tests run them: the renderer's median for a 512x512 19x19 board
+of 112 stones stayed at about 1.1 ms flat and 2.4 to 2.8 ms shaded (1.16 and 2.81 before);
+johnVsGnu's thumbnail at 1024x1024 at about 7.3 ms; the importer's 4,000 games at 0.88 to 0.91 s
+(0.89 before).
+
+**The products, checked once, headlessly:** the Release build's app, extensions, and importer are
+all 2.0.4 (5), for macOS 26.0. `mdimport -t -d2` used the build's importer: johnVsGnu.sgf gave
+all 24 custom attributes and the standard ones, a made-up collection gave Games 3 and Collection
+yes, and a made-up file with GM at `Int.min` and a 400-digit komi imported without a crash.
+`qlmanage -t -x` made thumbnails of both files, but with the installed 2.0.3 extension, which
+Quick Look kept using while the build was registered; the current code draws both thumbnails
+pixel for pixel as that extension did. That is a regression guard only: the build's own Quick
+Look extensions weren't exercised. Then the build was unregistered, Spotlight dropped its
+importer 15 seconds later, and only then were the build products deleted; the copy in
+`/Applications` (2.0.3) is again the only one registered.
+
+**Left for John:**
+
+- The preview's 2 MB limit (B4), the importer's number, and whether "Several" is the right thing
+  to show for a larger file.
+- L2 and L4, if the names or the unused API bother him.
+- On an external disk, `mdimport` given a single file stores nothing (B5); that may be worth a
+  report to Apple.
+- The five known defects above.
