@@ -25,10 +25,11 @@ Decisions as of 2026-09-24. The background is in `old-version-analysis.md`.
    the file itself, with no dependency on Spotlight. Both show the position after 50, 30, or 20
    moves by the board's shorter side (19 lines or more, 13 to 18, smaller), counting passes. The
    look's settings are constants in `Shared/Look.swift`.
-4. **Spotlight import extension.** It starts with a test of whether Finder offers our own fields
-   (such as "Black Player" and "Komi") from an import extension; the standard attributes work
-   either way. The translated field names of 1.x (10 languages) come from the
-   `legacy-1.x` branch (`SpotlightImporter/*.lproj/schema.strings`).
+4. **Spotlight importer** (done): an `.mdimporter` embedded in the app, because macOS 27 never
+   calls Spotlight import extensions for files on disk (see `spotlight-notes.md`). It sets the
+   attributes of 1.x under their 1.x names, so old saved searches work, with values from
+   SGFKit's game information, and names them in the 10 languages of 1.x (from the
+   `legacy-1.x` branch's `SpotlightImporter/*.lproj/schema.strings`).
 5. **The screensaver.**
 
 ## Look
