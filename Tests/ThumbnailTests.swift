@@ -8,38 +8,26 @@ import Testing
 struct ThumbnailTests {
     private let size = CGSize(width: 256, height: 256)
 
-    /// The alpha of the pixel at a column and a row counted from the top.
-    private func alpha(_ image: CGImage, x: Int, y: Int) -> UInt8 {
-        var pixel = [UInt8](repeating: 0, count: 4)
-        pixel.withUnsafeMutableBytes { buffer in
-            let context = CGContext(
-                data: buffer.baseAddress, width: 1, height: 1, bitsPerComponent: 8, bytesPerRow: 4,
-                space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-            )!
-            context.draw(image, in: CGRect(x: -x, y: y - image.height + 1, width: image.width, height: image.height))
-        }
-        return pixel[3]
-    }
-
     @Test func aGameGetsItsOpeningPosition() throws {
         let thumbnail = try #require(Thumbnail(collection: collection(longGame(size: 19, moves: 80))))
         #expect(thumbnail.position.movesShown == 50)
         #expect(!thumbnail.isCollection)
         let image = try #require(thumbnail.makeImage(size: size, scale: 2))
         #expect(image.width == 512 && image.height == 512)
-        #expect(alpha(image, x: 256, y: 256) == 255)
-        #expect(alpha(image, x: 1, y: 1) == 255, "a square board fills the thumbnail")
+        let pixels = Bitmap(image)
+        #expect(pixels.alpha(x: 256, y: 256) == 255)
+        #expect(pixels.alpha(x: 1, y: 1) == 255, "a square board fills the thumbnail")
     }
 
     @Test func aCollectionGetsTheBackdrop() throws {
         let sgf = "(;SZ[19];B[pd];W[dp])(;SZ[9];B[ee])"
         let thumbnail = try #require(Thumbnail(collection: collection(sgf, stopAfterFirstGame: true)))
         #expect(thumbnail.isCollection)
-        let image = try #require(thumbnail.makeImage(size: size, scale: 1))
+        let pixels = try Bitmap(#require(thumbnail.makeImage(size: size, scale: 1)))
         // The front board sits at the top left; the stack shows below and to the right, fading.
-        #expect(alpha(image, x: 2, y: 2) == 255)
-        #expect(alpha(image, x: 253, y: 2) == 0)
-        #expect(alpha(image, x: 253, y: 253) < 255)
+        #expect(pixels.alpha(x: 2, y: 2) == 255)
+        #expect(pixels.alpha(x: 253, y: 2) == 0)
+        #expect(pixels.alpha(x: 253, y: 253) < 255)
         let single = try #require(Thumbnail(collection: collection("(;SZ[19];B[pd];W[dp])")))
         #expect(!single.isCollection)
     }
@@ -56,9 +44,9 @@ struct ThumbnailTests {
 
     @Test func aRectangularBoardIsCenteredWithTransparentSides() throws {
         let thumbnail = try #require(Thumbnail(collection: collection("(;SZ[19:9];B[ee])")))
-        let image = try #require(thumbnail.makeImage(size: size, scale: 1))
-        #expect(alpha(image, x: 128, y: 128) == 255)
-        #expect(alpha(image, x: 128, y: 3) == 0)
+        let pixels = try Bitmap(#require(thumbnail.makeImage(size: size, scale: 1)))
+        #expect(pixels.alpha(x: 128, y: 128) == 255)
+        #expect(pixels.alpha(x: 128, y: 3) == 0)
     }
 
     @Test func contextSizeIsTheLargestSquare() {

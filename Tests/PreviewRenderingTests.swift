@@ -1,10 +1,8 @@
 import AppKit
 import Foundation
-import ImageIO
 import SGFKit
 import SwiftUI
 import Testing
-import UniformTypeIdentifiers
 
 /// Renders the preview's SwiftUI view to images with `ImageRenderer`, in light and dark mode.
 ///
@@ -36,49 +34,18 @@ struct PreviewRenderingTests {
         guard let directory = Self.directory else { return }
         let folder = URL(fileURLWithPath: directory, isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        let url = folder.appendingPathComponent("\(name).png")
-        let destination = try #require(CGImageDestinationCreateWithURL(url as CFURL, UTType.png.identifier as CFString, 1, nil))
-        CGImageDestinationAddImage(destination, image, nil)
-        #expect(CGImageDestinationFinalize(destination))
+        try writePNG(image, to: folder.appendingPathComponent("\(name).png"))
     }
 
     /// The average brightness of the pixels in a rect of the image, from 0 to 1.
     private func brightness(of image: CGImage, in rect: CGRect) -> Double {
-        let width = Int(rect.width), height = Int(rect.height)
-        var bytes = [UInt8](repeating: 0, count: width * height * 4)
-        bytes.withUnsafeMutableBytes { buffer in
-            let context = CGContext(
-                data: buffer.baseAddress, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
-                space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-            )!
-            context.draw(image, in: CGRect(x: -rect.minX, y: rect.maxY - CGFloat(image.height),
-                                           width: CGFloat(image.width), height: CGFloat(image.height)))
-        }
-        var total = 0.0
-        for index in stride(from: 0, to: bytes.count, by: 4) {
-            total += (Double(bytes[index]) + Double(bytes[index + 1]) + Double(bytes[index + 2])) / 765
-        }
-        return total / Double(width * height)
+        Bitmap(image, rect: rect).average { ($0[0] + $0[1] + $0[2]) / 765 }
     }
 
     /// How warm a rect of the image is: the average of red minus blue, from -1 to 1. The wood of
     /// the board is clearly warm; the gray backgrounds and the text are not.
     private func warmth(of image: CGImage, in rect: CGRect) -> Double {
-        let width = Int(rect.width), height = Int(rect.height)
-        var bytes = [UInt8](repeating: 0, count: width * height * 4)
-        bytes.withUnsafeMutableBytes { buffer in
-            let context = CGContext(
-                data: buffer.baseAddress, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
-                space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-            )!
-            context.draw(image, in: CGRect(x: -rect.minX, y: rect.maxY - CGFloat(image.height),
-                                           width: CGFloat(image.width), height: CGFloat(image.height)))
-        }
-        var total = 0.0
-        for index in stride(from: 0, to: bytes.count, by: 4) {
-            total += (Double(bytes[index]) - Double(bytes[index + 2])) / 255
-        }
-        return total / Double(width * height)
+        Bitmap(image, rect: rect).average { ($0[0] - $0[2]) / 255 }
     }
 
     @Test(arguments: [false, true])

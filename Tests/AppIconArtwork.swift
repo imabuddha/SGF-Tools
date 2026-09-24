@@ -1,10 +1,8 @@
 import CoreGraphics
 import Foundation
-import ImageIO
 import SGFKit
 import SGFRendering
 import Testing
-import UniformTypeIdentifiers
 
 /// The artwork of the app icon, `App/AppIcon.icon`: the top-right corner of the position that
 /// the thumbnail of John Mifsud's 2009 game against GNU Go shows, drawn by the thumbnails'
@@ -69,8 +67,8 @@ struct AppIconArtwork {
         if let directory = Self.directory {
             let folder = URL(fileURLWithPath: directory, isDirectory: true)
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-            try Self.writePNG(layers.board, to: folder.appendingPathComponent("board.png"))
-            try Self.writePNG(layers.stones, to: folder.appendingPathComponent("stones.png"))
+            try writePNG(layers.board, to: folder.appendingPathComponent("board.png"))
+            try writePNG(layers.stones, to: folder.appendingPathComponent("stones.png"))
         }
     }
 
@@ -102,11 +100,11 @@ struct AppIconArtwork {
     static func layers(of position: Board) -> (board: CGImage, stones: CGImage)? {
         let renderer = BoardRenderer(style: Look.thumbnailStyle, margin: Look.thumbnailMargin)
         let rect = boardRect(for: position.size)
-        let empty = Bitmap()
+        let empty = canvas()
         renderer.draw(Board(size: position.size), in: empty.context, rect: rect)
-        let full = Bitmap()
+        let full = canvas()
         renderer.draw(position, in: full.context, rect: rect)
-        let stonesOnly = Bitmap()
+        let stonesOnly = canvas()
         let radius = stoneRadius(renderer: renderer, empty: empty, rect: rect)
         for color in StoneColor.allCases {
             for point in position.stones(of: color) {
@@ -120,7 +118,7 @@ struct AppIconArtwork {
         stonesOnly.context.clip()
         renderer.draw(position, in: stonesOnly.context, rect: rect)
 
-        let stones = Bitmap()
+        let stones = canvas()
         for offset in stride(from: 0, to: stones.bytes.count, by: 4) {
             // Premultiplied: the stone, over the shadow.
             let shadow = shadowPixel(over: empty.pixel(at: offset), making: full.pixel(at: offset))
@@ -141,13 +139,12 @@ struct AppIconArtwork {
         let point = SGFPoint(column: 15, row: 5)
         var board = Board(size: .standard)
         board.place(.white, at: point)
-        let drawing = Bitmap()
+        let drawing = canvas()
         renderer.draw(board, in: drawing.context, rect: rect)
         let center = center(column: point.column, row: point.row, in: rect)
         var x = center.x
         while x > 0 {
-            let offset = (center.y * side + x) * 4
-            let difference = drawing.pixel(at: offset) - empty.pixel(at: offset)
+            let difference = drawing.pixel(x: x, y: center.y) - empty.pixel(x: x, y: center.y)
             if max(difference.max(), -difference.min()) <= 2 { break }
             x -= 1
         }
@@ -173,50 +170,8 @@ struct AppIconArtwork {
         return color
     }
 
-    private static func writePNG(_ image: CGImage, to url: URL) throws {
-        let destination = try #require(CGImageDestinationCreateWithURL(url as CFURL, UTType.png.identifier as CFString, 1, nil))
-        CGImageDestinationAddImage(destination, image, nil)
-        #expect(CGImageDestinationFinalize(destination))
-    }
-}
-
-/// A clear canvas-sized sRGB bitmap whose premultiplied RGBA bytes can be read and written,
-/// row 0 at the top.
-private final class Bitmap {
-    let context: CGContext
-    let bytes: UnsafeMutableBufferPointer<UInt8>
-
-    init() {
-        let side = AppIconArtwork.side
-        context = CGContext(
-            data: nil, width: side, height: side, bitsPerComponent: 8, bytesPerRow: side * 4,
-            space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        )!
-        bytes = UnsafeMutableBufferPointer(
-            start: context.data!.assumingMemoryBound(to: UInt8.self), count: side * side * 4
-        )
-    }
-
-    convenience init(_ image: CGImage) {
-        self.init()
-        context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
-    }
-
-    var image: CGImage? { context.makeImage() }
-
-    /// The four bytes of a pixel, from the offset of its first.
-    func pixel(at offset: Int) -> SIMD4<Double> {
-        SIMD4(Double(bytes[offset]), Double(bytes[offset + 1]), Double(bytes[offset + 2]), Double(bytes[offset + 3]))
-    }
-
-    func alpha(x: Int, y: Int) -> Int {
-        Int(bytes[(y * AppIconArtwork.side + x) * 4 + 3])
-    }
-
-    /// The relative brightness of an opaque pixel, from 0 to 1.
-    func brightness(x: Int, y: Int) -> Double {
-        let offset = (y * AppIconArtwork.side + x) * 4
-        return (0.2126 * Double(bytes[offset]) + 0.7152 * Double(bytes[offset + 1])
-            + 0.0722 * Double(bytes[offset + 2])) / 255
+    /// A clear bitmap the size of the icon's canvas.
+    private static func canvas() -> Bitmap {
+        Bitmap(width: side, height: side)
     }
 }
