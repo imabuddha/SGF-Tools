@@ -114,7 +114,8 @@ struct GameSummary: Sendable, Equatable {
         case "f", "forfeit":
             return " by forfeit"
         default:
-            guard let points = Double(text), points.isFinite, points >= 0 else { return " (\(text))" }
+            // Points are an SGF Real, as komi is: "2.5", or "2,5" with a decimal comma.
+            guard let points = SGFValue(raw: text).real, points >= 0 else { return " (\(text))" }
             if points == 0.5 { return " by half a point" }
             return " by \(number(points, locale: locale)) point\(points == 1 ? "" : "s")"
         }
