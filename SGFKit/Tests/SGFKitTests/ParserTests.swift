@@ -239,7 +239,7 @@ struct ParserMalformedTests {
             let collection = parse(bytes: Array(bytes[..<length]))
             #expect(collection.games.count <= 1)
             if let game = collection.games.first {
-                _ = game.mainLine
+                _ = game.position(afterMainLineMoves: .max)
             }
         }
     }
@@ -260,7 +260,7 @@ struct ParserMalformedTests {
             }
             let collection = parse(bytes: bytes)
             for game in collection.games {
-                _ = game.mainLine
+                _ = game.position(afterMainLineMoves: .max)
             }
         }
     }
@@ -273,7 +273,7 @@ struct ParserMalformedTests {
             if count > 2 { bytes.replaceSubrange(0 ..< 2, with: ascii("(;")) }
             let collection = parse(bytes: bytes)
             for game in collection.games {
-                _ = game.mainLine
+                _ = game.position(afterMainLineMoves: .max)
             }
         }
     }

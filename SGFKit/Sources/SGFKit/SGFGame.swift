@@ -50,6 +50,40 @@ public struct SGFGame: Sendable {
         }
         return line
     }
+
+    /// The number of moves on the main line, passes included.
+    public var mainLineMoveCount: Int {
+        mainLine.count { $0.move(on: boardSize) != nil }
+    }
+
+    /// The position after the first `moveCount` moves of the main line.
+    ///
+    /// Moves are counted as SGF numbers them: every B or W node counts, passes included. The
+    /// position includes the setup (AB, AW, and AE) of every main-line node up to the node of
+    /// the last counted move, and nothing from variations or later nodes. With `0`, it is the
+    /// position before the first move: handicap and other setup stones. A count past the end of
+    /// the main line gives the final position.
+    public func position(afterMainLineMoves moveCount: Int) -> Board {
+        var board = Board(size: boardSize)
+        let target = max(0, moveCount)
+        var played = 0
+        var next: SGFNode.ID? = 0
+        while let id = next {
+            let node = nodes[id]
+            let move = node.move(on: boardSize)
+            if move != nil, played == target { break }
+            for point in node.points("AB") { board.place(.black, at: point) }
+            for point in node.points("AW") { board.place(.white, at: point) }
+            for point in node.points("AE") { board.place(nil, at: point) }
+            if let move {
+                if let point = move.point { board.play(move.color, at: point) }
+                played += 1
+                if played == target { break }
+            }
+            next = node.childIDs.first
+        }
+        return board
+    }
 }
 
 /// A node of a game tree: its properties and its place in the tree.
@@ -84,5 +118,25 @@ public struct SGFNode: Sendable, Hashable, Identifiable {
     /// the node doesn't have the property.
     public func points(_ identifier: String) -> [SGFPoint] {
         self[identifier]?.values.flatMap(\.points) ?? []
+    }
+
+    /// The node's move, or `nil` if it has neither B nor W (B wins if it has both).
+    ///
+    /// An empty value is a pass, and so is any value that isn't a point on the board. That
+    /// includes `tt`, the FF[3] pass, on boards up to 19x19; on larger boards `tt` is a move.
+    public func move(on size: BoardSize) -> Move? {
+        let color: StoneColor
+        let property: SGFProperty
+        if let black = self["B"] {
+            (color, property) = (.black, black)
+        } else if let white = self["W"] {
+            (color, property) = (.white, white)
+        } else {
+            return nil
+        }
+        guard let point = property.value.point, size.contains(point) else {
+            return Move(color: color, point: nil)
+        }
+        return Move(color: color, point: point)
     }
 }
