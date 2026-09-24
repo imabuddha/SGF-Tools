@@ -15,3 +15,7 @@ sgf/sgfparse.out
 *.sparsebundle
 testfiles/TouchLib.sgf
 Icon?
+
+# Swift Package Manager
+SGFKit/.build/
+.swiftpm/
