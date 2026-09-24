@@ -7,7 +7,7 @@ struct GameTests {
     @Test func mainLineFollowsTheFirstChild() throws {
         let game = try firstGame(Fixtures.game19)
         #expect(game.mainLine.count == 25)
-        let moves = game.mainLine.compactMap { $0.move(on: game.boardSize)?.point?.sgf }
+        let moves = game.mainLineMoves.compactMap { $0.point?.sgf }
         #expect(moves.suffix(5) == ["rg", "qg", "dj", "pf", "jd"])
         #expect(game.nodes.count == 26)
     }
@@ -126,6 +126,18 @@ struct GameTests {
     @Test func mainLineMoveCountCountsEveryMoveIncludingPasses() throws {
         #expect(try firstGame(Fixtures.game19).mainLineMoveCount == 24)
         #expect(try firstGame("(;SZ[9];B[ee];W[];B[tt];AB[aa])").mainLineMoveCount == 3)
+    }
+
+    @Test func mainLineMovesIncludePassesAndLeaveOutVariations() throws {
+        let game = try firstGame("(;SZ[9]AB[aa];B[ee];W[];AW[bb];B[tt](;W[cc])(;W[gg]))")
+        #expect(game.mainLineMoves == [
+            Move(color: .black, point: pt("ee")),
+            Move(color: .white, point: nil),
+            Move(color: .black, point: nil),
+            Move(color: .white, point: pt("cc")),
+        ])
+        #expect(game.mainLineMoves.count == game.mainLineMoveCount)
+        #expect(try firstGame("(;SZ[9]AB[aa])").mainLineMoves.isEmpty)
     }
 
     @Test func legacyCompactPositionAfterTheOpening() throws {

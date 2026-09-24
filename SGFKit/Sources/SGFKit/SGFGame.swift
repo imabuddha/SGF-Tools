@@ -40,20 +40,21 @@ public struct SGFGame: Sendable {
     }
 
     /// The main line: the root, its first child, that node's first child, and so on.
-    public var mainLine: [SGFNode] {
-        var line: [SGFNode] = []
-        var next: SGFNode.ID? = 0
-        while let id = next {
-            let node = nodes[id]
-            line.append(node)
-            next = node.childIDs.first
-        }
-        return line
+    public var mainLine: [SGFNode] { Array(mainLineNodes) }
+
+    /// The moves of the main line, in order, passes included.
+    public var mainLineMoves: [Move] {
+        mainLineNodes.compactMap { $0.move(on: boardSize) }
     }
 
     /// The number of moves on the main line, passes included.
     public var mainLineMoveCount: Int {
-        mainLine.count { $0.move(on: boardSize) != nil }
+        mainLineNodes.count { $0.move(on: boardSize) != nil }
+    }
+
+    /// The nodes of ``mainLine``, one at a time.
+    private var mainLineNodes: UnfoldFirstSequence<SGFNode> {
+        sequence(first: nodes[0]) { [nodes] node in node.childIDs.first.map { nodes[$0] } }
     }
 
     /// The position after the first `moveCount` moves of the main line.
@@ -67,9 +68,7 @@ public struct SGFGame: Sendable {
         var board = Board(size: boardSize)
         let target = max(0, moveCount)
         var played = 0
-        var next: SGFNode.ID? = 0
-        while let id = next {
-            let node = nodes[id]
+        for node in mainLineNodes {
             let move = node.move(on: boardSize)
             if move != nil, played == target { break }
             for point in node.points("AB") { board.place(.black, at: point) }
@@ -80,7 +79,6 @@ public struct SGFGame: Sendable {
                 played += 1
                 if played == target { break }
             }
-            next = node.childIDs.first
         }
         return board
     }

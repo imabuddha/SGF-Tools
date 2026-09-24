@@ -23,7 +23,7 @@ struct OpeningPosition: Sendable {
     /// The opening position of a game.
     init(game: SGFGame) {
         let target = Self.moveCount(for: game.boardSize)
-        let moves = game.mainLine.compactMap { $0.move(on: game.boardSize) }
+        let moves = game.mainLineMoves
         movesShown = min(target, moves.count)
         totalMoves = moves.count
         board = game.position(afterMainLineMoves: movesShown)

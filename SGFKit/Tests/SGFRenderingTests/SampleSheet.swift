@@ -70,8 +70,7 @@ struct SampleSheet {
 
         // Extras: the options, and the smallest sizes.
         // The game ends with two passes; mark the last stone played.
-        let stonesPlayed = john.mainLine.compactMap { $0.move(on: john.boardSize)?.point }
-        let lastMove = try #require(stonesPlayed.last)
+        let lastMove = try #require(john.mainLineMoves.compactMap(\.point).last)
         let endBoard = john.position(afterMainLineMoves: endMoves)
         var optionImages: [(String, CGImage)] = []
         for style in BoardStyle.builtIn {

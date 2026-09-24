@@ -158,7 +158,7 @@ public struct GameInfo: Sendable, Hashable {
         }
         datePlayed = date.flatMap(PartialDate.init(sgfDate:))
         yearPlayed = datePlayed?.year
-        moveCount = mainLine.count { $0.move(on: game.boardSize)?.isPass == false }
+        moveCount = game.mainLineMoves.count { !$0.isPass }
         self.numberOfGames = numberOfGames
         self.isCollection = isCollection
 

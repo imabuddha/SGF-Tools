@@ -21,8 +21,7 @@ struct OpeningPositionTests {
         #expect(position.isOpening)
         #expect(position.board == game.position(afterMainLineMoves: count))
         #expect(position.board.stones(of: .black).count + position.board.stones(of: .white).count == count)
-        let moves = game.mainLine.compactMap { $0.move(on: game.boardSize) }
-        #expect(position.lastMove == moves[count - 1].point)
+        #expect(position.lastMove == game.mainLineMoves[count - 1].point)
     }
 
     @Test func passesCount() throws {
