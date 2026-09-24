@@ -34,6 +34,9 @@ packages:
     path: SGFKit
 
 targets:
+  # The app icon, App/AppIcon.icon, is an Icon Composer document: Xcode compiles it into
+  # Assets.car, with its layers for the system to light, and AppIcon.icns. Its artwork is drawn by
+  # Tests/AppIconArtwork.swift.
   SGFTools:
     type: application
     platform: macOS
@@ -54,6 +57,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.imabuddha.SGFTools
         INFOPLIST_FILE: App/Info.plist
         CODE_SIGN_ENTITLEMENTS: App/SGFTools.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
 
   SGFToolsThumbnail:
     type: app-extension

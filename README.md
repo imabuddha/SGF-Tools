@@ -46,6 +46,13 @@ The app's tests are logic tests with no host app, so running them never opens SG
 include renderings of the preview in light and dark mode; to save them as PNGs, set
 `TEST_RUNNER_SGF_PREVIEW_SAMPLES` to a folder when running `xcodebuild test`.
 
+The app icon, `App/AppIcon.icon`, is an Icon Composer document, so macOS lights it and shows it
+in the dark, tinted, and clear icon styles. Its two layers, the board and the stones, are drawn by
+SGFRendering: a corner of the position that the thumbnail of John Mifsud's 2009 game against
+GNU Go shows. After a change to the renderer, draw them again with
+`TEST_RUNNER_SGF_APP_ICON_ASSETS="$PWD/App/AppIcon.icon/Assets"` set when running
+`xcodebuild test` (see `Tests/AppIconArtwork.swift`).
+
 The app is signed to run locally (ad hoc), which needs no Apple account, and macOS loads its
 Quick Look extensions that way. To sign with your own team instead, see
 `Config/Signing.xcconfig`.
