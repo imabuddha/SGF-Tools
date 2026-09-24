@@ -119,8 +119,9 @@ later, for example to find games that share an opening.
   clone all start with a literal `&#65279;`, an HTML-escaped byte-order mark left by a web
   download, and none of them got indexed. Readers should skip text before `(;`.
 - **Encodings.** Only CA[UTF-8] was recognized; everything else was read as Latin-1. A file that
-  says UTF-8 but is really Latin-1 (four of the "why bad" files) comes out garbled. A BOM wasn't
-  handled.
+  says UTF-8 but isn't comes out garbled. Four of the "why bad" files do this: their only
+  non-ASCII bytes are `A1 AF`, the right single quote `’` in the Chinese and Korean charsets (GBK,
+  CP949), not Latin-1. A BOM wasn't handled.
 - **Escapes.** `\]` and soft line breaks were never unescaped, so the backslash stays in the text.
 - **Results.** Anything that doesn't start with "W+" counts as a Black win, so a draw (RE[0]), a
   void game, or an unknown result (RE[?]) all make Black the winner.
