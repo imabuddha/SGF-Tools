@@ -25,7 +25,8 @@ struct Pixels {
 
     let width: Int
     let height: Int
-    private let bytes: [UInt8]
+    /// Every pixel's red, green, blue, and alpha (premultiplied), row by row from the top.
+    let bytes: [UInt8]
 
     init(_ image: CGImage) {
         width = image.width
@@ -123,6 +124,14 @@ struct DetectedGrid {
 extension CGImage {
     /// The image's pixels.
     var pixels: Pixels { Pixels(self) }
+}
+
+/// A clear sRGB bitmap context of a size in pixels, like those of the renderer's images.
+func bitmapContext(width: Int, height: Int) throws -> CGContext {
+    try #require(CGContext(
+        data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+        space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+    ))
 }
 
 /// A point from its SGF letters.

@@ -81,10 +81,7 @@ struct PixelTests {
 
     @Test func linesLandOnWholePixelsInAnOddRect() throws {
         // A rect that starts and ends between pixels, in a context scaled by 2.
-        let context = try #require(CGContext(
-            data: nil, width: 600, height: 500, bitsPerComponent: 8, bytesPerRow: 0,
-            space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        ))
+        let context = try bitmapContext(width: 600, height: 500)
         context.scaleBy(x: 2, y: 2)
         let drawn = BoardRenderer(style: .flat).draw(Board(size: .standard), in: context,
                                                      rect: CGRect(x: 10.3, y: 7.6, width: 240.45, height: 230.2))
@@ -196,10 +193,7 @@ struct PixelTests {
 
     @Test("The board is upright in a flipped context", arguments: [false, true])
     func uprightWhenFlipped(flipped: Bool) throws {
-        let context = try #require(CGContext(
-            data: nil, width: 200, height: 200, bitsPerComponent: 8, bytesPerRow: 0,
-            space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        ))
+        let context = try bitmapContext(width: 200, height: 200)
         if flipped {
             context.translateBy(x: 0, y: 200)
             context.scaleBy(x: 1, y: -1)
@@ -262,7 +256,7 @@ struct PixelTests {
         let small = try #require(BoardRenderer(style: style, showsCoordinates: true)
             .makeImage(of: Board(size: .standard), size: square(64)))
         let smallPlain = try #require(BoardRenderer(style: style).makeImage(of: Board(size: .standard), size: square(64)))
-        #expect(Data(small.pixels.bytesForComparison) == Data(smallPlain.pixels.bytesForComparison))
+        #expect(small.pixels.bytes == smallPlain.pixels.bytes)
     }
 
     @Test("Edge stones reach the edge of the board", arguments: BoardStyle.builtIn)
@@ -324,21 +318,6 @@ struct PixelTests {
         // every time when tests run in parallel (differences of up to 16 levels, near the stone).
         let with = try #require(BoardRenderer(style: .flat, showsCoordinates: true).makeCollectionImage(of: position, size: size))
         let without = try #require(BoardRenderer(style: .flat).makeCollectionImage(of: position, size: size))
-        #expect(Data(with.pixels.bytesForComparison) == Data(without.pixels.bytesForComparison))
-    }
-}
-
-extension Pixels {
-    /// All pixels as bytes, for comparing two images.
-    var bytesForComparison: [UInt8] {
-        var bytes: [UInt8] = []
-        bytes.reserveCapacity(width * height * 4)
-        for y in 0 ..< height {
-            for x in 0 ..< width {
-                let color = self[x, y]
-                bytes += [UInt8(color.red), UInt8(color.green), UInt8(color.blue), UInt8(color.alpha)]
-            }
-        }
-        return bytes
+        #expect(with.pixels.bytes == without.pixels.bytes)
     }
 }

@@ -74,10 +74,7 @@ struct SizeTests {
     }
 
     @Test func drawingIntoAnEmptyRectDrawsNothing() throws {
-        let context = try #require(CGContext(
-            data: nil, width: 10, height: 10, bitsPerComponent: 8, bytesPerRow: 0,
-            space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        ))
+        let context = try bitmapContext(width: 10, height: 10)
         let renderer = BoardRenderer()
         #expect(renderer.draw(Board(size: .standard), in: context, rect: .zero).isNull)
         #expect(renderer.draw(Board(size: .standard), in: context, rect: .null).isNull)
@@ -85,10 +82,7 @@ struct SizeTests {
     }
 
     @Test func collectionFrontBoardSitsAtTheTopLeft() throws {
-        let context = try #require(CGContext(
-            data: nil, width: 256, height: 256, bitsPerComponent: 8, bytesPerRow: 0,
-            space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        ))
+        let context = try bitmapContext(width: 256, height: 256)
         let rect = CGRect(x: 0, y: 0, width: 256, height: 256)
         let front = BoardRenderer().drawCollection(Board(size: .standard), in: context, rect: rect)
         // In the default user space, y points up: the front board touches the top and left

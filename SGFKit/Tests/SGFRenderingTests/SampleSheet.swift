@@ -124,10 +124,7 @@ struct SampleSheet {
         let smallRowHeight = titleHeight + 32 * magnify + captionHeight + gap
         let height = edge * 2 + titleHeight + rowHeight * CGFloat(subjects.count + 1) + smallRowHeight + gap * 2
 
-        guard let context = CGContext(
-            data: nil, width: Int(width), height: Int(height), bitsPerComponent: 8, bytesPerRow: 0,
-            space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        ) else { return nil }
+        guard let context = try? bitmapContext(width: Int(width), height: Int(height)) else { return nil }
         // Work top-down: flip, and flip each image back when drawing it.
         context.translateBy(x: 0, y: height)
         context.scaleBy(x: 1, y: -1)
