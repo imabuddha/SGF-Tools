@@ -20,7 +20,9 @@ There is no release yet, but it can be built and tried. So far:
     19x19, 30 on 13x13, 20 on smaller boards), with a stack of boards behind it for a file
     that holds several games
   - **previews**: press the Space bar on a game in Finder to see the board, with coordinates,
-    beside the players, the result, the event, the date, and the rest of the game information
+    beside the players, the result, the event, the date, and the rest of the game information;
+    of a file over 2 MB, only the first game is read, so the preview says that the file holds
+    several games rather than how many
   - **search**: Spotlight indexes the players, event, date, result, comments, and more of each
     game, so Finder, Spotlight, and `mdfind` find games (see [Searching](#searching)).
 

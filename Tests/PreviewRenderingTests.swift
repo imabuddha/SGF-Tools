@@ -165,4 +165,19 @@ struct PreviewRenderingTests {
     @Test func aFileWithNoGameHasNoPreview() {
         #expect(GamePreview(collection: collection("No game here.")) == nil)
     }
+
+    /// Of a file over the limit, only the first game is read, so the preview can't count them.
+    @Test func aLargeFileIsReadOnlyToItsFirstGame() throws {
+        let sgf = "(;GM[1]SZ[9]PB[First];B[ee])\n(;GM[1]SZ[9]PB[Second])\n"
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).sgf")
+        try Data(sgf.utf8).write(to: url)
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let whole = try #require(try GamePreview(contentsOf: url))
+        #expect(whole.summary.fields.last == .init(label: "Games", value: "2"))
+        let large = try #require(try GamePreview(contentsOf: url, wholeFileLimit: sgf.utf8.count - 1))
+        #expect(large.summary.fields.last == .init(label: "Games", value: "Several"))
+        #expect(large.summary.black?.name == "First")
+        #expect(large.position.movesShown == 1)
+    }
 }

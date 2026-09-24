@@ -21,9 +21,9 @@ import Foundation
 public enum SGFParser {
     /// Options for parsing.
     public struct Options: Sendable, Hashable {
-        /// Stop after the first game tree, leaving the rest of the data unread. For thumbnails
-        /// of large collection files. ``SGFCollection/moreGamesFollow`` then tells whether the
-        /// file holds more games.
+        /// Stop after the first game tree, leaving the rest of the data unread. For thumbnails,
+        /// and for previews of large files. ``SGFCollection/moreGamesFollow`` then tells whether
+        /// the file holds more games.
         public var stopAfterFirstGame: Bool
 
         /// Creates parsing options.
