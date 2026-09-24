@@ -3,7 +3,7 @@ import SwiftUI
 
 /// The app's window: what SGF Tools does, where to see it, and the version.
 struct ContentView: View {
-    /// The version shown, such as "2.0.0 (1)".
+    /// The version shown, such as "2.0.2 (3)".
     var version = Self.bundleVersion
 
     var body: some View {
@@ -22,8 +22,9 @@ struct ContentView: View {
                 }
             }
 
-            Text("SGF Tools shows Go game records (SGF files) in Finder and Quick Look.")
+            Text("SGF Tools shows Go game records (SGF files) in Finder and Quick Look, and lets Spotlight search them.")
                 .font(.title3)
+                .fixedSize(horizontal: false, vertical: true)
 
             VStack(alignment: .leading, spacing: 12) {
                 Feature(
@@ -39,11 +40,20 @@ struct ContentView: View {
                     text: "Select a game in Finder and press the Space bar to see its board beside the "
                         + "players, the result, and the rest of the game information."
                 )
+                Feature(
+                    symbol: "magnifyingglass",
+                    title: "Search",
+                    text: "Spotlight indexes each game’s players, event, date, result, and comments. In a "
+                        + "Finder search, choose Other… from the attribute menu for fields such as Black "
+                        + "Player, Winner, and Year Played."
+                )
             }
 
             Text("There is nothing to set up: once SGF Tools is in your Applications folder, macOS uses it "
                 + "for SGF files. If thumbnails or previews don’t appear, check that SGF Tools is turned "
-                + "on in System Settings > General > Login Items & Extensions, under Quick Look.")
+                + "on in System Settings > General > Login Items & Extensions, under Quick Look. Games "
+                + "Spotlight indexed before SGF Tools was installed become searchable once they are indexed "
+                + "again; the README on GitHub explains how.")
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -51,7 +61,7 @@ struct ContentView: View {
         .frame(width: 520)
     }
 
-    /// The app's version and build, such as "2.0.0 (1)".
+    /// The app's version and build, such as "2.0.2 (3)".
     static var bundleVersion: String {
         let info = Bundle.main.infoDictionary ?? [:]
         let version = info["CFBundleShortVersionString"] as? String ?? "?"

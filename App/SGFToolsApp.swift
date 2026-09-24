@@ -2,7 +2,8 @@ import AppKit
 import SwiftUI
 
 /// SGF Tools: a small window that explains what the app does. The app is mainly the home of its
-/// Quick Look extensions, which draw thumbnails and previews of SGF files in Finder.
+/// Quick Look extensions, which draw thumbnails and previews of SGF files in Finder, and of its
+/// Spotlight importer, which indexes the games.
 @main
 struct SGFToolsApp: App {
     @NSApplicationDelegateAdaptor private var appDelegate: AppDelegate
