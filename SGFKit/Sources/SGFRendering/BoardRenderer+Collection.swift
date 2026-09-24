@@ -3,20 +3,15 @@ import SGFKit
 
 extension BoardRenderer {
     /// The number of boards stacked behind the front board of a collection, as in 1.x.
-    public static let collectionDepth = 3
+    static let collectionDepth = 3
 
-    /// Draws the backdrop that marks a file holding several games: a few boards stacked behind
-    /// and below to the right, fading as they go back, as SGF Tools 1.x did.
-    ///
-    /// The stack and the front board together are fitted and centered in `rect`. Draw the front
-    /// board into the returned rect, or use ``drawCollection(_:lastMove:in:rect:)``, which does
-    /// both. A collection has no coordinates, whatever ``showsCoordinates`` says: the stacked
-    /// boards would cover them.
+    /// Draws the backdrop of ``drawCollection(_:lastMove:in:rect:)``, the boards stacked behind
+    /// the front board. The stack and the front board together are fitted and centered in `rect`.
     ///
     /// - Returns: The rect for the front board in user space, or `CGRect.null` if `rect` is
     ///   empty.
     @discardableResult
-    public func drawCollectionBackdrop(for size: BoardSize, in context: CGContext, rect: CGRect) -> CGRect {
+    func drawCollectionBackdrop(for size: BoardSize, in context: CGContext, rect: CGRect) -> CGRect {
         Self.inPixelSpace(of: context, rect: rect) { pixelRect in
             let step = max(1, (min(pixelRect.width, pixelRect.height) * 0.028).rounded())
             let span = step * CGFloat(Self.collectionDepth)
@@ -45,7 +40,12 @@ extension BoardRenderer {
         }
     }
 
-    /// Draws a position on top of the collection backdrop.
+    /// Draws a position on the backdrop that marks a file holding several games: a few boards
+    /// stacked behind and below to the right, fading as they go back, as SGF Tools 1.x did.
+    ///
+    /// The stack and the front board together are fitted and centered in `rect`. A collection
+    /// has no coordinates, whatever ``showsCoordinates`` says: the stacked boards would cover
+    /// them.
     ///
     /// - Returns: The front board's rect in user space, or `CGRect.null` if `rect` is empty.
     @discardableResult

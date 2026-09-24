@@ -17,23 +17,20 @@ import SGFKit
 /// widths, stones, and labels all scale with the cell, so a board looks the same at any size,
 /// only sharper.
 ///
-/// Small boards are simplified. Below ``compactCellSize`` device pixels per cell, the inner
-/// lines are drawn faint, stones fill their cells without shading, and star points and
-/// coordinates are left out. Below 3 pixels per cell, the inner lines go too, and stones become
-/// squares that fill their cells, so even a 16-pixel 19x19 thumbnail reads as a board of stones.
+/// Small boards are simplified. Below 6 device pixels per cell, the inner lines are drawn faint,
+/// stones fill their cells without shading, and star points and coordinates are left out. Below
+/// 3 pixels per cell, the inner lines go too, and stones become squares that fill their cells,
+/// so even a 16-pixel 19x19 thumbnail reads as a board of stones.
 ///
 /// Drawing uses only Core Graphics and Core Text, so it works in app extensions and screensavers
 /// alike. A renderer is a value and can be used from any thread.
 public struct BoardRenderer: Sendable, Hashable {
-    /// Device pixels per cell below which the board is drawn simplified: faint inner lines,
-    /// stones that fill their cells, and no shading, star points, or coordinates.
-    public static let compactCellSize: CGFloat = BoardLayout.compactCellSize
-
     /// The look of the board and stones.
     public var style: BoardStyle
 
-    /// Whether to label the columns and rows (see ``BoardCoordinates``) on the sides in
-    /// ``coordinateSides``. The labels go outside the board, in a band of their own, so they
+    /// Whether to label the columns and rows on the sides in ``coordinateSides``, as GoBooks and
+    /// most Go books do: letters for the columns, skipping I, and numbers for the rows, counting
+    /// from 1 at the bottom. The labels go outside the board, in a band of their own, so they
     /// don't push the stones in. They are left out, and no room is made for them, when the board
     /// is too small for readable text.
     public var showsCoordinates: Bool

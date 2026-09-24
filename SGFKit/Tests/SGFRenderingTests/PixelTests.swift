@@ -1,7 +1,7 @@
 import CoreGraphics
 import Foundation
 @testable import SGFKit
-import SGFRendering
+@testable import SGFRendering
 import Testing
 
 /// Renders boards and checks their pixels. Grid lines are found in images of empty flat boards

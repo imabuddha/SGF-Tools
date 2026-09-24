@@ -28,7 +28,7 @@ extension BoardSize {
     /// top and bottom only. A 19x9 board has seven too: corners on the fourth columns and third
     /// rows, the center, and side points at the top and bottom only. A board with a dimension
     /// of 1 or 2 has none.
-    public var starPoints: [SGFPoint] {
+    var starPoints: [SGFPoint] {
         guard columns >= 3, rows >= 3 else { return [] }
         let across = StarLines(lineCount: columns)
         let down = StarLines(lineCount: rows)

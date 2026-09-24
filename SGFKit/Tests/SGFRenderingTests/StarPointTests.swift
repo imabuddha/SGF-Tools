@@ -1,5 +1,5 @@
 @testable import SGFKit
-import SGFRendering
+@testable import SGFRendering
 import Testing
 
 @Suite("Star points")

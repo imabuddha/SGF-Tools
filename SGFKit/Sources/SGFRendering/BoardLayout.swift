@@ -8,8 +8,8 @@ import SGFKit
 /// line is rounded to the nearest pixel on its own, so neighboring cells can differ by one pixel
 /// while the cell size stays the same on average in both directions.
 struct BoardLayout {
-    /// Below this many device pixels per cell, drawing is simplified (see
-    /// ``BoardRenderer/compactCellSize``).
+    /// Below this many device pixels per cell, drawing is simplified. (``BoardRenderer``'s
+    /// documentation gives this number, and ``tinyCellSize``'s.)
     static let compactCellSize: CGFloat = 6
 
     /// Below this, stones are drawn as squares that fill their cells and inner lines are left
