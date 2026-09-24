@@ -42,12 +42,7 @@ targets:
     platform: macOS
     sources:
       - App
-      - Shared/Look.swift
     dependencies:
-      - package: SGFKit
-        product: SGFKit
-      - package: SGFKit
-        product: SGFRendering
       - target: SGFToolsThumbnail
       - target: SGFToolsPreview
     settings:

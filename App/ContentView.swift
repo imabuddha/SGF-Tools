@@ -1,5 +1,4 @@
-import SGFKit
-import SGFRendering
+import AppKit
 import SwiftUI
 
 /// The app's window: what SGF Tools does, where to see it, and the version.
@@ -10,8 +9,10 @@ struct ContentView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .center, spacing: 16) {
-                SampleBoard()
-                    .frame(width: 88, height: 88)
+                Image(nsImage: NSImage(named: NSImage.applicationIconName) ?? NSImage())
+                    .resizable()
+                    .frame(width: 96, height: 96)
+                    .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 4) {
                     Text("SGF Tools")
                         .font(.largeTitle.weight(.semibold))
@@ -75,25 +76,5 @@ private struct Feature: View {
                 Text(text).fixedSize(horizontal: false, vertical: true)
             }
         }
-    }
-}
-
-/// A small made-up position, drawn the way thumbnails are.
-private struct SampleBoard: View {
-    @Environment(\.displayScale) private var displayScale
-
-    var body: some View {
-        GeometryReader { geometry in
-            if let image = Self.image(size: geometry.size, scale: displayScale) {
-                Image(decorative: image, scale: displayScale)
-            }
-        }
-    }
-
-    private static func image(size: CGSize, scale: CGFloat) -> CGImage? {
-        let sgf = "(;SZ[9];B[ee];W[gc];B[gd];W[fc];B[dc];W[hd];B[cf];W[eg])"
-        guard let game = SGFParser.parse(Data(sgf.utf8)).games.first else { return nil }
-        let renderer = BoardRenderer(style: Look.thumbnailStyle, margin: Look.thumbnailMargin)
-        return renderer.makeImage(of: game.position(afterMainLineMoves: .max), size: size, scale: scale)
     }
 }
