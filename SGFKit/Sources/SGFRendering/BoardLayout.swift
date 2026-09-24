@@ -3,7 +3,7 @@ import SGFKit
 
 /// Where everything goes, in pixel space: device pixels, with y pointing up on the output.
 ///
-/// The board is fitted into the rect with square cells and centered. The wood and every grid
+/// The board and its coordinates are fitted into the rect with square cells and centered. The wood and every grid
 /// line start and end on whole pixels, so lines are crisp at any scale. Each line is rounded to
 /// the nearest pixel on its own, so neighboring cells can differ by one pixel while the cell
 /// size stays the same on average in both directions.
@@ -16,7 +16,7 @@ struct BoardLayout {
     /// out.
     static let tinyCellSize: CGFloat = 3
 
-    /// The width of the coordinate band on each side, in cells.
+    /// The width of the coordinate band outside the board, on each side that has one, in cells.
     static let labelBand: CGFloat = 0.9
 
     /// The coordinate font size, as a fraction of the cell.
@@ -47,8 +47,15 @@ struct BoardLayout {
     /// would be, so the edge stones stay centered on the line's inner part.
     let frameWidth: CGFloat
 
-    /// Whether there is room for coordinates, if they were asked for.
-    let showsLabels: Bool
+    /// The sides that have coordinates: those asked for, or none if there is no room for them.
+    let labelSides: CoordinateSides
+
+    /// The wood beyond the outer lines, in cells: the half cell that edge stones need, plus the
+    /// margin.
+    let woodBorder: CGFloat
+
+    /// Whether there are coordinates.
+    var showsLabels: Bool { !labelSides.isEmpty }
 
     /// Whether drawing is simplified for a small board.
     var isCompact: Bool { cell < Self.compactCellSize }
@@ -58,40 +65,48 @@ struct BoardLayout {
 
     /// Lays out a board in a rect of pixel space, or returns `nil` if the rect is empty.
     ///
+    /// The coordinates go outside the board, in bands of their own, and the board and its
+    /// bands together are centered in the rect.
+    ///
     /// - Parameters:
     ///   - margin: Extra wood beyond the usual half cell around the grid, in cells.
-    ///   - wantsLabels: Whether to make room for coordinates on all four sides.
-    init?(size: BoardSize, in rect: CGRect, margin: CGFloat, wantsLabels: Bool) {
+    ///   - labelSides: The sides to make room for coordinates on.
+    init?(size: BoardSize, in rect: CGRect, margin: CGFloat, labelSides: CoordinateSides) {
         guard rect.width.isFinite, rect.height.isFinite, rect.width >= 1, rect.height >= 1 else { return nil }
         let margin = margin.isFinite ? max(0, margin) : 0
+        let woodBorder = 0.5 + margin
         let spanX = CGFloat(size.columns - 1)
         let spanY = CGFloat(size.rows - 1)
-        func cellSize(border: CGFloat) -> CGFloat {
-            min(rect.width / (spanX + 2 * border), rect.height / (spanY + 2 * border))
+        func band(_ side: CoordinateSides, of sides: CoordinateSides) -> CGFloat {
+            sides.contains(side) ? Self.labelBand : 0
+        }
+        func cellSize(sides: CoordinateSides) -> CGFloat {
+            let width = spanX + 2 * woodBorder + band(.left, of: sides) + band(.right, of: sides)
+            let height = spanY + 2 * woodBorder + band(.bottom, of: sides) + band(.top, of: sides)
+            return min(rect.width / width, rect.height / height)
         }
 
-        var showsLabels = wantsLabels
-        var border = 0.5 + margin + (showsLabels ? Self.labelBand : 0)
-        var cell = cellSize(border: border)
-        if showsLabels, cell * Self.labelFontRatio < Self.minimumLabelFontSize {
-            showsLabels = false
-            border = 0.5 + margin
-            cell = cellSize(border: border)
+        var labelSides = labelSides
+        var cell = cellSize(sides: labelSides)
+        if !labelSides.isEmpty, cell * Self.labelFontRatio < Self.minimumLabelFontSize {
+            labelSides = []
+            cell = cellSize(sides: labelSides)
         }
         guard cell.isFinite, cell > 0 else { return nil }
 
-        let width = (spanX + 2 * border) * cell
-        let height = (spanY + 2 * border) * cell
-        let minX = (rect.midX - width / 2).rounded()
-        let minY = (rect.midY - height / 2).rounded()
-        let maxX = max(minX + 1, (rect.midX + width / 2).rounded())
-        let maxY = max(minY + 1, (rect.midY + height / 2).rounded())
+        // The board's center, off the rect's center by half the difference of opposite bands.
+        let centerX = rect.midX + (band(.left, of: labelSides) - band(.right, of: labelSides)) * cell / 2
+        let centerY = rect.midY + (band(.bottom, of: labelSides) - band(.top, of: labelSides)) * cell / 2
+        let width = (spanX + 2 * woodBorder) * cell
+        let height = (spanY + 2 * woodBorder) * cell
+        let minX = (centerX - width / 2).rounded()
+        let minY = (centerY - height / 2).rounded()
+        let maxX = max(minX + 1, (centerX + width / 2).rounded())
+        let maxY = max(minY + 1, (centerY + height / 2).rounded())
         let boardRect = CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
 
         let lineWidth = max(1, (cell / 30).rounded())
         let frameWidth = cell < 4 ? lineWidth : max(lineWidth + 1, (lineWidth * 1.7).rounded())
-        let centerX = rect.midX
-        let centerY = rect.midY
 
         self.columns = size.columns
         self.rows = size.rows
@@ -99,7 +114,8 @@ struct BoardLayout {
         self.boardRect = boardRect
         self.lineWidth = lineWidth
         self.frameWidth = frameWidth
-        self.showsLabels = showsLabels
+        self.labelSides = labelSides
+        self.woodBorder = woodBorder
         lineLeft = (0 ..< size.columns).map { index in
             (centerX + (CGFloat(index) - spanX / 2) * cell - lineWidth / 2).rounded()
         }

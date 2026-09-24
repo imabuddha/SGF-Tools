@@ -10,7 +10,8 @@ extension BoardRenderer {
     ///
     /// The stack and the front board together are fitted and centered in `rect`. Draw the front
     /// board into the returned rect, or use ``drawCollection(_:lastMove:in:rect:)``, which does
-    /// both.
+    /// both. A collection has no coordinates, whatever ``showsCoordinates`` says: the stacked
+    /// boards would cover them.
     ///
     /// - Returns: The rect for the front board in user space, or `CGRect.null` if `rect` is
     ///   empty.
@@ -22,7 +23,7 @@ extension BoardRenderer {
             guard pixelRect.width > span, pixelRect.height > span else { return nil }
             let available = CGRect(x: pixelRect.minX, y: pixelRect.minY + span,
                                    width: pixelRect.width - span, height: pixelRect.height - span)
-            guard let layout = BoardLayout(size: size, in: available, margin: margin, wantsLabels: showsCoordinates)
+            guard let layout = BoardLayout(size: size, in: available, margin: margin, labelSides: [])
             else { return nil }
 
             let board = layout.boardRect.size
@@ -53,7 +54,9 @@ extension BoardRenderer {
     ) -> CGRect {
         let front = drawCollectionBackdrop(for: board.size, in: context, rect: rect)
         guard !front.isNull else { return .null }
-        return draw(board, lastMove: lastMove, in: context, rect: front)
+        var renderer = self
+        renderer.showsCoordinates = false
+        return renderer.draw(board, lastMove: lastMove, in: context, rect: front)
     }
 
     /// Makes an image of a position on top of the collection backdrop; see

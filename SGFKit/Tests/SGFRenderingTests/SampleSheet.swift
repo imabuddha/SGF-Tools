@@ -75,7 +75,7 @@ struct SampleSheet {
         let endBoard = john.position(afterMainLineMoves: endMoves)
         var optionImages: [(String, CGImage)] = []
         for style in BoardStyle.builtIn {
-            let renderer = BoardRenderer(style: style, showsCoordinates: true, margin: 0.5)
+            let renderer = BoardRenderer(style: style, showsCoordinates: true)
             for side in [256.0, 512.0] {
                 let image = try #require(renderer.makeImage(
                     of: endBoard, lastMove: lastMove, size: CGSize(width: side, height: side)))
@@ -156,7 +156,7 @@ struct SampleSheet {
             y += rowHeight
         }
 
-        text("Extras: coordinates, a 0.5-cell margin, and the last-move marker (end of johnVsGnu.sgf)",
+        text("Extras: coordinates on the left and bottom, and the last-move marker (end of johnVsGnu.sgf)",
              at: CGPoint(x: edge, y: y + 20), size: 15, bold: true, in: context)
         var x = edge
         for (label, image) in options {

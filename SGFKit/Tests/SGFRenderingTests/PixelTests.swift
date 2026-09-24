@@ -252,14 +252,77 @@ struct PixelTests {
         let plain = try gridSpan(BoardRenderer(style: style))
         let margin = try gridSpan(BoardRenderer(style: style, margin: 0.5))
         let labels = try gridSpan(BoardRenderer(style: style, showsCoordinates: true))
-        // 18 cells plus a half cell each side, then plus 0.5 or 0.9 cell each side.
+        let allSides = try gridSpan(BoardRenderer(style: style, showsCoordinates: true, coordinateSides: .all))
+        // 18 cells plus a half cell each side; then plus 0.5 cell each side, or a 0.9-cell band
+        // on one side (left and bottom) or both.
         #expect(abs(plain / margin - 20 / 19) < 0.01)
-        #expect(abs(plain / labels - 20.8 / 19) < 0.01)
+        #expect(abs(plain / labels - 19.9 / 19) < 0.01)
+        #expect(abs(plain / allSides - 20.8 / 19) < 0.01)
         // Too small for readable labels: no room is made for them.
         let small = try #require(BoardRenderer(style: style, showsCoordinates: true)
             .makeImage(of: Board(size: .standard), size: square(64)))
         let smallPlain = try #require(BoardRenderer(style: style).makeImage(of: Board(size: .standard), size: square(64)))
         #expect(Data(small.pixels.bytesForComparison) == Data(smallPlain.pixels.bytesForComparison))
+    }
+
+    @Test("Edge stones reach the edge of the board", arguments: BoardStyle.builtIn)
+    func edgeStonesReachTheEdge(style: BoardStyle) throws {
+        // A black stone on each side's edge line: A10, K19, T10, and K1.
+        let position = board(black: ["aj", "ja", "sj", "js"])
+        let image = try #require(BoardRenderer(style: style).makeImage(of: position, size: square(400)))
+        let pixels = image.pixels
+        let cell = 400.0 / 19
+        // Within a tenth of a cell of each edge, the middle of each side is stone.
+        for (x, y) in [(0.1 * cell, 200.0), (200, 0.1 * cell), (400 - 0.1 * cell, 200), (200, 400 - 0.1 * cell)] {
+            #expect(pixels[(x, y)].brightness < 0.3, "at \(x), \(y)")
+        }
+    }
+
+    @Test("Coordinates go outside the board, on the left and bottom by default")
+    func coordinatesOutsideTheBoard() throws {
+        let side = 400.0
+        let renderer = BoardRenderer(style: .flat, showsCoordinates: true)
+        let pixels = try #require(renderer.makeImage(of: Board(size: .standard), size: square(side))).pixels
+        let cell = side / 19.9
+        let band = 0.9 * cell
+        func opaqueCount(x: ClosedRange<Double>, y: ClosedRange<Double>) -> Int {
+            var count = 0
+            for py in Int(y.lowerBound) ... Int(y.upperBound) {
+                for px in Int(x.lowerBound) ... Int(x.upperBound) where pixels[px, py].alpha > 0 { count += 1 }
+            }
+            return count
+        }
+        // The board fills the top right; the bands on the left and bottom hold only the labels.
+        #expect(pixels[Int(side) - 2, 1].alpha == 255)
+        #expect(pixels[Int(band) + 2, 1].alpha == 255)
+        #expect(pixels[1, 1].alpha == 0)
+        #expect(pixels[Int(side) - 2, Int(side) - 1].alpha == 0)
+        #expect(opaqueCount(x: 0 ... band - 2, y: 0 ... side - band - 1) > 0, "row numbers on the left")
+        #expect(opaqueCount(x: band + 1 ... side - 1, y: side - band + 2 ... side - 1) > 0, "column letters below")
+        // Nothing in the corner between the two bands.
+        #expect(opaqueCount(x: 0 ... band - 2, y: side - band + 2 ... side - 1) == 0)
+        // The labels are in the style's color unless another is given.
+        let white = CGColor(srgbRed: 1, green: 1, blue: 1, alpha: 1)
+        var light = renderer
+        light.coordinateColor = white
+        let lightPixels = try #require(light.makeImage(of: Board(size: .standard), size: square(side))).pixels
+        var darkest = 1.0, lightest = 0.0
+        for py in 0 ..< Int(side - band) {
+            for px in 0 ..< Int(band - 2) {
+                if pixels[px, py].alpha >= 200 { darkest = min(darkest, pixels[px, py].brightness) }
+                if lightPixels[px, py].alpha >= 200 { lightest = max(lightest, lightPixels[px, py].brightness) }
+            }
+        }
+        #expect(darkest < 0.2)
+        #expect(lightest > 0.9)
+    }
+
+    @Test func collectionsHaveNoCoordinates() throws {
+        let position = board(black: ["dd"])
+        let size = square(400)
+        let with = try #require(BoardRenderer(showsCoordinates: true).makeCollectionImage(of: position, size: size))
+        let without = try #require(BoardRenderer().makeCollectionImage(of: position, size: size))
+        #expect(Data(with.pixels.bytesForComparison) == Data(without.pixels.bytesForComparison))
     }
 }
 

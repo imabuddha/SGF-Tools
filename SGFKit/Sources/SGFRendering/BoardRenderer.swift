@@ -11,8 +11,9 @@ import SGFKit
 ///     let image = renderer.makeImage(of: game.position(afterMainLineMoves: 50),
 ///                                    size: CGSize(width: 256, height: 256), scale: 2)
 ///
-/// The board is fitted into the rect with square cells and centered; anything outside the board
-/// is left untouched, so an image of a rectangular board has transparent sides. Grid lines are
+/// The board, with its coordinates if it has them, is fitted into the rect with square cells and
+/// centered; anything else is left untouched, so an image of a rectangular board has transparent
+/// sides. Grid lines are
 /// placed on whole device pixels, so they are crisp at any scale. Line widths, stones, and
 /// labels all scale with the cell, so a board looks the same at any size, only sharper.
 ///
@@ -31,20 +32,35 @@ public struct BoardRenderer: Sendable, Hashable {
     /// The look of the board and stones.
     public var style: BoardStyle
 
-    /// Whether to label the columns and rows on all four sides, as GoBooks does (see
-    /// ``BoardCoordinates``). Labels are left out, and no room is made for them, when the board
+    /// Whether to label the columns and rows (see ``BoardCoordinates``) on the sides in
+    /// ``coordinateSides``. The labels go outside the board, in a band of their own, so they
+    /// don't push the stones in. They are left out, and no room is made for them, when the board
     /// is too small for readable text.
     public var showsCoordinates: Bool
 
+    /// The sides that carry coordinates when ``showsCoordinates`` is on: the left and bottom by
+    /// default. ``CoordinateSides/all`` gives the four sides of GoBooks.
+    public var coordinateSides: CoordinateSides
+
+    /// The color of the coordinates. They are drawn outside the board, on whatever is behind it,
+    /// so a caller drawing on a dark background should pass a light color. `nil` uses the style's
+    /// own color, a dark brown or black for light backgrounds.
+    public var coordinateColor: CGColor?
+
     /// Extra board around the grid, in cells, beyond the half cell that edge stones need.
-    /// With coordinates, it goes outside them. `0` gives the tightest board; `0.5` looks more
-    /// like a real board.
+    /// `0`, the default, lets the edge stones reach the edge of the board, as they do on a real
+    /// board. Coordinates go outside the margin.
     public var margin: CGFloat
 
     /// Creates a renderer. The options are off by default.
-    public init(style: BoardStyle = .shaded, showsCoordinates: Bool = false, margin: CGFloat = 0) {
+    public init(
+        style: BoardStyle = .shaded, showsCoordinates: Bool = false, coordinateSides: CoordinateSides = .leftAndBottom,
+        coordinateColor: CGColor? = nil, margin: CGFloat = 0
+    ) {
         self.style = style
         self.showsCoordinates = showsCoordinates
+        self.coordinateSides = coordinateSides
+        self.coordinateColor = coordinateColor
         self.margin = margin
     }
 
@@ -59,14 +75,14 @@ public struct BoardRenderer: Sendable, Hashable {
     ///   - lastMove: A point to mark as the last move, with a ring on its stone. Nothing is
     ///     marked if the point is empty or off the board, or on a board too small to show it.
     ///   - context: Where to draw.
-    ///   - rect: The area to fit the board into, in the context's user space.
-    /// - Returns: The board's rect in user space: the part of `rect` that was drawn. It is
+    ///   - rect: The area to fit the board and its coordinates into, in the context's user space.
+    /// - Returns: The board's rect in user space, without the coordinates outside it. It is
     ///   `CGRect.null` if nothing was drawn because `rect` is empty.
     @discardableResult
     public func draw(_ board: Board, lastMove: SGFPoint? = nil, in context: CGContext, rect: CGRect) -> CGRect {
         Self.inPixelSpace(of: context, rect: rect) { pixelRect in
             guard let layout = BoardLayout(
-                size: board.size, in: pixelRect, margin: margin, wantsLabels: showsCoordinates
+                size: board.size, in: pixelRect, margin: margin, labelSides: showsCoordinates ? coordinateSides : []
             ) else { return nil }
             draw(board, lastMove: lastMove, layout: layout, in: context)
             return layout.boardRect
@@ -149,6 +165,7 @@ public struct BoardRenderer: Sendable, Hashable {
 
     private func draw(_ board: Board, lastMove: SGFPoint?, layout: BoardLayout, in context: CGContext) {
         let palette = Palette.of(style.look)
+        context.saveGState()
         // Nothing, not even an edge stone's shadow, goes outside the board.
         context.clip(to: layout.boardRect)
         drawWood(layout: layout, palette: palette, in: context)
@@ -156,12 +173,13 @@ public struct BoardRenderer: Sendable, Hashable {
         if !layout.isCompact {
             drawStarPoints(of: board.size, layout: layout, palette: palette, in: context)
         }
-        if layout.showsLabels {
-            drawLabels(layout: layout, palette: palette, in: context)
-        }
         drawStones(of: board, layout: layout, palette: palette, in: context)
         if let lastMove {
             drawLastMoveMarker(at: lastMove, on: board, layout: layout, palette: palette, in: context)
+        }
+        context.restoreGState()
+        if layout.showsLabels {
+            drawLabels(layout: layout, color: coordinateColor ?? palette.label, in: context)
         }
     }
 
@@ -216,7 +234,8 @@ public struct BoardRenderer: Sendable, Hashable {
         context.fillPath()
     }
 
-    private func drawLabels(layout: BoardLayout, palette: Palette, in context: CGContext) {
+    /// Draws the coordinates in their bands outside the board.
+    private func drawLabels(layout: BoardLayout, color: CGColor, in context: CGContext) {
         let fontSize = layout.cell * BoardLayout.labelFontRatio
         let font = CTFontCreateUIFontForLanguage(.system, fontSize, nil)
             ?? CTFontCreateWithName("Helvetica" as CFString, fontSize, nil)
@@ -226,7 +245,7 @@ public struct BoardRenderer: Sendable, Hashable {
             NSAttributedString.Key(kCTForegroundColorFromContextAttributeName as String): true,
         ]
         context.saveGState()
-        context.setFillColor(palette.label)
+        context.setFillColor(color)
         context.textMatrix = .identity
 
         func draw(_ text: String, at centers: [CGPoint]) {
@@ -238,22 +257,24 @@ public struct BoardRenderer: Sendable, Hashable {
             }
         }
 
-        let distance = layout.cell * (0.5 + BoardLayout.labelBand / 2)
+        // From the outer lines, past the wood, to the middle of the band.
+        let distance = layout.cell * (layout.woodBorder + BoardLayout.labelBand / 2)
         let topLeft = layout.center(column: 1, row: 1)
         let bottomRight = layout.center(column: layout.columns, row: layout.rows)
+        let sides = layout.labelSides
         for column in 1 ... layout.columns {
             let x = layout.center(column: column, row: 1).x
-            draw(BoardCoordinates.columnLabel(column), at: [
-                CGPoint(x: x, y: topLeft.y + distance),
-                CGPoint(x: x, y: bottomRight.y - distance),
-            ])
+            var centers: [CGPoint] = []
+            if sides.contains(.top) { centers.append(CGPoint(x: x, y: topLeft.y + distance)) }
+            if sides.contains(.bottom) { centers.append(CGPoint(x: x, y: bottomRight.y - distance)) }
+            if !centers.isEmpty { draw(BoardCoordinates.columnLabel(column), at: centers) }
         }
         for row in 1 ... layout.rows {
             let y = layout.center(column: 1, row: row).y
-            draw(BoardCoordinates.rowLabel(row, rows: layout.rows), at: [
-                CGPoint(x: topLeft.x - distance, y: y),
-                CGPoint(x: bottomRight.x + distance, y: y),
-            ])
+            var centers: [CGPoint] = []
+            if sides.contains(.left) { centers.append(CGPoint(x: topLeft.x - distance, y: y)) }
+            if sides.contains(.right) { centers.append(CGPoint(x: bottomRight.x + distance, y: y)) }
+            if !centers.isEmpty { draw(BoardCoordinates.rowLabel(row, rows: layout.rows), at: centers) }
         }
         context.restoreGState()
     }

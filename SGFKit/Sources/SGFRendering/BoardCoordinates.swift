@@ -34,3 +34,23 @@ public enum BoardCoordinates {
         columnLabel(point.column) + rowLabel(point.row, rows: size.rows)
     }
 }
+
+/// Sides of a board, for choosing where coordinates go.
+public struct CoordinateSides: OptionSet, Sendable, Hashable {
+    public let rawValue: Int
+
+    public init(rawValue: Int) {
+        self.rawValue = rawValue
+    }
+
+    public static let left = CoordinateSides(rawValue: 1 << 0)
+    public static let right = CoordinateSides(rawValue: 1 << 1)
+    public static let top = CoordinateSides(rawValue: 1 << 2)
+    public static let bottom = CoordinateSides(rawValue: 1 << 3)
+
+    /// The left and bottom, as Go programs on the Mac usually show coordinates.
+    public static let leftAndBottom: CoordinateSides = [.left, .bottom]
+
+    /// All four sides, as GoBooks and many books show them.
+    public static let all: CoordinateSides = [.left, .right, .top, .bottom]
+}
