@@ -41,22 +41,6 @@ struct Thumbnail: Sendable {
         }
     }
 
-    /// Makes an image of the thumbnail, `size` times `scale` pixels, transparent where the board
-    /// doesn't fill it.
-    func makeImage(size: CGSize, scale: CGFloat) -> CGImage? {
-        let width = Int((size.width * scale).rounded())
-        let height = Int((size.height * scale).rounded())
-        guard width > 0, height > 0, let space = CGColorSpace(name: CGColorSpace.sRGB),
-              let context = CGContext(
-                  data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
-                  space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-              )
-        else { return nil }
-        context.scaleBy(x: scale, y: scale)
-        draw(in: context, rect: CGRect(origin: .zero, size: size))
-        return context.makeImage()
-    }
-
     /// The size to draw a thumbnail at: the largest square that fits the size Quick Look allows.
     static func contextSize(fitting maximumSize: CGSize) -> CGSize {
         let side = max(1, min(maximumSize.width, maximumSize.height).rounded(.down))
