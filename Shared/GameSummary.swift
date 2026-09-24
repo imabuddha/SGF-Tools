@@ -46,8 +46,8 @@ struct GameSummary: Sendable, Equatable {
     /// The summary of a file's game information.
     ///
     /// - Parameter moveCount: The number of moves of the first game's main line, passes
-    ///   included, so that it matches the move numbers. (``GameInfo/moveCount`` leaves passes
-    ///   out, as 1.x did.)
+    ///   included, so that it matches the move numbers. (``GameInfo/moveCountWithoutPasses``
+    ///   leaves passes out, as 1.x did.)
     init(info: GameInfo, moveCount: Int, locale: Locale = .current) {
         title = info.gameName
         black = Self.player(name: info.blackPlayer, rank: info.blackRank, team: info.blackTeam)

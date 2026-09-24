@@ -80,8 +80,10 @@ public struct GameInfo: Sendable, Hashable {
     public var datePlayed: PartialDate?
     /// The year of ``datePlayed``.
     public var yearPlayed: Int?
-    /// The number of moves on the main line of the (first) game, not counting passes.
-    public var moveCount: Int
+    /// The number of moves on the main line of the (first) game, without passes, as SGF Tools
+    /// 1.x counted them for Spotlight. ``SGFGame/mainLineMoveCount`` counts the passes too, as
+    /// SGF numbers moves, so a game that ends with two passes has two more moves there.
+    public var moveCountWithoutPasses: Int
     /// The number of games read. After parsing with
     /// ``SGFParser/Options/stopAfterFirstGame`` this is 1 even when more games follow; see
     /// ``isCollection``.
@@ -160,7 +162,7 @@ public struct GameInfo: Sendable, Hashable {
         yearPlayed = datePlayed?.year
         // Counted on the main line walked above: a second walk, for mainLineMoves, would make
         // the importer's game information about a tenth slower.
-        moveCount = mainLine.count { $0.move(on: game.boardSize)?.isPass == false }
+        moveCountWithoutPasses = mainLine.count { $0.move(on: game.boardSize)?.isPass == false }
         self.numberOfGames = numberOfGames
         self.isCollection = isCollection
 

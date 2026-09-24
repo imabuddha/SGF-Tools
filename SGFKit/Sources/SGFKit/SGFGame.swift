@@ -52,7 +52,8 @@ public struct SGFGame: Sendable {
         mainLineNodes.compactMap { $0.move(on: boardSize) }
     }
 
-    /// The number of moves on the main line, passes included.
+    /// The number of moves on the main line, passes included, as SGF numbers moves.
+    /// (``GameInfo/moveCountWithoutPasses`` leaves passes out, as SGF Tools 1.x did.)
     public var mainLineMoveCount: Int {
         mainLineNodes.count { $0.move(on: boardSize) != nil }
     }

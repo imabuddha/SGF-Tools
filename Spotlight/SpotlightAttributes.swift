@@ -102,7 +102,7 @@ struct SpotlightAttributes: Equatable {
         if first.gameType == 1 || collection.games[0].declaredBoardSize != nil {
             values[Name.size] = .integer(first.boardSize.columns)
         }
-        values[Name.moves] = .integer(first.moveCount)
+        values[Name.moves] = .integer(first.moveCountWithoutPasses)
         values[Name.numberOfGames] = .integer(games.count)
         values[Name.isCollection] = .boolean(collection.isCollection)
 

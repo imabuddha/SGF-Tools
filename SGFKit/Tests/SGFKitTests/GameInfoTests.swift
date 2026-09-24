@@ -43,7 +43,7 @@ struct GameInfoTests {
         #expect(info.loser == "Black Tester")
         #expect(info.datePlayed == PartialDate(year: 2024, month: 3, day: 17))
         #expect(info.yearPlayed == 2024)
-        #expect(info.moveCount == 24)
+        #expect(info.moveCountWithoutPasses == 24)
         #expect(info.numberOfGames == 1)
         #expect(info.isCollection == false)
         #expect(info.commentText == "Both sides take corners. Approach A variation.")
@@ -145,10 +145,10 @@ struct GameInfoTests {
         #expect(info.loser == "Kuro")
     }
 
-    @Test func moveCountSkipsPassesAndVariationsAndCountsOnlyTheFirstGame() throws {
+    @Test func moveCountWithoutPassesSkipsPassesVariationsAndLaterGames() throws {
         let text = "(;SZ[9];B[ee];W[];B[tt];W[cc](;B[gg];W[jj])(;B[aa];W[bb];B[cc]))(;SZ[9];B[aa];W[bb];B[cc];W[dd])"
         let info = try #require(parse(text).info)
-        #expect(info.moveCount == 3)
+        #expect(info.moveCountWithoutPasses == 3)
     }
 
     @Test func collectionInfo() throws {
@@ -158,7 +158,7 @@ struct GameInfoTests {
         #expect(info.blackPlayer == "First Black")
         #expect(info.whitePlayer == "First White")
         #expect(info.boardSize == BoardSize(9))
-        #expect(info.moveCount == 2)
+        #expect(info.moveCountWithoutPasses == 2)
         #expect(info.commentText == "one two three")
     }
 
