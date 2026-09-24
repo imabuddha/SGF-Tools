@@ -29,6 +29,22 @@ Decisions as of 2026-09-24. The background is in `old-version-analysis.md`.
    `legacy-1.x` branch (`SpotlightImporter/*.lproj/schema.strings`).
 5. **The screensaver.**
 
+## Look
+
+Decided by John on 2026-09-24:
+
+- **No margin.** Thumbnails and previews use a margin of 0, so stones on the edge reach the edge of
+  the board, as in 1.x. On a real board the outer line is where an edge stone's center sits, so the
+  stone comes up to, or close to, the board's edge. Coordinates go outside the board, in their own
+  space, and don't push the stones in.
+- **Five star points on 13x13:** the 4-4 points and the center. Every other size keeps the 1.x
+  rules.
+- **Coordinates on the left and bottom only** (in the preview), as the renderer's default when
+  coordinates are on. Past 25 columns the letters go on as AA, AB, and so on.
+- **Unchanged:** the flat board stays buff, the shaded board keeps its procedural wood, a
+  collection shows three boards stacked behind the front one, and the last move is marked with a
+  ring.
+
 ## Parser decisions
 
 - A file that claims UTF-8, or names no charset, but isn't valid UTF-8 is decoded with macOS's
