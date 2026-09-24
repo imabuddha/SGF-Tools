@@ -22,7 +22,6 @@ configFiles:
 settings:
   base:
     ARCHS: arm64
-    MACOSX_DEPLOYMENT_TARGET: "26.0"
     MARKETING_VERSION: 2.0.3
     CURRENT_PROJECT_VERSION: 4
     SWIFT_VERSION: "6.0"
