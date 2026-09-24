@@ -34,11 +34,18 @@ struct StarPointTests {
         return points
     }
 
-    @Test("Square boards match 1.x", arguments: 1 ... 52)
+    /// The one deliberate change from 1.x: 13x13 has the usual five star points, the 4-4 points
+    /// and the center, where 1.x also had the four side points.
+    private func expectedStarPoints(_ size: Int) -> Set<SGFPoint> {
+        guard size == 13 else { return oldStarPoints(size) }
+        return Set([(4, 4), (4, 10), (7, 7), (10, 4), (10, 10)].map { SGFPoint(column: $0.0, row: $0.1) })
+    }
+
+    @Test("Square boards match 1.x, except 13x13", arguments: 1 ... 52)
     func squareBoardsMatchOldVersion(size: Int) throws {
         let boardSize = try #require(BoardSize(size))
         let points = boardSize.starPoints
-        #expect(Set(points) == oldStarPoints(size))
+        #expect(Set(points) == expectedStarPoints(size))
         #expect(points.count == Set(points).count, "no duplicates")
         #expect(points == points.sorted())
     }
@@ -46,9 +53,10 @@ struct StarPointTests {
     @Test func familiarSizes() throws {
         #expect(try #require(BoardSize(19)).starPoints.map(\.sgf)
             == ["dd", "dj", "dp", "jd", "jj", "jp", "pd", "pj", "pp"])
-        // 1.x puts nine on 13x13 (fourth-line corners, sides, and center), not the usual five.
-        #expect(try #require(BoardSize(13)).starPoints.map(\.sgf)
-            == ["dd", "dg", "dj", "gd", "gg", "gj", "jd", "jg", "jj"])
+        // The usual five on 13x13, where 1.x had nine (with the side points too).
+        #expect(try #require(BoardSize(13)).starPoints.map(\.sgf) == ["dd", "dj", "gg", "jd", "jj"])
+        #expect(Set(try #require(BoardSize(13)).starPoints) != oldStarPoints(13))
+        #expect(try #require(BoardSize(15)).starPoints.count == 9)
         #expect(try #require(BoardSize(9)).starPoints.map(\.sgf) == ["cc", "cg", "ee", "gc", "gg"])
         #expect(try #require(BoardSize(5)).starPoints.map(\.sgf) == ["bb", "bd", "cc", "db", "dd"])
         #expect(try #require(BoardSize(3)).starPoints.map(\.sgf) == ["bb"])
@@ -57,8 +65,9 @@ struct StarPointTests {
     }
 
     @Test func nineteenByThirteen() throws {
+        // Like 13x13, the 13 rows carry no side points; the 19 columns do.
         let size = try #require(BoardSize(columns: 19, rows: 13))
-        #expect(size.starPoints.map(\.sgf) == ["dd", "dg", "dj", "jd", "jg", "jj", "pd", "pg", "pj"])
+        #expect(size.starPoints.map(\.sgf) == ["dd", "dj", "jd", "jg", "jj", "pd", "pj"])
     }
 
     @Test func nineteenByNine() throws {
