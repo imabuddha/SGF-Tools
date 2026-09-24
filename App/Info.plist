@@ -25,7 +25,9 @@
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2009-2010 Jason Foreman and John Mifsud, © 2026 John Mifsud. MIT License.</string>
+	<string>Pragmaphilia Labs
+Copyright © 2026 John Mifsud. SGF Tools 1.x © 2009-2010 Jason Foreman and John Mifsud.
+MIT License.</string>
 	<key>UTImportedTypeDeclarations</key>
 	<array>
 		<dict>
