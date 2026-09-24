@@ -2,29 +2,6 @@ import SGFKit
 import SGFRendering
 import SwiftUI
 
-/// What a file's preview shows: its first game's opening position and the game information.
-struct GamePreview: Sendable {
-    let position: OpeningPosition
-    let summary: GameSummary
-
-    /// The preview of an SGF file, or `nil` if it has no game tree. The whole file is read, so
-    /// that the number of games is known.
-    ///
-    /// - Throws: Only if the file can't be read.
-    init?(contentsOf url: URL) throws {
-        try self.init(collection: SGFCollection(contentsOf: url))
-    }
-
-    /// The preview of a parsed file, or `nil` if it has no games.
-    init?(collection: SGFCollection, locale: Locale = .current) {
-        guard let game = collection.games.first,
-              let summary = GameSummary(collection: collection, locale: locale)
-        else { return nil }
-        position = OpeningPosition(game: game)
-        self.summary = summary
-    }
-}
-
 /// A file's preview: the board on the left and the game information beside it, or, where there
 /// isn't room for both side by side (Finder's Get Info and column view give a narrow, tall space),
 /// the board above the game information.
@@ -43,7 +20,7 @@ struct GamePreviewView: View {
                     HStack(alignment: .top, spacing: Self.spacing) {
                         board
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        GameInfoView(summary: preview.summary)
+                        GameSummaryView(summary: preview.summary)
                             .frame(width: Look.previewInfoWidth)
                             .frame(maxHeight: .infinity, alignment: .top)
                     }
@@ -53,7 +30,7 @@ struct GamePreviewView: View {
                         // almost half the height, enough for the players and the result.
                         board
                             .frame(width: inner.width, height: min(inner.width, inner.height * 0.55))
-                        GameInfoView(summary: preview.summary)
+                        GameSummaryView(summary: preview.summary)
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                     }
                 }
@@ -118,7 +95,7 @@ struct BoardView: View {
 }
 
 /// The game information: the players, the result, the other fields, and the game comment.
-struct GameInfoView: View {
+struct GameSummaryView: View {
     let summary: GameSummary
 
     var body: some View {

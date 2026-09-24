@@ -85,7 +85,11 @@ targets:
     platform: macOS
     sources:
       - Extensions/Preview
-      - Shared
+      - Shared/Look.swift
+      - Shared/OpeningPosition.swift
+      - Shared/GameSummary.swift
+      - Shared/GamePreview.swift
+      - Shared/GamePreviewView.swift
     dependencies:
       - package: SGFKit
         product: SGFKit
