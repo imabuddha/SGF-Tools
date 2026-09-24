@@ -240,6 +240,7 @@ struct ParserMalformedTests {
             #expect(collection.games.count <= 1)
             if let game = collection.games.first {
                 _ = game.position(afterMainLineMoves: .max)
+                _ = GameInfo(game: game)
             }
         }
     }
@@ -261,7 +262,9 @@ struct ParserMalformedTests {
             let collection = parse(bytes: bytes)
             for game in collection.games {
                 _ = game.position(afterMainLineMoves: .max)
+                _ = GameInfo(game: game)
             }
+            _ = collection.info
         }
     }
 

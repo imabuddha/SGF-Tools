@@ -32,4 +32,9 @@ public struct SGFCollection: Sendable {
 
     /// Whether the file holds more than one game.
     public var isCollection: Bool { games.count > 1 || moreGamesFollow }
+
+    /// The game information of the file, as SGF Tools 1.x indexed it: the fields and move count
+    /// of the first game, plus the number of games and the comments of all of them. `nil` if the
+    /// file has no games.
+    public var info: GameInfo? { GameInfo(collection: self) }
 }
