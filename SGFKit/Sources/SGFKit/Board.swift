@@ -4,7 +4,7 @@ public enum StoneColor: Sendable, Hashable, CaseIterable {
     case white
 
     /// The other color.
-    public var opponent: StoneColor {
+    var opponent: StoneColor {
         switch self {
         case .black: .white
         case .white: .black
@@ -21,13 +21,13 @@ public struct Move: Sendable, Hashable {
     public let point: SGFPoint?
 
     /// Creates a move; a `nil` point is a pass.
-    public init(color: StoneColor, point: SGFPoint?) {
+    init(color: StoneColor, point: SGFPoint?) {
         self.color = color
         self.point = point
     }
 
     /// Whether the move is a pass.
-    public var isPass: Bool { point == nil }
+    var isPass: Bool { point == nil }
 }
 
 /// A Go board: the stones on it and the number captured so far.
@@ -114,7 +114,7 @@ public struct Board: Sendable, Hashable {
     /// `"size,<black points>,<white points>"`, each point as two SGF letters, listed column by
     /// column. For example, `"19,pdpp,dddp"`. A rectangular board's size is written as in SZ,
     /// such as `"19:13"`.
-    public var compactPosition: String {
+    var compactPosition: String {
         let black = stones(of: .black).map(\.sgf).joined()
         let white = stones(of: .white).map(\.sgf).joined()
         return "\(size.sgf),\(black),\(white)"

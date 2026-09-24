@@ -10,7 +10,7 @@ public struct SGFProperty: Sendable, Hashable {
     public let values: [SGFValue]
 
     /// Creates a property.
-    public init(identifier: String, values: [SGFValue]) {
+    init(identifier: String, values: [SGFValue]) {
         self.identifier = identifier
         self.values = values
     }

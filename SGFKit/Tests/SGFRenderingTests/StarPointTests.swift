@@ -1,4 +1,4 @@
-import SGFKit
+@testable import SGFKit
 import SGFRendering
 import Testing
 

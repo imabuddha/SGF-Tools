@@ -9,18 +9,18 @@ public struct SGFGame: Sendable {
     public let nodes: [SGFNode]
 
     /// The text encoding the values were decoded with.
-    public let encoding: String.Encoding
+    let encoding: String.Encoding
 
     /// The board size from the root's SZ property; 19x19 if it is missing or invalid.
     public let boardSize: BoardSize
 
     /// The board size the root's SZ property gives, or `nil` if the root has no SZ or its value
-    /// isn't a valid size (see ``BoardSize/init(sgf:)``).
+    /// isn't a valid size: `"19"`, or `"19:13"` for 19 columns and 13 rows, each from 1 to 52.
     public let declaredBoardSize: BoardSize?
 
     /// Creates a game from its nodes, which must be in file order with valid parent and child
     /// IDs. The board size is read from the root's SZ property.
-    public init(nodes: [SGFNode], encoding: String.Encoding = .utf8) {
+    init(nodes: [SGFNode], encoding: String.Encoding = .utf8) {
         precondition(!nodes.isEmpty, "A game needs at least a root node.")
         self.nodes = nodes
         self.encoding = encoding
@@ -30,9 +30,6 @@ public struct SGFGame: Sendable {
 
     /// The root node, which holds the game information and any handicap stones.
     public var root: SGFNode { nodes[0] }
-
-    /// The node with an ID.
-    public subscript(id: SGFNode.ID) -> SGFNode { nodes[id] }
 
     /// The children of a node; the first one continues the main line.
     public func children(of node: SGFNode) -> [SGFNode] {
@@ -119,7 +116,7 @@ public struct SGFNode: Sendable, Hashable, Identifiable {
     public let properties: [SGFProperty]
 
     /// Creates a node.
-    public init(id: Int, parentID: Int?, childIDs: [Int], properties: [SGFProperty]) {
+    init(id: Int, parentID: Int?, childIDs: [Int], properties: [SGFProperty]) {
         self.id = id
         self.parentID = parentID
         self.childIDs = childIDs

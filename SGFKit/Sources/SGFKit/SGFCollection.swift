@@ -13,10 +13,10 @@ public struct SGFCollection: Sendable {
 
     /// Whether the parser stopped after the first game (see
     /// ``SGFParser/Options/stopAfterFirstGame``) and another game tree follows it.
-    public let moreGamesFollow: Bool
+    let moreGamesFollow: Bool
 
     /// Creates a collection.
-    public init(games: [SGFGame], warnings: [SGFWarning] = [], moreGamesFollow: Bool = false) {
+    init(games: [SGFGame], warnings: [SGFWarning] = [], moreGamesFollow: Bool = false) {
         self.games = games
         self.warnings = warnings
         self.moreGamesFollow = moreGamesFollow

@@ -122,7 +122,7 @@ struct SpotlightAttributesTests {
 
     /// Noon UTC is the same day everywhere from UTC-11 to UTC+11, so Finder shows the day played.
     @Test func datePlayedIsTheSameDayInLocalTime() throws {
-        let day = try #require(PartialDate(year: 1846, month: 7, day: 21))
+        let day = try #require(PartialDate(sgfDate: "1846-07-21"))
         let date = try #require(SpotlightAttributes.day(of: day))
         for hours in -11 ... 11 {
             var calendar = Calendar(identifier: .gregorian)

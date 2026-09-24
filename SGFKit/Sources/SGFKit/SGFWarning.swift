@@ -44,7 +44,7 @@ public struct SGFWarning: Sendable, Hashable, CustomStringConvertible {
     public let offset: Int
 
     /// Creates a warning.
-    public init(_ kind: Kind, offset: Int) {
+    init(_ kind: Kind, offset: Int) {
         self.kind = kind
         self.offset = offset
     }

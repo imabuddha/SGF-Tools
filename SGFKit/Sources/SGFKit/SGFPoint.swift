@@ -19,7 +19,7 @@ public struct SGFPoint: Sendable, Hashable, Comparable, CustomStringConvertible 
     /// Creates a point from its two SGF letters, such as `"pd"`.
     ///
     /// Surrounding whitespace is ignored. Returns `nil` for anything other than two letters.
-    public init?(sgf: String) {
+    init?(sgf: String) {
         var scalars = sgf.unicodeScalars[...]
         while let first = scalars.first, first.properties.isWhitespace { scalars.removeFirst() }
         while let last = scalars.last, last.properties.isWhitespace { scalars.removeLast() }
@@ -31,7 +31,7 @@ public struct SGFPoint: Sendable, Hashable, Comparable, CustomStringConvertible 
     }
 
     /// The point's two SGF letters, such as `"pd"`. A coordinate outside 1-52 is written as `?`.
-    public var sgf: String {
+    var sgf: String {
         String(Self.letter(for: column)) + String(Self.letter(for: row))
     }
 

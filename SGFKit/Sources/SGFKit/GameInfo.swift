@@ -101,7 +101,7 @@ public struct GameInfo: Sendable, Hashable {
 
     /// The information about a file: the fields and move count of its first game, the number
     /// of games, and the comments of all of them. `nil` if the collection has no games.
-    public init?(collection: SGFCollection) {
+    init?(collection: SGFCollection) {
         guard let first = collection.games.first else { return nil }
         self.init(game: first, commentSources: collection.games, numberOfGames: collection.games.count,
                   isCollection: collection.isCollection)
@@ -187,7 +187,7 @@ public struct GameInfo: Sendable, Hashable {
     ]
 
     /// The name of a GM value, as FF[4] lists them (with the spelling of "Hnefatafl" fixed).
-    public static func gameTypeName(for gameType: Int) -> String? {
+    static func gameTypeName(for gameType: Int) -> String? {
         let names = [
             "Go", "Othello", "Chess", "Gomoku+Renju", "Nine Men's Morris",
             "Backgammon", "Chinese Chess", "Shogi", "Lines of Action", "Ataxx",
@@ -216,7 +216,7 @@ public enum GameResult: Sendable, Hashable {
     case unknown
 
     /// Interprets an RE value, ignoring case and surrounding whitespace.
-    public init(sgf: String) {
+    init(sgf: String) {
         let text = sgf.trimmingCharacters(in: .whitespacesAndNewlines)
         let lowercased = text.lowercased()
         if lowercased.hasPrefix("b+") || lowercased.hasPrefix("w+") {
@@ -232,7 +232,7 @@ public enum GameResult: Sendable, Hashable {
     }
 
     /// The color that won, or `nil` if nobody did.
-    public var winner: StoneColor? {
+    var winner: StoneColor? {
         if case .win(let color, _) = self { return color }
         return nil
     }
@@ -240,7 +240,7 @@ public enum GameResult: Sendable, Hashable {
 
 /// A date that may lack its day, or its month and day, as DT allows: `1996-05-06`, `1996-05`,
 /// or `1996`.
-public struct PartialDate: Sendable, Hashable, Comparable, CustomStringConvertible {
+public struct PartialDate: Sendable, Hashable, CustomStringConvertible {
     /// The year, 1-9999.
     public let year: Int
     /// The month, 1-12, if known.
@@ -250,7 +250,7 @@ public struct PartialDate: Sendable, Hashable, Comparable, CustomStringConvertib
 
     /// Creates a date, or returns `nil` if a component is out of range or there is a day
     /// without a month.
-    public init?(year: Int, month: Int? = nil, day: Int? = nil) {
+    init?(year: Int, month: Int? = nil, day: Int? = nil) {
         guard (1 ... 9999).contains(year) else { return nil }
         if let month, !(1 ... 12).contains(month) { return nil }
         if let day {
@@ -321,13 +321,8 @@ public struct PartialDate: Sendable, Hashable, Comparable, CustomStringConvertib
     }
 
     /// The date as components, with only the known ones set.
-    public var dateComponents: DateComponents {
+    var dateComponents: DateComponents {
         DateComponents(year: year, month: month, day: day)
-    }
-
-    /// Orders dates by year, month, and day; a missing month or day sorts first.
-    public static func < (lhs: PartialDate, rhs: PartialDate) -> Bool {
-        (lhs.year, lhs.month ?? 0, lhs.day ?? 0) < (rhs.year, rhs.month ?? 0, rhs.day ?? 0)
     }
 
     private static func days(inMonth month: Int, year: Int) -> Int {

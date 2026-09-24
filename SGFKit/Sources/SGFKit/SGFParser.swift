@@ -8,12 +8,11 @@ import Foundation
 /// - Text before, between, and after game trees is skipped, including a byte-order mark or the
 ///   literal `&#65279;` that some web downloads leave at the start. A game tree starts at a `(`
 ///   followed, after optional whitespace, by `;`.
-/// - Each game's text is decoded with the charset its CA property names; see
-///   ``SGFGame/encoding``. Without CA, UTF-8 is tried first. When the text should be UTF-8 but
-///   isn't, its charset is detected among the usual Chinese, Korean, Japanese, and Western ones,
-///   with Windows-1252 (which covers Latin-1) as the last resort. When the text isn't valid in
-///   another declared charset, the parser falls back to Windows-1252 or, for a file labeled
-///   Latin-1 that is really UTF-8, to UTF-8.
+/// - Each game's text is decoded with the charset its CA property names. Without CA, UTF-8 is
+///   tried first. When the text should be UTF-8 but isn't, its charset is detected among the
+///   usual Chinese, Korean, Japanese, and Western ones, with Windows-1252 (which covers Latin-1)
+///   as the last resort. When the text isn't valid in another declared charset, the parser falls
+///   back to Windows-1252 or, for a file labeled Latin-1 that is really UTF-8, to UTF-8.
 /// - UTF-16 files (with or without a byte-order mark) are converted to UTF-8 first.
 /// - Lowercase letters in property identifiers are ignored, as FF[1]-FF[3] allowed, so
 ///   `AddBlack` reads as `AB`.
@@ -22,8 +21,8 @@ public enum SGFParser {
     /// Options for parsing.
     public struct Options: Sendable, Hashable {
         /// Stop after the first game tree, leaving the rest of the data unread. For thumbnails,
-        /// and for previews of large files. ``SGFCollection/moreGamesFollow`` then tells whether
-        /// the file holds more games.
+        /// and for previews of large files. ``SGFCollection/isCollection`` still tells whether
+        /// the file holds more than one game.
         public var stopAfterFirstGame: Bool
 
         /// Creates parsing options.
