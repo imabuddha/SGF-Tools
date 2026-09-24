@@ -162,3 +162,9 @@ public struct SGFValue: Sendable, Hashable, CustomStringConvertible {
         return String(result)
     }
 }
+
+extension Character {
+    /// Whether this is one of the ASCII digits 0-9, the only digits of SGF's numbers, sizes,
+    /// and dates.
+    var isASCIIDigit: Bool { ("0" ... "9").contains(self) }
+}

@@ -60,8 +60,3 @@ public struct BoardSize: Sendable, Hashable, CustomStringConvertible {
         (1 ... columns).contains(point.column) && (1 ... rows).contains(point.row)
     }
 }
-
-extension Character {
-    /// Whether this is one of the ASCII digits 0-9.
-    var isASCIIDigit: Bool { ("0" ... "9").contains(self) }
-}

@@ -420,16 +420,13 @@ private struct ByteParser {
         case .western:
             let hasNonASCII = ranges.contains { range in bytes[range].contains { $0 >= 0x80 } }
             if hasNonASCII, let utf8 = decodeAll(TextDecoding.utf8) {
-                return DecodedValues(strings: utf8, encoding: .utf8,
-                                     fallback: .encodingFallback(declared: charset.declaredName ?? "", used: "UTF-8"))
+                return DecodedValues(strings: utf8, encoding: .utf8, fallback: fallback(to: "UTF-8"))
             }
             return DecodedValues(strings: windows1252(), encoding: .windowsCP1252)
         case .other(let declared):
             let (strings, fellBack) = decodeEach(as: declared)
-            return DecodedValues(
-                strings: strings, encoding: declared,
-                fallback: fellBack ? .encodingFallback(declared: charset.declaredName ?? "", used: "Windows-1252") : nil
-            )
+            return DecodedValues(strings: strings, encoding: declared,
+                                 fallback: fellBack ? fallback(to: "Windows-1252") : nil)
         }
     }
 
