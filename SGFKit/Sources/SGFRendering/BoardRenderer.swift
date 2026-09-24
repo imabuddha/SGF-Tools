@@ -13,9 +13,9 @@ import SGFKit
 ///
 /// The board, with its coordinates if it has them, is fitted into the rect with square cells and
 /// centered; anything else is left untouched, so an image of a rectangular board has transparent
-/// sides. Grid lines are
-/// placed on whole device pixels, so they are crisp at any scale. Line widths, stones, and
-/// labels all scale with the cell, so a board looks the same at any size, only sharper.
+/// sides. Grid lines are placed on whole device pixels, so they are crisp at any scale. Line
+/// widths, stones, and labels all scale with the cell, so a board looks the same at any size,
+/// only sharper.
 ///
 /// Small boards are simplified. Below ``compactCellSize`` device pixels per cell, the inner
 /// lines are drawn faint, stones fill their cells without shading, and star points and

@@ -3,10 +3,10 @@ import SGFKit
 
 /// Where everything goes, in pixel space: device pixels, with y pointing up on the output.
 ///
-/// The board and its coordinates are fitted into the rect with square cells and centered. The wood and every grid
-/// line start and end on whole pixels, so lines are crisp at any scale. Each line is rounded to
-/// the nearest pixel on its own, so neighboring cells can differ by one pixel while the cell
-/// size stays the same on average in both directions.
+/// The board and its coordinates are fitted into the rect with square cells and centered. The
+/// wood and every grid line start and end on whole pixels, so lines are crisp at any scale. Each
+/// line is rounded to the nearest pixel on its own, so neighboring cells can differ by one pixel
+/// while the cell size stays the same on average in both directions.
 struct BoardLayout {
     /// Below this many device pixels per cell, drawing is simplified (see
     /// ``BoardRenderer/compactCellSize``).

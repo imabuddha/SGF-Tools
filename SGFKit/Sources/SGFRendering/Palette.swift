@@ -1,7 +1,10 @@
 import CoreGraphics
 
 /// The colors of one style. All colors are sRGB.
-struct Palette {
+///
+/// Unchecked `Sendable`, because `CGGradient` isn't `Sendable`: a palette never changes once it is
+/// made, so the built-in ones can be shared by every thread that draws.
+struct Palette: @unchecked Sendable {
     /// The board's color where it is drawn without grain: the whole flat board, and the boards
     /// behind a collection.
     let board: CGColor
@@ -44,7 +47,7 @@ struct Palette {
         }
     }
 
-    nonisolated(unsafe) static let shaded = Palette(
+    static let shaded = Palette(
         board: WoodGrain.averageColor,
         boardEdge: rgb(0.36, 0.22, 0.08, 0.55),
         line: rgb(0.13, 0.08, 0.03, 0.66),
@@ -76,7 +79,7 @@ struct Palette {
         markerOnWhite: rgb(0.08, 0.08, 0.08, 0.90)
     )
 
-    nonisolated(unsafe) static let flat = Palette(
+    static let flat = Palette(
         board: rgb(0.965, 0.890, 0.720),
         boardEdge: rgb(0.40, 0.30, 0.15, 0.55),
         line: rgb(0, 0, 0),
