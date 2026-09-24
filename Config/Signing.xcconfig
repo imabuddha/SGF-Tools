@@ -1,0 +1,18 @@
+// Signing for every target.
+//
+// By default, SGF Tools is signed to run locally (ad hoc), which needs no Apple account. To sign
+// with your own Apple Development team instead, put a file named Local.xcconfig at the root of
+// the repository (git ignores it) with your team in it:
+//
+//     DEVELOPMENT_TEAM = ABCDE12345
+//     CODE_SIGN_STYLE = Automatic
+//     CODE_SIGN_IDENTITY = Apple Development
+//
+// The Xcode project is generated from project.yml, so a team picked by hand in Xcode's Signing &
+// Capabilities tab is lost the next time it is generated; Local.xcconfig survives.
+
+CODE_SIGN_STYLE = Manual
+CODE_SIGN_IDENTITY = -
+DEVELOPMENT_TEAM =
+
+#include? "../Local.xcconfig"
