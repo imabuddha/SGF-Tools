@@ -7,23 +7,62 @@ that replays games.
 ## Status
 
 **Version 2.0 is being written from scratch** for Apple Silicon Macs running macOS 26 or later.
-It isn't ready to install yet. So far:
+There is no release yet, but it can be built and tried. So far:
 
 - **SGFKit**, a Swift package with no dependencies:
-  - a tolerant SGF parser: every SGF version, collections, any charset, and damaged or
-    mislabeled files
+  - a tolerant SGF parser: every SGF version, collections, any charset (with detection for
+    files that claim UTF-8 but aren't), and damaged or mislabeled files
   - the game model, with captures
   - the game information that Spotlight will index.
 - **SGFRendering**, the board drawing that the thumbnails, the previews, and the screensaver share.
+- **SGF Tools.app**, a small app that holds two Quick Look extensions:
+  - **thumbnails**: Finder shows the first game's board after the opening moves (50 moves on
+    19x19, 30 on 13x13, 20 on smaller boards), with a stack of boards behind it for a file
+    that holds several games
+  - **previews**: press the Space bar on a game in Finder to see the board, with coordinates,
+    beside the players, the result, the event, the date, and the rest of the game information.
 
-Next come the SGF Tools app with its Quick Look extensions, then Spotlight search, then the
-screensaver. The plan is in [docs/plan.md](docs/plan.md).
+Next come Spotlight search, then the screensaver. The plan is in [docs/plan.md](docs/plan.md).
 
-To run the tests:
+## Building
+
+You need Xcode 27 and [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
+The Xcode project is generated from `project.yml` and isn't in the repository:
 
 ```bash
-cd SGFKit && swift test
+xcodegen generate
+open SGFTools.xcodeproj
 ```
+
+Or from the command line:
+
+```bash
+xcodebuild -project SGFTools.xcodeproj -scheme "SGF Tools" -configuration Release build
+xcodebuild -project SGFTools.xcodeproj -scheme "SGF Tools" test   # the app's tests
+cd SGFKit && swift test                                            # the package's tests
+```
+
+The app's tests are logic tests with no host app, so running them never opens SGF Tools. They
+include renderings of the preview in light and dark mode; to save them as PNGs, set
+`TEST_RUNNER_SGF_PREVIEW_SAMPLES` to a folder when running `xcodebuild test`.
+
+The app is signed to run locally (ad hoc), which needs no Apple account, and macOS loads its
+Quick Look extensions that way. To sign with your own team instead, see
+`Config/Signing.xcconfig`.
+
+## Trying it out
+
+1. Build the Release configuration, as above.
+2. Copy `SGF Tools.app` from the build products into `/Applications` (in Xcode: Product > Show
+   Build Folder in Finder, then `Products/Release`). The extensions work only while macOS knows
+   where the app is; opening it once, or copying it into Applications, registers it.
+3. In Finder, SGF files get board thumbnails. Select one and press the Space bar for the preview.
+4. If nothing changes, check that SGF Tools is on in System Settings > General > Login Items &
+   Extensions, under Quick Look, and run `qlmanage -r` and `qlmanage -r cache` in Terminal to
+   reset Quick Look.
+
+`qlmanage -t -x -s 512 -o <folder> <file.sgf>` makes a thumbnail PNG without opening a window.
+(Without `-x`, `qlmanage -t` on macOS 27 doesn't use app extensions at all and waits forever.)
 
 ## History
 

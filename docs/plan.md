@@ -21,8 +21,10 @@ Decisions as of 2026-09-24. The background is in `old-version-analysis.md`.
 1. **SGFKit** (done): a tolerant parser, the game model, and game info.
 2. **SGFRendering** (done): the board drawing that the thumbnail, the preview, and the
    screensaver all share.
-3. **SGF Tools.app** with the Quick Look thumbnail and preview extensions. Thumbnails read the
-   file itself, with no dependency on Spotlight.
+3. **SGF Tools.app** (done) with the Quick Look thumbnail and preview extensions. Thumbnails read
+   the file itself, with no dependency on Spotlight. Both show the position after 50, 30, or 20
+   moves by the board's shorter side (19 lines or more, 13 to 18, smaller), counting passes. The
+   look's settings are constants in `Shared/Look.swift`.
 4. **Spotlight import extension.** It starts with a test of whether Finder offers our own fields
    (such as "Black Player" and "Komi") from an import extension; the standard attributes work
    either way. The translated field names of 1.x (10 languages) come from the
