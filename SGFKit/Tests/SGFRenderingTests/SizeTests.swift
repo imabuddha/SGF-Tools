@@ -45,6 +45,9 @@ struct SizeTests {
                     let middle = [(side / 2, side / 2), (side / 2 - 1, side / 2 - 1)]
                     #expect(middle.contains { pixels[$0.0, $0.1].alpha == 255 }, "\(size) at \(side) px")
                 }
+                let collection = try #require(renderers[0].makeCollectionImage(
+                    of: board, size: CGSize(width: side, height: side)))
+                #expect(collection.width == side)
             }
         }
     }
@@ -78,6 +81,25 @@ struct SizeTests {
         let renderer = BoardRenderer()
         #expect(renderer.draw(Board(size: .standard), in: context, rect: .zero).isNull)
         #expect(renderer.draw(Board(size: .standard), in: context, rect: .null).isNull)
+        #expect(renderer.drawCollection(Board(size: .standard), in: context, rect: .zero).isNull)
+    }
+
+    @Test func collectionFrontBoardSitsAtTheTopLeft() throws {
+        let context = try #require(CGContext(
+            data: nil, width: 256, height: 256, bitsPerComponent: 8, bytesPerRow: 0,
+            space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ))
+        let rect = CGRect(x: 0, y: 0, width: 256, height: 256)
+        let front = BoardRenderer().drawCollection(Board(size: .standard), in: context, rect: rect)
+        // In the default user space, y points up: the front board touches the top and left
+        // edges, and the stack behind it shows at the bottom and right.
+        #expect(front.minX == 0)
+        #expect(front.maxY == 256)
+        #expect(front.width == front.height)
+        #expect(front.width > 256 * 0.85 && front.width < 256)
+        let pixels = try #require(context.makeImage()).pixels
+        #expect(pixels[250, 250].alpha > 0, "the stack shows at the bottom right")
+        #expect(pixels[250, 3].alpha == 0, "nothing at the top right")
     }
 
     @Test func stylesHaveStableIdentifiers() {
