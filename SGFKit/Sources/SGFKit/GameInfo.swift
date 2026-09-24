@@ -35,6 +35,10 @@ public struct GameInfo: Sendable, Hashable {
     public var komi: Double?
     /// The number of handicap stones (HA).
     public var handicap: Int?
+    /// The old-style handicap arrangement (OH), a nonstandard property of historical game
+    /// records, such as `"B-(W)-B"`: Black in two games out of three, with the parentheses
+    /// marking the part of the cycle this game belongs to.
+    public var oldHandicap: String?
     /// The main time limit in seconds (TM).
     public var timeLimit: Double?
     /// The overtime method (OT).
@@ -130,6 +134,7 @@ public struct GameInfo: Sendable, Hashable {
         rules = simpleText("RU")
         komi = values["KM"]?.real
         handicap = values["HA"]?.number
+        oldHandicap = simpleText("OH")
         timeLimit = values["TM"]?.real
         overtime = simpleText("OT")
         opening = simpleText("ON")
@@ -173,8 +178,8 @@ public struct GameInfo: Sendable, Hashable {
 
     /// The properties the fields come from.
     private static let identifiers: Set<String> = [
-        "PB", "PW", "BR", "WR", "BT", "WT", "RE", "EV", "RO", "DT", "PC", "RU", "KM", "HA", "TM", "OT",
-        "ON", "SO", "AN", "US", "AP", "CP", "GN", "GC", "GM", "FF",
+        "PB", "PW", "BR", "WR", "BT", "WT", "RE", "EV", "RO", "DT", "PC", "RU", "KM", "HA", "OH", "TM",
+        "OT", "ON", "SO", "AN", "US", "AP", "CP", "GN", "GC", "GM", "FF",
     ]
 
     /// The name of a GM value, as FF[4] lists them (with the spelling of "Hnefatafl" fixed).

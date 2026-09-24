@@ -58,6 +58,11 @@ struct GameInfoTests {
         #expect(info.outcome == .win(.black, margin: "R"))
     }
 
+    @Test func oldHandicap() throws {
+        let info = GameInfo(game: try firstGame("(;PB[Kuro]PW[Shiro]OH[ B-(W)-B ])"))
+        #expect(info.oldHandicap == "B-(W)-B")
+    }
+
     @Test func missingFieldsAreNil() throws {
         let info = GameInfo(game: try firstGame("(;SZ[9];B[ee])"))
         #expect(info.blackPlayer == nil)
@@ -67,6 +72,7 @@ struct GameInfoTests {
         #expect(info.datePlayed == nil)
         #expect(info.yearPlayed == nil)
         #expect(info.komi == nil)
+        #expect(info.oldHandicap == nil)
         #expect(info.gameType == 1)
         #expect(info.gameTypeName == "Go")
         #expect(info.fileFormat == nil)
