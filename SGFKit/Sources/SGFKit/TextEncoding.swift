@@ -4,8 +4,12 @@ import Foundation
 /// How the values of one game are decoded, chosen from its CA property.
 struct Charset {
     enum Kind {
-        /// No CA, or CA says UTF-8: UTF-8 if the text is valid UTF-8, Windows-1252 otherwise.
+        /// No CA, or CA says UTF-8 or names an unknown charset: UTF-8 if the text is valid
+        /// UTF-8. If it isn't, the charset is detected; see ``CharsetDetection``.
         case utf8
+        /// The charset ``CharsetDetection`` found for text that should have been UTF-8 but
+        /// wasn't.
+        case detected(String.Encoding)
         /// CA names Latin-1, Windows-1252, or ASCII: Windows-1252, a superset of the printable
         /// Latin-1 characters, unless the text is valid UTF-8 with non-ASCII characters in it.
         case western
@@ -68,6 +72,14 @@ struct Charset {
         }
     }
 
+    /// The charset detected for a game whose text isn't valid UTF-8, keeping what the game
+    /// declared (UTF-8, an unknown charset, or nothing).
+    init(detected encoding: String.Encoding, replacing declared: Charset) {
+        let cfEncoding = CFStringConvertNSStringEncodingToEncoding(encoding.rawValue)
+        self.init(kind: .detected(encoding), declaredName: declared.declaredName,
+                  leadBytes: Self.leadBytes(for: cfEncoding), isUnknown: declared.isUnknown)
+    }
+
     private init(kind: Kind, declaredName: String?, leadBytes: [Bool]?, isUnknown: Bool) {
         self.kind = kind
         self.declaredName = declaredName
@@ -111,6 +123,116 @@ struct Charset {
             return table
         }
         return nil
+    }
+}
+
+/// Guessing the charset of a game's text when it should be UTF-8 but isn't.
+///
+/// Files with no CA property, or with a wrong one, come in every charset: GB2312 and GBK from
+/// Chinese servers, EUC-KR from Korean ones, Shift_JIS from Japanese programs, Big5 from Taiwan,
+/// and Windows-1252 from Western ones. Their bytes are valid in several of these at once, so
+/// macOS's detection (`NSString.stringEncoding(for:encodingOptions:convertedString:usedLossyConversion:)`)
+/// picks the likeliest of ``candidates``.
+///
+/// That detection is unreliable for short Western text. An accented capital followed by a
+/// lowercase letter, as in "Émile", is also a valid Big5 or GBK character, and a lone accented
+/// capital is a half-width katakana in Shift_JIS. So text that reads as ordinary Western
+/// European text in Windows-1252 (see ``looksWestern(_:)``) stays Windows-1252, as it was before
+/// detection existed.
+enum CharsetDetection {
+    /// The charsets to choose from, each as the Windows superset that decodes the most files:
+    /// GB18030 (for GB2312 and GBK), CP949 (for EUC-KR), CP932 (for Shift_JIS), Big5-HKSCS
+    /// (for Big5), and Windows-1252 (for Latin-1).
+    static let candidates: [String.Encoding] = [gb18030, cp949, cp932, big5, .windowsCP1252]
+
+    static let gb18030 = encoding(.GB_18030_2000)
+    static let cp949 = encoding(.dosKorean)
+    static let cp932 = encoding(.dosJapanese)
+    static let big5 = encoding(.big5_HKSCS_1999)
+
+    /// At most this many bytes are passed to detection, so a huge file stays fast.
+    static let maximumSampleSize = 65536
+
+    /// The charset of text that isn't valid UTF-8: one of ``candidates``.
+    ///
+    /// - Parameter sample: The game's values that contain non-ASCII bytes, separated by line
+    ///   breaks.
+    /// - Returns: The detected charset, or Windows-1252 if detection finds none of the others
+    ///   or the text reads as Western European text in Windows-1252.
+    static func detect(_ sample: [UInt8]) -> String.Encoding {
+        let sample = sample.count > maximumSampleSize ? Array(sample[..<maximumSampleSize]) : sample
+        let western = sample.withUnsafeBufferPointer { TextDecoding.windows1252($0[...]) }
+        if looksWestern(western) { return .windowsCP1252 }
+        var converted: NSString?
+        var usedLossyConversion: ObjCBool = false
+        let rawValue = NSString.stringEncoding(
+            for: Data(sample),
+            encodingOptions: [
+                .suggestedEncodingsKey: candidates.map(\.rawValue),
+                .useOnlySuggestedEncodingsKey: true,
+                .allowLossyKey: false,
+            ],
+            convertedString: &converted,
+            usedLossyConversion: &usedLossyConversion
+        )
+        let detected = String.Encoding(rawValue: rawValue)
+        guard rawValue != 0, !usedLossyConversion.boolValue, candidates.contains(detected) else {
+            return .windowsCP1252
+        }
+        return detected
+    }
+
+    /// Whether text decoded as Windows-1252 reads as Western European text: every non-ASCII
+    /// character is a Latin letter or a common punctuation mark or symbol, and no more than
+    /// three of them come in a row.
+    ///
+    /// Text in a Chinese, Korean, or Japanese charset read this way turns into runs of symbols
+    /// and accented letters, one pair of bytes per character, so it almost never passes. The
+    /// rare text that passes (such as a lone "3段" in Shift_JIS) is decoded as Windows-1252, as
+    /// before detection existed.
+    static func looksWestern(_ text: String) -> Bool {
+        var run = 0
+        for scalar in text.unicodeScalars {
+            guard !scalar.isASCII else {
+                run = 0
+                continue
+            }
+            run += 1
+            guard run <= 3, isWestern(scalar) else { return false }
+        }
+        return true
+    }
+
+    /// Latin letters, and the punctuation marks and symbols Western text commonly uses. Left
+    /// out are the C1 controls, the spacing diacritics other than the acute accent (which
+    /// stands in for an apostrophe), and rare symbols such as `¤` and `¦`.
+    private static func isWestern(_ scalar: Unicode.Scalar) -> Bool {
+        switch scalar.value {
+        case 0xC0 ... 0xFF: // Latin-1 letters, and × and ÷
+            true
+        case 0xA0 ... 0xBF:
+            !"¤¦¨¬\u{AD}¯¸".unicodeScalars.contains(scalar)
+        default:
+            "ŒœŠšŽžŸƒ‘’‚“”„–—…•‹›€™".unicodeScalars.contains(scalar)
+        }
+    }
+
+    /// The name of a detected charset, for warnings: the name files usually declare it by.
+    static func name(of encoding: String.Encoding) -> String {
+        switch encoding {
+        case gb18030: "GB18030"
+        case cp949: "EUC-KR"
+        case cp932: "Shift_JIS"
+        case big5: "Big5"
+        case .windowsCP1252: "Windows-1252"
+        default:
+            CFStringConvertEncodingToIANACharSetName(CFStringConvertNSStringEncodingToEncoding(encoding.rawValue))
+                .map { $0 as String } ?? "\(encoding)"
+        }
+    }
+
+    private static func encoding(_ encoding: CFStringEncodings) -> String.Encoding {
+        String.Encoding(rawValue: CFStringConvertEncodingToNSStringEncoding(CFStringEncoding(encoding.rawValue)))
     }
 }
 

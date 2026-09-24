@@ -139,6 +139,82 @@ struct EncodingTests {
         #expect(collection.warnings.map(\.kind) == [.unknownCharset("klingon-7")])
     }
 
+    // MARK: Detection, when the text should be UTF-8 but isn't
+
+    @Test func rightQuoteInAChineseCharsetInsideASCIIText() throws {
+        // A1 AF is the right single quotation mark in GBK and CP949. Files from Chinese and
+        // Korean servers use it for apostrophes in English text; read as Windows-1252 it was
+        // "\u{A1}\u{AF}".
+        let collection = parse(bytes: ascii("(;GM[1]PB[Lee]C[Black") + [0xA1, 0xAF] + ascii("s move is good.];B[aa])"))
+        let game = try #require(collection.games.first)
+        #expect(game.root["C"]?.value.text == "Black\u{2019}s move is good.")
+        #expect([CharsetDetection.gb18030, CharsetDetection.cp949].contains(game.encoding))
+        #expect(collection.warnings.isEmpty)
+    }
+
+    @Test func koreanNamesInEUCKR() throws {
+        // Detection needs a little text: two short names alone are sometimes taken for Big5 or
+        // GBK, but a game record's usual fields are enough.
+        let bytes = ascii("(;GM[1]EV[") + encoded("한국바둑리그", .EUC_KR) + ascii("]PB[")
+            + encoded("김민준", .EUC_KR) + ascii("]PW[") + encoded("박서연", .EUC_KR) + ascii("]RE[")
+            + encoded("백 불계승", .EUC_KR) + ascii("];B[pd])")
+        let game = try firstGame(bytes: bytes)
+        #expect(game.root["PB"]?.value.simpleText == "김민준")
+        #expect(game.root["PW"]?.value.simpleText == "박서연")
+        #expect(game.root["RE"]?.value.simpleText == "백 불계승")
+        #expect(game.encoding == CharsetDetection.cp949)
+    }
+
+    @Test func japaneseNameInShiftJIS() throws {
+        // The last character of the event, U+8868, is 95 5C: its trail byte is a backslash, so
+        // the tree must be parsed again once Shift_JIS is detected, or the closing bracket
+        // would be read as escaped.
+        let bytes = ascii("(;GM[1]EV[") + encoded("日本代表", String.Encoding.shiftJIS) + ascii("]PB[")
+            + encoded("山田太郎", String.Encoding.shiftJIS) + ascii("]PW[White];B[pd];W[dp])")
+        let collection = parse(bytes: bytes)
+        let game = try #require(collection.games.first)
+        #expect(game.root["EV"]?.value.simpleText == "日本代表")
+        #expect(game.root["PB"]?.value.simpleText == "山田太郎")
+        #expect(game.root["PW"]?.value.simpleText == "White")
+        #expect(game.nodes.count == 3)
+        #expect(game.encoding == CharsetDetection.cp932)
+        #expect(collection.warnings.isEmpty)
+    }
+
+    @Test(arguments: [
+        ("张三", CFStringEncodings.GB_18030_2000, CharsetDetection.gb18030),
+        ("圍棋比賽", CFStringEncodings.big5, CharsetDetection.big5),
+    ])
+    func chineseText(text: String, charset: CFStringEncodings, expected: String.Encoding) throws {
+        let game = try firstGame(bytes: ascii("(;GM[1]EV[") + encoded(text, charset) + ascii("])"))
+        #expect(game.root["EV"]?.value.simpleText == text)
+        #expect(game.encoding == expected)
+    }
+
+    @Test func westernWindows1252TextDecodesAsBefore() throws {
+        let players = "Émile Ängelholm"
+        let comment = "l’été à Zürich — naïve café, Øyvind’s “Æsir” ½ point"
+        for declaration in ["", "CA[UTF-8]"] {
+            let bytes = ascii("(;GM[1]\(declaration)PB[") + encoded(players, .windowsCP1252)
+                + ascii("]C[") + encoded(comment, .windowsCP1252) + ascii("])")
+            let collection = parse(bytes: bytes)
+            let game = try #require(collection.games.first)
+            #expect(game.root["PB"]?.value.simpleText == players)
+            #expect(game.root["C"]?.value.text == comment)
+            #expect(game.encoding == .windowsCP1252)
+            #expect(collection.warnings.map(\.kind)
+                == (declaration.isEmpty ? [] : [.encodingFallback(declared: "UTF-8", used: "Windows-1252")]))
+        }
+    }
+
+    @Test(arguments: ["Émile", "Ängelholm", "Æsir", "Çelik", "Élodie Martin", "Ü", "½ point", "it´s", "ÀÁ"])
+    func shortWesternTextIsNotMistakenForAnAsianCharset(text: String) throws {
+        // macOS's detection alone reads these as Big5, GBK, or Shift_JIS half-width katakana.
+        let game = try firstGame(bytes: ascii("(;PB[") + encoded(text, .windowsCP1252) + ascii("])"))
+        #expect(game.root["PB"]?.value.simpleText == text)
+        #expect(game.encoding == .windowsCP1252)
+    }
+
     @Test func eachGameInACollectionHasItsOwnCharset() throws {
         let bytes = ascii("(;CA[UTF-8]PB[Jos") + [0xC3, 0xA9] + ascii("])")
             + ascii("(;CA[ISO-8859-1]PB[Jos") + [0xE9] + ascii("])")
@@ -146,4 +222,14 @@ struct EncodingTests {
         #expect(collection.games.map { $0.root["PB"]?.value.simpleText } == ["Jos\u{E9}", "Jos\u{E9}"])
         #expect(collection.warnings.isEmpty)
     }
+}
+
+/// The bytes of a string in an encoding.
+private func encoded(_ text: String, _ encoding: String.Encoding) -> [UInt8] {
+    Array(text.data(using: encoding)!)
+}
+
+/// The bytes of a string in a Core Foundation charset.
+private func encoded(_ text: String, _ charset: CFStringEncodings) -> [UInt8] {
+    encoded(text, String.Encoding(rawValue: CFStringConvertEncodingToNSStringEncoding(CFStringEncoding(charset.rawValue))))
 }

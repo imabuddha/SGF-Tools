@@ -9,9 +9,11 @@ import Foundation
 ///   literal `&#65279;` that some web downloads leave at the start. A game tree starts at a `(`
 ///   followed, after optional whitespace, by `;`.
 /// - Each game's text is decoded with the charset its CA property names; see
-///   ``SGFGame/encoding``. Without CA, UTF-8 is tried first. When the text isn't valid in the
-///   declared charset, the parser falls back to Windows-1252 (which covers Latin-1) or, for a
-///   file labeled Latin-1 that is really UTF-8, to UTF-8.
+///   ``SGFGame/encoding``. Without CA, UTF-8 is tried first. When the text should be UTF-8 but
+///   isn't, its charset is detected among the usual Chinese, Korean, Japanese, and Western ones,
+///   with Windows-1252 (which covers Latin-1) as the last resort. When the text isn't valid in
+///   another declared charset, the parser falls back to Windows-1252 or, for a file labeled
+///   Latin-1 that is really UTF-8, to UTF-8.
 /// - UTF-16 files (with or without a byte-order mark) are converted to UTF-8 first.
 /// - Lowercase letters in property identifiers are ignored, as FF[1]-FF[3] allowed, so
 ///   `AddBlack` reads as `AB`.
@@ -177,13 +179,28 @@ private struct ByteParser {
             let root = parseTree(at: start, leadBytes: nil, rootOnly: true)
             charset = Charset(declared: declaredCharset(root: root, start: start))
         }
-        let tree = parseTree(at: start, leadBytes: charset.leadBytes, rootOnly: false)
+        var tree = parseTree(at: start, leadBytes: charset.leadBytes, rootOnly: false)
+        var decoded = decodeValues(of: tree, charset: charset)
+        if decoded == nil {
+            // Not valid UTF-8: detect the charset, and parse again if its trail bytes can look
+            // like `\` or `]`.
+            charset = Charset(detected: CharsetDetection.detect(nonASCIISample(of: tree)), replacing: charset)
+            if charset.leadBytes != nil {
+                tree = parseTree(at: start, leadBytes: charset.leadBytes, rootOnly: false)
+            }
+            decoded = decodeValues(of: tree, charset: charset)
+        }
+        guard let decoded else { preconditionFailure("Only UTF-8 decoding can fail.") }
+
         warnings += tree.warnings
         if charset.isUnknown, let name = charset.declaredName {
             warnings.append(SGFWarning(.unknownCharset(name), offset: charsetOffset(in: tree) ?? start))
         }
-        let (nodes, encoding) = decode(tree, charset: charset, start: start)
-        let game = SGFGame(nodes: nodes, encoding: encoding)
+        if let fallback = decoded.fallback {
+            warnings.append(SGFWarning(fallback, offset: start))
+        }
+        let nodes = makeNodes(of: tree, values: decoded.strings)
+        let game = SGFGame(nodes: nodes, encoding: decoded.encoding)
         if let size = nodes[0]["SZ"], BoardSize(sgf: size.value.simpleText) == nil {
             let offset = tree.nodes[0].properties.first { $0.identifier == "SZ" }?.values.first?.lowerBound
             warnings.append(SGFWarning(.invalidBoardSize(size.value.simpleText.trimmingCharacters(in: .whitespaces)),
@@ -341,12 +358,20 @@ private struct ByteParser {
 
     // MARK: Decoding
 
-    /// Decodes the values of a parsed tree and builds its nodes.
-    private mutating func decode(_ tree: RawTree, charset: Charset, start: Int) -> ([SGFNode], String.Encoding) {
-        let bytes = bytes
-        let ranges = tree.nodes.flatMap { $0.properties.flatMap(\.values) }
+    /// The decoded values of a tree, in the order of its nodes, properties, and values.
+    private struct DecodedValues {
         var strings: [String]
         var encoding: String.Encoding
+        /// Why the text was decoded in a charset other than the declared one, if it was.
+        var fallback: SGFWarning.Kind?
+    }
+
+    /// Decodes the values of a parsed tree. Returns `nil` only for the UTF-8 charset (no CA, or
+    /// CA naming UTF-8 or an unknown charset) when the text isn't valid UTF-8; the caller then
+    /// detects the charset.
+    private func decodeValues(of tree: RawTree, charset: Charset) -> DecodedValues? {
+        let bytes = bytes
+        let ranges = tree.nodes.flatMap { $0.properties.flatMap(\.values) }
 
         func decodeAll(_ decoder: (Slice<UnsafeBufferPointer<UInt8>>) -> String?) -> [String]? {
             var result: [String] = []
@@ -360,44 +385,74 @@ private struct ByteParser {
 
         func windows1252() -> [String] { ranges.map { TextDecoding.windows1252(bytes[$0]) } }
 
-        switch charset.kind {
-        case _ where isConvertedFromUTF16:
-            (strings, encoding) = (decodeAll(TextDecoding.utf8) ?? windows1252(), .utf8)
-        case .utf8:
-            if let utf8 = decodeAll(TextDecoding.utf8) {
-                (strings, encoding) = (utf8, .utf8)
-            } else {
-                (strings, encoding) = (windows1252(), .windowsCP1252)
-                if let declared = charset.declaredName, !charset.isUnknown {
-                    warnings.append(SGFWarning(.encodingFallback(declared: declared, used: "Windows-1252"),
-                                               offset: start))
-                }
-            }
-        case .western:
-            let hasNonASCII = ranges.contains { range in bytes[range].contains { $0 >= 0x80 } }
-            if hasNonASCII, let utf8 = decodeAll(TextDecoding.utf8) {
-                (strings, encoding) = (utf8, .utf8)
-                warnings.append(SGFWarning(.encodingFallback(declared: charset.declaredName ?? "", used: "UTF-8"),
-                                           offset: start))
-            } else {
-                (strings, encoding) = (windows1252(), .windowsCP1252)
-            }
-        case .other(let declaredEncoding):
-            encoding = declaredEncoding
+        /// Decodes each value in `encoding`, or in Windows-1252 if it isn't valid there.
+        func decodeEach(as encoding: String.Encoding) -> (strings: [String], fellBack: Bool) {
             var fellBack = false
-            strings = ranges.map { range in
-                if let string = TextDecoding.decode(bytes[range], as: declaredEncoding) { return string }
+            let strings = ranges.map { range in
+                if let string = TextDecoding.decode(bytes[range], as: encoding) { return string }
                 fellBack = true
                 return TextDecoding.windows1252(bytes[range])
             }
-            if fellBack {
-                warnings.append(SGFWarning(.encodingFallback(declared: charset.declaredName ?? "",
-                                                             used: "Windows-1252"), offset: start))
-            }
+            return (strings, fellBack)
         }
 
-        var nextString = strings.makeIterator()
-        let nodes = tree.nodes.enumerated().map { id, raw in
+        /// A fallback warning for a game that declared a known charset.
+        func fallback(to used: String) -> SGFWarning.Kind? {
+            guard let declared = charset.declaredName, !charset.isUnknown else { return nil }
+            return .encodingFallback(declared: declared, used: used)
+        }
+
+        switch charset.kind {
+        case _ where isConvertedFromUTF16:
+            return DecodedValues(strings: decodeAll(TextDecoding.utf8) ?? windows1252(), encoding: .utf8)
+        case .utf8:
+            return decodeAll(TextDecoding.utf8).map { DecodedValues(strings: $0, encoding: .utf8) }
+        case .detected(let detected):
+            // Without CA, FF[4] makes Latin-1 the default, so reading Windows-1252 or any other
+            // detected charset isn't worth a warning. Declaring UTF-8 wrongly is.
+            if detected == .windowsCP1252 {
+                return DecodedValues(strings: windows1252(), encoding: .windowsCP1252,
+                                     fallback: fallback(to: CharsetDetection.name(of: .windowsCP1252)))
+            }
+            let (strings, _) = decodeEach(as: detected)
+            return DecodedValues(strings: strings, encoding: detected,
+                                 fallback: fallback(to: CharsetDetection.name(of: detected)))
+        case .western:
+            let hasNonASCII = ranges.contains { range in bytes[range].contains { $0 >= 0x80 } }
+            if hasNonASCII, let utf8 = decodeAll(TextDecoding.utf8) {
+                return DecodedValues(strings: utf8, encoding: .utf8,
+                                     fallback: .encodingFallback(declared: charset.declaredName ?? "", used: "UTF-8"))
+            }
+            return DecodedValues(strings: windows1252(), encoding: .windowsCP1252)
+        case .other(let declared):
+            let (strings, fellBack) = decodeEach(as: declared)
+            return DecodedValues(
+                strings: strings, encoding: declared,
+                fallback: fellBack ? .encodingFallback(declared: charset.declaredName ?? "", used: "Windows-1252") : nil
+            )
+        }
+    }
+
+    /// The values of a tree that contain non-ASCII bytes, separated by line breaks, for charset
+    /// detection.
+    private func nonASCIISample(of tree: RawTree) -> [UInt8] {
+        var sample: [UInt8] = []
+        for node in tree.nodes {
+            for property in node.properties {
+                for range in property.values where bytes[range].contains(where: { $0 >= 0x80 }) {
+                    if !sample.isEmpty { sample.append(0x0A) }
+                    sample += bytes[range]
+                    if sample.count >= CharsetDetection.maximumSampleSize { return sample }
+                }
+            }
+        }
+        return sample
+    }
+
+    /// Builds the nodes of a tree from its decoded values.
+    private func makeNodes(of tree: RawTree, values: [String]) -> [SGFNode] {
+        var nextString = values.makeIterator()
+        return tree.nodes.enumerated().map { id, raw in
             SGFNode(
                 id: id,
                 parentID: raw.parentID,
@@ -408,6 +463,5 @@ private struct ByteParser {
                 }
             )
         }
-        return (nodes, encoding)
     }
 }

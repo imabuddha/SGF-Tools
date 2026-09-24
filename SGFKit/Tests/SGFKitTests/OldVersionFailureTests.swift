@@ -30,8 +30,22 @@ struct OldVersionFailureTests {
 
     // MARK: Encodings: only CA[UTF-8] was recognized, and everything else was read as Latin-1.
 
+    @Test func utf8DeclaredButReallyAChineseCharset() throws {
+        // Like four of the "why bad" files: CA[UTF-8], but the only non-ASCII bytes are A1 AF,
+        // the right single quotation mark in GBK and CP949. 1.x showed it as "\u{A1}\u{AF}".
+        let bytes = ascii("(;GM[1]FF[4]CA[UTF-8]SZ[19]EV[Fixture") + [0xA1, 0xAF] + ascii("s Cup]C[Black")
+            + [0xA1, 0xAF] + ascii("s last game.];B[pd])")
+        let collection = parse(bytes: bytes)
+        let info = try #require(collection.info)
+        #expect(info.event == "Fixture\u{2019}s Cup")
+        #expect(info.commentText == "Black\u{2019}s last game.")
+        let kinds = collection.warnings.map(\.kind)
+        #expect(kinds == [.encodingFallback(declared: "UTF-8", used: "GB18030")]
+            || kinds == [.encodingFallback(declared: "UTF-8", used: "EUC-KR")])
+    }
+
     @Test func utf8DeclaredButReallyLatin1() throws {
-        // Like four of the "why bad" files: CA[UTF-8], but the names are in Latin-1.
+        // CA[UTF-8], but the names are in Latin-1.
         let bytes = ascii("(;GM[1]FF[4]CA[UTF-8]SZ[19]PW[Andr") + [0xE9] + ascii("]PB[J") + [0xF6]
             + ascii("rg]C[Gr") + [0xFC, 0xDF] + ascii("e];B[pd])")
         let collection = parse(bytes: bytes)

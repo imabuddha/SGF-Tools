@@ -31,8 +31,11 @@ Decisions as of 2026-09-24. The background is in `old-version-analysis.md`.
 
 ## Parser decisions
 
-- A file that claims UTF-8 but isn't valid UTF-8 is decoded with macOS's charset detection, with
-  Windows-1252 as the last resort. A Latin-1 label is read as Windows-1252, as browsers do.
+- A file that claims UTF-8, or names no charset, but isn't valid UTF-8 is decoded with macOS's
+  charset detection among GB18030, CP949 (EUC-KR), CP932 (Shift_JIS), Big5, and Windows-1252,
+  with Windows-1252 as the last resort. Text that reads as ordinary Western European text in
+  Windows-1252 stays Windows-1252, because the detection alone takes short Western text such as
+  "Émile" for Big5 or Shift_JIS. A Latin-1 label is read as Windows-1252, as browsers do.
 - Text that was already garbled on disk (double-encoded UTF-8, literal U+FFFD) is left as it is.
 - "The first 50 moves" counts passes, so move 50 matches the move numbers in other SGF programs.
 - A point off the board (including `tt` on boards up to 19x19) is a pass. Several setup properties
