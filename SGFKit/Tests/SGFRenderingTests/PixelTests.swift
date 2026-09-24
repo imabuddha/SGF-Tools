@@ -320,8 +320,10 @@ struct PixelTests {
     @Test func collectionsHaveNoCoordinates() throws {
         let position = board(black: ["dd"])
         let size = square(400)
-        let with = try #require(BoardRenderer(showsCoordinates: true).makeCollectionImage(of: position, size: size))
-        let without = try #require(BoardRenderer().makeCollectionImage(of: position, size: size))
+        // Flat, because Core Graphics doesn't draw the shaded stones' drop shadows identically
+        // every time when tests run in parallel (differences of up to 16 levels, near the stone).
+        let with = try #require(BoardRenderer(style: .flat, showsCoordinates: true).makeCollectionImage(of: position, size: size))
+        let without = try #require(BoardRenderer(style: .flat).makeCollectionImage(of: position, size: size))
         #expect(Data(with.pixels.bytesForComparison) == Data(without.pixels.bytesForComparison))
     }
 }
