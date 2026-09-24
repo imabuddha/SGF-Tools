@@ -13,6 +13,10 @@ let package = Package(
         .target(name: "SGFKit"),
         .target(name: "SGFRendering", dependencies: ["SGFKit"]),
         .testTarget(name: "SGFKitTests", dependencies: ["SGFKit"]),
-        .testTarget(name: "SGFRenderingTests", dependencies: ["SGFRendering", "SGFKit"]),
+        .testTarget(
+            name: "SGFRenderingTests",
+            dependencies: ["SGFRendering", "SGFKit"],
+            resources: [.copy("Fixtures")]
+        ),
     ]
 )

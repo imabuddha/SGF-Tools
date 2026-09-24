@@ -137,3 +137,41 @@ func board(_ size: BoardSize = .standard, black: [String] = [], white: [String] 
     for point in white { board.place(.white, at: pt(point)) }
     return board
 }
+
+/// The first game of an SGF text.
+func game(_ sgf: String) -> SGFGame {
+    SGFParser.parse(Data(sgf.utf8)).games[0]
+}
+
+enum Fixtures {
+    /// John Mifsud's 3-stone handicap game against GNU Go, from the SGF Tools 1.x test files.
+    static func johnVsGnu() throws -> SGFGame {
+        let url = try #require(Bundle.module.url(forResource: "johnVsGnu", withExtension: "sgf", subdirectory: "Fixtures"))
+        let collection = try SGFCollection(contentsOf: url)
+        return try #require(collection.games.first)
+    }
+
+    /// Made-up positions, not real games.
+    static let nineByNine = """
+        (;GM[1]FF[4]SZ[9];B[ee];W[gc];B[gd];W[fc];B[dc];W[hd];B[he];W[hc];B[fe];W[cg];B[dg]
+        ;W[ch];B[cf];W[dh];B[eh];W[bf];B[be];W[bg];B[ei];W[ce];B[de];W[bd];B[cd];W[fh])
+        """
+
+    static let thirteenByThirteen = """
+        (;GM[1]FF[4]SZ[13];B[jd];W[dj];B[jj];W[dd];B[fc];W[cf];B[kg];W[dc];B[ec];W[db];B[fk]
+        ;W[ek];B[fj];W[ei];B[hk];W[cc];B[gg];W[eg];B[jb];W[fe];B[gd];W[hi];B[ii];W[hh];B[hg]
+        ;W[gi];B[gj];W[ih];B[ji];W[fi];B[kk];W[bh])
+        """
+
+    static let nineteenByThirteen = """
+        (;GM[1]FF[4]SZ[19:13];B[pd];W[dj];B[pj];W[dd];B[jg];W[fc];B[nc];W[cg];B[qg];W[gj];B[jj]
+        ;W[jd];B[kc];W[id];B[lf];W[fg];B[kk];W[gl];B[ni];W[hh])
+        """
+
+    static let collection = """
+        (;GM[1]FF[4]SZ[19];B[pd];W[dp];B[pp];W[dd];B[fq];W[cn];B[jp];W[qf];B[nc];W[rd];B[qc]
+        ;W[qi];B[qk];W[ok];B[qn];W[ic];B[qe];W[re];B[rf];W[rg];B[qg];W[dj];B[pf];W[jd])
+        (;GM[1]FF[4]SZ[19];B[qd];W[dc];B[pq];W[oc])
+        (;GM[1]FF[4]SZ[13];B[jd];W[dj])
+        """
+}

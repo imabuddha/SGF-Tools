@@ -109,3 +109,34 @@ struct SizeTests {
         #expect(BoardStyle(identifier: "kaya") == nil)
     }
 }
+
+@Suite("Timing")
+struct TimingTests {
+    /// Measures a 512x512-pixel 19x19 image with about 100 stones. The limit is lenient, so a
+    /// debug build on a busy machine passes; the numbers printed are what matters.
+    @Test(arguments: BoardStyle.builtIn)
+    func fastEnough(style: BoardStyle) throws {
+        let game = try Fixtures.johnVsGnu()
+        let board = game.position(afterMainLineMoves: 110)
+        let stones = board.stones(of: .black).count + board.stones(of: .white).count
+        #expect((90 ... 120).contains(stones))
+        let renderer = BoardRenderer(style: style)
+        let size = CGSize(width: 512, height: 512)
+        let clock = ContinuousClock()
+
+        var image: CGImage?
+        let first = clock.measure { image = renderer.makeImage(of: board, size: size) }
+        #expect(image != nil)
+        var times: [Duration] = []
+        for _ in 0 ..< 60 {
+            times.append(clock.measure { image = renderer.makeImage(of: board, size: size) })
+        }
+        times.sort()
+        let median = times[times.count / 2]
+        func ms(_ duration: Duration) -> String {
+            String(format: "%.2f ms", Double(duration.components.attoseconds) / 1e15 + Double(duration.components.seconds) * 1000)
+        }
+        print("Timing (\(style)): 512x512 19x19 with \(stones) stones: first \(ms(first)), median \(ms(median)), fastest \(ms(times[0])), slowest \(ms(times.last!))")
+        #expect(median < .milliseconds(50))
+    }
+}
