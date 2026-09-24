@@ -1,0 +1,73 @@
+/* English */
+
+"com_breedingpinetrees_sgf_result" = "Result";
+"com_breedingpinetrees_sgf_result.Description" = "Game result";
+
+"com_breedingpinetrees_sgf_event" = "Event";
+"com_breedingpinetrees_sgf_event.Description" = "Tournament or event where the game took place";
+
+"com_breedingpinetrees_sgf_white" = "White Player";
+"com_breedingpinetrees_sgf_white.Description" = "White Player";
+
+"com_breedingpinetrees_sgf_black" = "Black Player";
+"com_breedingpinetrees_sgf_black.Description" = "Black Player";
+
+"com_breedingpinetrees_sgf_handicap" = "Handicap";
+"com_breedingpinetrees_sgf_handicap.Description" = "Number of handicap stones the black player received";
+
+"com_breedingpinetrees_sgf_komi" = "Komi";
+"com_breedingpinetrees_sgf_komi.Description" = "Amount of komi the white player received";
+
+"com_breedingpinetrees_sgf_size" = "Board Size";
+"com_breedingpinetrees_sgf_size.Description" = "Board Size";
+
+"com_breedingpinetrees_sgf_gametype" = "Game Type";
+"com_breedingpinetrees_sgf_gametype.Description" = "Type of game played";
+
+"com_breedingpinetrees_sgf_whiterank" = "White Player's Rank";
+"com_breedingpinetrees_sgf_whiterank.Description" = "White Player's Rank";
+
+"com_breedingpinetrees_sgf_blackrank" = "Black Player's Rank";
+"com_breedingpinetrees_sgf_blackrank.Description" = "Black Player's Rank";
+
+"com_breedingpinetrees_sgf_blackteam" = "Black Team";
+"com_breedingpinetrees_sgf_blackteam.Description" = "Name of the black team if the game was a team match";
+
+"com_breedingpinetrees_sgf_whiteteam" = "White Team";
+"com_breedingpinetrees_sgf_whiteteam.Description" = "Name of the white team if the game was a team match";
+
+"com_breedingpinetrees_sgf_opening" = "Opening";
+"com_breedingpinetrees_sgf_opening.Description" = "Information about the opening played";
+
+"com_breedingpinetrees_sgf_overtime" = "Overtime Method";
+"com_breedingpinetrees_sgf_overtime.Description" = "Method used for overtime";
+
+"com_breedingpinetrees_sgf_round" = "Round Number & Type";
+"com_breedingpinetrees_sgf_round.Description" = "Round number and type of round";
+
+"com_breedingpinetrees_sgf_ruleset" = "Ruleset";
+"com_breedingpinetrees_sgf_ruleset.Description" = "Rules used";
+
+"com_breedingpinetrees_sgf_oldhandicap" = "Old Handicap";
+"com_breedingpinetrees_sgf_oldhandicap.Description" = "Old style handicap arrangements";
+
+"com_breedingpinetrees_sgf_dateplayed" = "Date Played";
+"com_breedingpinetrees_sgf_dateplayed.Description" = "Date the game was played";
+
+"com_breedingpinetrees_sgf_yearplayed" = "Year Played";
+"com_breedingpinetrees_sgf_yearplayed.Description" = "Year in which the game was played";
+
+"com_breedingpinetrees_sgf_winner" = "Winner";
+"com_breedingpinetrees_sgf_winner.Description" = "Player who won the game";
+
+"com_breedingpinetrees_sgf_loser" = "Loser";
+"com_breedingpinetrees_sgf_loser.Description" = "Player who lost the game";
+
+"com_breedingpinetrees_sgf_iscollection" = "Collection";
+"com_breedingpinetrees_sgf_iscollection.Description" = "True if the file contains more than one game record";
+
+"com_breedingpinetrees_sgf_numgames" = "Games";
+"com_breedingpinetrees_sgf_numgames.Description" = "Number of game records";
+
+"com_breedingpinetrees_sgf_moves" = "Moves";
+"com_breedingpinetrees_sgf_moves.Description" = "Number of moves played";

@@ -23,8 +23,8 @@ settings:
   base:
     ARCHS: arm64
     MACOSX_DEPLOYMENT_TARGET: "26.0"
-    MARKETING_VERSION: 2.0.1
-    CURRENT_PROJECT_VERSION: 2
+    MARKETING_VERSION: 2.0.2
+    CURRENT_PROJECT_VERSION: 3
     SWIFT_VERSION: "6.0"
     ENABLE_HARDENED_RUNTIME: YES
     DEAD_CODE_STRIPPING: YES
@@ -45,6 +45,11 @@ targets:
     dependencies:
       - target: SGFToolsThumbnail
       - target: SGFToolsPreview
+      - target: SGFToolsSpotlight
+        embed: true
+        copy:
+          destination: wrapper
+          subpath: Contents/Library/Spotlight
     settings:
       base:
         PRODUCT_NAME: SGF Tools
@@ -94,6 +99,26 @@ targets:
         CODE_SIGN_ENTITLEMENTS: Extensions/Preview/Preview.entitlements
         SKIP_INSTALL: YES
 
+  # The Spotlight importer: an .mdimporter, the plug-in kind of importer, embedded in the app at
+  # Contents/Library/Spotlight. macOS 27 never calls Spotlight import extensions for files on
+  # disk (see docs/spotlight-notes.md). Its attributes are declared in Spotlight/schema.xml and
+  # named in Spotlight/*.lproj/schema.strings.
+  SGFToolsSpotlight:
+    type: bundle
+    platform: macOS
+    sources:
+      - Spotlight
+    dependencies:
+      - package: SGFKit
+        product: SGFKit
+    settings:
+      base:
+        PRODUCT_NAME: SGFToolsSpotlight
+        PRODUCT_BUNDLE_IDENTIFIER: com.pragmaphilia.SGFTools.Spotlight
+        WRAPPER_EXTENSION: mdimporter
+        INFOPLIST_FILE: Spotlight/Info.plist
+        SKIP_INSTALL: YES
+
   # Logic tests with no host app: they compile the shared sources themselves, so running them
   # never launches SGF Tools.
   SGFToolsTests:
@@ -103,6 +128,7 @@ targets:
       - Tests
       - Shared
       - App/ContentView.swift
+      - Spotlight/SpotlightAttributes.swift
       - path: SGFKit/Tests/SGFRenderingTests/Fixtures/johnVsGnu.sgf
         buildPhase: resources
     dependencies:
@@ -121,7 +147,9 @@ schemes:
   SGF Tools:
     build:
       targets:
-        SGFTools: all
+        # Testing doesn't build the app. Every build of the app registers it with macOS, and
+        # with it its Spotlight importer (see "Building" in the README).
+        SGFTools: [run, profile, analyze, archive]
         SGFToolsTests: [test]
     test:
       targets:
