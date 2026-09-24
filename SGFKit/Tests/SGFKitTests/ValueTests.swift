@@ -90,7 +90,7 @@ struct ValueTypedTests {
         #expect(SGFValue(raw: raw).real == expected)
     }
 
-    @Test(arguments: ["", "six", "6.5.5", "nan", "inf"])
+    @Test(arguments: ["", "six", "6.5.5", "nan", "inf", "0x10", "1e2", String(repeating: "9", count: 400)])
     func notReals(raw: String) {
         #expect(SGFValue(raw: raw).real == nil)
     }

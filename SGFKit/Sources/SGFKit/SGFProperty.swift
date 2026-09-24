@@ -73,7 +73,7 @@ public struct SGFValue: Sendable, Hashable, CustomStringConvertible {
     }
 
     /// The value as an FF[4] Real, such as `6.5`. A decimal comma (`6,5`) is accepted too.
-    /// `nil` for anything else.
+    /// `nil` for anything else, and for a number too large for a `Double`.
     public var real: Double? {
         var text = trimmed
         if !text.contains("."), text.filter({ $0 == "," }).count == 1 {
@@ -84,9 +84,11 @@ public struct SGFValue: Sendable, Hashable, CustomStringConvertible {
         let parts = body.split(separator: ".", omittingEmptySubsequences: false)
         guard (1 ... 2).contains(parts.count),
               parts.allSatisfy({ $0.allSatisfy(\.isASCIIDigit) }),
-              parts.contains(where: { !$0.isEmpty })
+              parts.contains(where: { !$0.isEmpty }),
+              let value = Double(text.first == "+" ? String(text.dropFirst()) : text),
+              value.isFinite
         else { return nil }
-        return Double(text.first == "+" ? String(text.dropFirst()) : text)
+        return value
     }
 
     /// The value as a single point, such as `pd`, or `nil` if it isn't two SGF letters.
