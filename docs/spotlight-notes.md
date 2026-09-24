@@ -98,17 +98,27 @@ mdfind xylophonic                # a word from a comment (kMDItemTextContent)
 
 ## Re-importing SGF files
 
-- `mdimport <folder>` re-imports every file under the folder, whether or not it changed. This is
-  the simplest way to re-index a folder of games.
-- `mdimport a.sgf b.sgf …` re-imported only the first file (though `mdimport -t` test-imports
-  every file it is given). With `xargs`, pass one path per call:
+- **`mdimport -i <folder>` is the way to re-index.** It re-imports every file under the folder,
+  whether or not it changed, SGF or not, and Spotlight stores what the importers return. (`-i`
+  is also what `mdimport` does with no option, according to its manual.) On 2026-09-25 it
+  worked on an external volume as well as on the internal disk: after `mdimport -i` on two
+  folders of the external volume, `mdls` showed the attributes, and `mdfind -onlyin <volume>`
+  counted the files.
+- **Single files aren't always re-imported.** On the external volume, `mdimport <file>` and
+  `mdimport -i <file>` return without storing anything: `mdls` shows no
+  `com_breedingpinetrees_sgf_*` afterward, although `mdimport -t -d2 <file>` shows the importer
+  returning 45 attributes. So the per-file command that these notes and the README recommended
+  until 2.0.4, one path per call because `mdimport a.sgf b.sgf …` re-imported only the first
+  file,
 
   ```sh
   mdfind -0 'kMDItemContentType == "com.red-bean.sgf"' | xargs -0 -n 1 mdimport
   ```
 
-  This reached every file. Each call takes 6 to 20 ms, so about 10 to 30 minutes for the 92,000
-  SGF files on the test Mac, plus the importing itself, which Spotlight does in the background.
+  left 20,165 files on John's Mac with the attributes, all on the internal disk, and none of the
+  64,812 SGF files on an external volume. Whether the internal files got them from these calls
+  or from Spotlight's own background pass is unknown, so the earlier "this reached every file"
+  doesn't hold.
 - A file imported in the last minute or so isn't imported again on request.
 - `mdimport -r <importer>` asks Spotlight to re-import every file of the importer's types on every
   volume. Not tested here, deliberately.

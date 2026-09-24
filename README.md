@@ -176,21 +176,21 @@ only those. The largest SGF file found so far, 1.78 MB with 4,002 games, is read
 
 Spotlight uses the importer for files that are added or changed. Files it indexed before SGF
 Tools was installed keep only their name, dates, and the like until they are imported again. In
-Terminal, either import a folder, which imports every file in it and in the folders inside it:
+Terminal, import each folder that holds SGF files, on any disk, with `mdimport -i`:
 
 ```bash
-mdimport ~/Documents/Go
+mdimport -i ~/Documents/Go
+mdimport -i "/Volumes/Go Archive/Games"
 ```
 
-or import every SGF file that Spotlight knows about, on every indexed disk:
+This imports every file in the folder and in the folders inside it, whether or not it changed,
+so in a folder that also holds other files, it imports those again too. Spotlight imports the
+files in the background, so searches find them a little later; `mdls <file.sgf>` shows whether
+a file has the fields yet.
 
-```bash
-mdfind -0 'kMDItemContentType == "com.red-bean.sgf"' | xargs -0 -n 1 mdimport
-```
-
-`-n 1` hands `mdimport` one file at a time, which is what reached every file in testing. It
-takes about 10 ms a file, so 15 minutes or so for 90,000 files, and Spotlight imports the files
-in the background, so searches find them a little later.
+Import folders rather than single files: on an external disk, `mdimport` given a single file
+returns without storing anything, so feeding it the SGF files that `mdfind` lists, one by one,
+leaves the games on such a disk unindexed.
 
 ## History
 
