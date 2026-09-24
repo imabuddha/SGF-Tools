@@ -145,9 +145,10 @@ extension SpotlightAttributes {
     /// The most of a file that is read: its first 2 MB.
     ///
     /// Spotlight runs importers in worker processes that macOS expects to stay under 150 MB
-    /// (their memory limit; some workers have 100 MB). Parsing takes only about 0.1 seconds a
-    /// megabyte, but the parsed games take 30 times the file's size in memory for a collection
-    /// of ordinary games, and up to 70 times for a single game that is all moves and variations.
+    /// (their memory limit; some workers have 100 MB). Indexing takes only about 0.2 seconds a
+    /// megabyte there, but the parsed games take 30 times the file's size in memory for a
+    /// collection of ordinary games, and up to 70 times for one game that is all moves and
+    /// variations.
     /// Of a larger file, only the games in its first 2 MB are indexed, and Games counts only
     /// those. The largest SGF file found so far, 1.78 MB with 4,002 games, is read in full.
     static let byteLimit = 2 << 20

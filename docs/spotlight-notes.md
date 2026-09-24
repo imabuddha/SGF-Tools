@@ -144,21 +144,21 @@ build, registered by Xcode, on synthetic games and `johnVsGnu.sgf`:
 
 **Reading at most 2 MB of a file.** Spotlight's workers have memory limits in
 `/System/Library/LaunchDaemons/com.apple.jetsamproperties.Mac.plist`: 150 MB for
-`com.apple.mdworker.shared` and `.single.arm64`, 100 MB for `.isolation` and `.bundles`. They are
-soft limits: a test import of 8 MB, which takes about 250 MB, wasn't killed, but a worker over
-its limit is the first to go when memory is short. SGFKit's parsed games take about 30 times the file's size
-in memory for a collection of ordinary games (64 MB for 2 MB and 4,000 games) and up to 70 times
-for one game that is all moves and variations (145 MB for 2 MB), mostly because the parser holds
-two forms of the tree for a moment. So the importer reads only a file's first 2 MB; the parser
-takes a game cut off there as it would a truncated file. The largest SGF file on the test Mac,
-1.78 MB with 4,002 games, is read in full. If larger files matter one day, parsing one game at a
-time, or a leaner tree in SGFKit, would allow more.
+`com.apple.mdworker.shared` and `.single.arm64`, 100 MB for `.isolation` and `.bundles`. They
+are soft limits: a test import of 8 MB, which takes about 250 MB, wasn't killed, but a worker
+over its limit is the first to go when memory is short. SGFKit's parsed games take about 30
+times the file's size in memory for a collection of ordinary games (64 MB for 2 MB and 4,000
+games) and up to 70 times for one game that is all moves and variations (145 MB for 2 MB),
+mostly because the parser holds two forms of the tree for a moment. So the importer reads only
+a file's first 2 MB; the parser takes a game cut off there as it would a truncated file. The
+largest SGF file on the test Mac, 1.78 MB with 4,002 games, is read in full. If larger files
+matter one day, parsing one game at a time, or a leaner tree in SGFKit, would allow more.
 
-**Speed.** Spotlight's workers run on the efficiency cores. Plug-in time reported by
-`mdimport -t -d1 -p`: about 1 ms for a single game; 0.40 to 0.44 seconds at the 2 MB limit
-(4,000 or more ordinary games, or one game of about 350,000 moves). Built with `-O` and run on its own,
-the same work takes 0.16 seconds, 60% of it parsing and the rest the game information of every
-game, which the collected values need.
+**Speed.** Plug-in time reported by `mdimport -t -d1 -p`: about 1 ms for a single game, and
+0.40 to 0.44 seconds at the 2 MB limit (4,000 or more ordinary games, or one game of about
+350,000 moves). The same work compiled into one module with `-O` and run on its own takes 0.16
+seconds, 60% of it parsing and the rest the game information of every game, which the collected
+values need.
 
 **Testing doesn't build the app.** The scheme builds the app for running, profiling, analyzing,
 and archiving only, because every build of the app is registered and becomes a live importer.
