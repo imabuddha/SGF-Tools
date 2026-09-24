@@ -15,11 +15,12 @@ import UniformTypeIdentifiers
 struct PreviewRenderingTests {
     static let directory = ProcessInfo.processInfo.environment["SGF_PREVIEW_SAMPLES"]
 
-    /// Renders a preview at the size Quick Look is asked for, on a window-like background.
-    private func render(_ preview: GamePreview, dark: Bool) throws -> CGImage {
+    /// Renders a preview at the size Quick Look is asked for (or `size`), on a window-like
+    /// background.
+    private func render(_ preview: GamePreview, dark: Bool, size: CGSize = Look.previewSize) throws -> CGImage {
         let background = dark ? Color(white: 0.17) : Color(white: 0.96)
         let view = GamePreviewView(preview: preview)
-            .frame(width: Look.previewSize.width, height: Look.previewSize.height)
+            .frame(width: size.width, height: size.height)
             .background(background)
             .environment(\.colorScheme, dark ? .dark : .light)
         let renderer = ImageRenderer(content: view)
@@ -56,6 +57,26 @@ struct PreviewRenderingTests {
         var total = 0.0
         for index in stride(from: 0, to: bytes.count, by: 4) {
             total += (Double(bytes[index]) + Double(bytes[index + 1]) + Double(bytes[index + 2])) / 765
+        }
+        return total / Double(width * height)
+    }
+
+    /// How warm a rect of the image is: the average of red minus blue, from -1 to 1. The wood of
+    /// the board is clearly warm; the gray backgrounds and the text are not.
+    private func warmth(of image: CGImage, in rect: CGRect) -> Double {
+        let width = Int(rect.width), height = Int(rect.height)
+        var bytes = [UInt8](repeating: 0, count: width * height * 4)
+        bytes.withUnsafeMutableBytes { buffer in
+            let context = CGContext(
+                data: buffer.baseAddress, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
+                space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+            )!
+            context.draw(image, in: CGRect(x: -rect.minX, y: rect.maxY - CGFloat(image.height),
+                                           width: CGFloat(image.width), height: CGFloat(image.height)))
+        }
+        var total = 0.0
+        for index in stride(from: 0, to: bytes.count, by: 4) {
+            total += (Double(bytes[index]) - Double(bytes[index + 2])) / 255
         }
         return total / Double(width * height)
     }
@@ -121,6 +142,24 @@ struct PreviewRenderingTests {
         let window = try #require(image)
         #expect(window.width == 1040)
         try write(window, name: "app-window-\(dark ? "dark" : "light")")
+    }
+
+    /// Finder's Get Info window gives the preview a narrow, tall space (about 272 by 360 points).
+    /// There the board goes above the information instead of being squeezed beside it (John,
+    /// 2026-09-25: the board was a few points wide and the caption ran down one letter a line).
+    @Test(arguments: [false, true])
+    func aNarrowSpaceStacksTheBoardAboveTheInformation(dark: Bool) throws {
+        let preview = try #require(try GamePreview(contentsOf: Fixtures.johnVsGnu()))
+        let size = CGSize(width: 272, height: 360)
+        let image = try render(preview, dark: dark, size: size)
+        // At scale 2: the board fills the width under the 20-point padding, from the top.
+        #expect(warmth(of: image, in: CGRect(x: 120, y: 80, width: 280, height: 160)) > 0.15,
+                "a wide board at the top")
+        // Nothing beside the board: its right-hand part is wood too, not the information.
+        #expect(warmth(of: image, in: CGRect(x: 380, y: 100, width: 30, height: 120)) > 0.15)
+        // The information below the board, on the plain background.
+        #expect(warmth(of: image, in: CGRect(x: 60, y: 560, width: 400, height: 120)) < 0.05)
+        try write(image, name: "preview-narrow-johnVsGnu-\(dark ? "dark" : "light")")
     }
 
     @Test func aFileWithNoGameHasNoPreview() {

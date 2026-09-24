@@ -48,4 +48,9 @@ enum Look {
 
     /// The width of the game information beside the board, in points.
     static let previewInfoWidth: CGFloat = 300
+
+    /// The smallest board the preview puts beside the game information, in points. Where the
+    /// space is narrower than this plus the information, as in Finder's Get Info and column view,
+    /// the board goes above the information instead.
+    static let previewMinimumBoardSide: CGFloat = 260
 }

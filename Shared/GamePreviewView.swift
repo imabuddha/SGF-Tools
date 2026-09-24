@@ -25,25 +25,53 @@ struct GamePreview: Sendable {
     }
 }
 
-/// A file's preview: the board on the left, and the game information beside it.
+/// A file's preview: the board on the left and the game information beside it, or, where there
+/// isn't room for both side by side (Finder's Get Info and column view give a narrow, tall space),
+/// the board above the game information.
 struct GamePreviewView: View {
     let preview: GamePreview
 
-    var body: some View {
-        HStack(alignment: .top, spacing: 20) {
-            VStack(spacing: 6) {
-                BoardView(position: preview.position)
-                Text(caption)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+    private static let padding: CGFloat = 20
+    private static let spacing: CGFloat = 20
 
-            GameInfoView(summary: preview.summary)
-                .frame(width: Look.previewInfoWidth)
-                .frame(maxHeight: .infinity, alignment: .top)
+    var body: some View {
+        GeometryReader { geometry in
+            let inner = CGSize(width: max(0, geometry.size.width - 2 * Self.padding),
+                               height: max(0, geometry.size.height - 2 * Self.padding))
+            Group {
+                if inner.width >= Look.previewMinimumBoardSide + Self.spacing + Look.previewInfoWidth {
+                    HStack(alignment: .top, spacing: Self.spacing) {
+                        board
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        GameInfoView(summary: preview.summary)
+                            .frame(width: Look.previewInfoWidth)
+                            .frame(maxHeight: .infinity, alignment: .top)
+                    }
+                } else {
+                    VStack(alignment: .leading, spacing: Self.spacing) {
+                        // A square board as wide as the space, but leaving the information
+                        // almost half the height, enough for the players and the result.
+                        board
+                            .frame(width: inner.width, height: min(inner.width, inner.height * 0.55))
+                        GameInfoView(summary: preview.summary)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    }
+                }
+            }
+            .padding(Self.padding)
         }
-        .padding(20)
+    }
+
+    /// The board with its caption underneath.
+    private var board: some View {
+        VStack(spacing: 6) {
+            BoardView(position: preview.position)
+            Text(caption)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
     }
 
     /// Which position the board shows.
