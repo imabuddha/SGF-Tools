@@ -134,7 +134,7 @@ would need new SGFKit API or a file that both the preview and the importer compi
 **L2. `GameInfo.moveCount` and `SGFGame.mainLineMoveCount`.** Similar names for different counts:
 without passes, as the Moves field of 1.x, and with passes, as SGF numbers moves. Both docs say
 which is which, `GameInfo` keeps the fields of 1.x, and after D1 the code reads
-`mainLineMoves.count { !$0.isPass }`.
+`mainLineMoves.count { !$0.isPass }`. *Changed in 2.0.5, as John decided; see the outcome.*
 
 **L3. `GameInfo(collection:)` joins the comments of every game, which only the tests read.** The
 importer makes each game's `GameInfo` itself, for the values it collects from every game, and the
@@ -145,6 +145,7 @@ its cost in the preview is bounded.
 `collectionDepth`, and `drawCollectionBackdrop(for:in:rect:)`, `BoardCoordinates.name(of:on:)`,
 `GameInfo.gameTypeName(for:)`, `Board.compactPosition`, and `SGFGame.subscript(id:)`. Each is
 small and documented, and the screensaver, or the playlist the plan mentions, may want it.
+*Changed in 2.0.5, as John decided; see the outcome.*
 
 **L5. Charset names.** `Charset(declared:)` (`TextEncoding.swift:44`) matches common names of UTF-8
 and Latin-1 itself before asking Core Foundation, which knows most of them. The list covers
@@ -190,7 +191,7 @@ These come later, as John decided, and are not fixed here:
 
 Every finding marked *Fix* was fixed, in separate commits for refactors and for behavior changes.
 Before each commit, the suite that its change affects passed; both suites pass at the end. The
-version is now 2.0.4 (5).
+version became 2.0.4 (5).
 
 **Behavior changes**, all bug fixes:
 
@@ -232,9 +233,41 @@ importer 15 seconds later, and only then were the build products deleted; the co
 
 **Left for John:**
 
-- The preview's 2 MB limit (B4), the importer's number, and whether "Several" is the right thing
-  to show for a larger file.
-- L2 and L4, if the names or the unused API bother him.
 - On an external disk, `mdimport` given a single file stores nothing (B5); that may be worth a
   report to Apple.
 - The five known defects above.
+
+### John's decisions, 2026-09-25
+
+- **The 2 MB limit (B4) stays.** John confirmed it. The preview reads a file over 2 MB only to
+  its first game and shows "Games: Several", and the importer reads a file's first 2 MB, as
+  before. Nothing changed.
+- **L2: the count that leaves out passes now says so.** `GameInfo.moveCount` is now
+  `GameInfo.moveCountWithoutPasses`, and its doc comment and that of
+  `SGFGame.mainLineMoveCount`, which counts passes as SGF numbers moves and keeps its name, each
+  point to the other. The Spotlight attribute `com_breedingpinetrees_sgf_moves` keeps its name
+  and its count, without passes, as in 1.x.
+- **L4: the public API is what is used, and the core others would need.** A declaration stays
+  public if the app's shared code, the extensions, the importer, or SGFRendering use it, or if it
+  is the core of a type John named for other users of the package: the parser, `SGFCollection`,
+  `SGFGame`, `GameInfo`, `Board`, `BoardRenderer`, and `BoardStyle`, with the types in their
+  API, such as `SGFNode` and `BoardSize`. Everything else that only its own module or the tests
+  used is now internal, and the package's tests reach it with `@testable import`:
+  - SGFKit: the initializers that only the parser calls, of `SGFCollection`, `SGFGame`,
+    `SGFNode`, `SGFProperty`, `SGFWarning`, and `Move`; `SGFCollection.moreGamesFollow` and
+    `SGFGame.encoding`; `GameInfo.init?(collection:)` and `gameTypeName(for:)`;
+    `Board.compactPosition`; `StoneColor.opponent`; `Move.isPass`; `GameResult.init(sgf:)` and
+    `winner`; `PartialDate.init?(year:month:day:)` and `dateComponents`; `SGFPoint.init?(sgf:)`
+    and `sgf`; and `BoardSize.maximum`, `init?(_:)`, `init?(sgf:)`, `isSquare`, `sgf`, and
+    `contains(_:)`.
+  - SGFRendering: `BoardCoordinates`, `BoardSize.starPoints`, `BoardRenderer.collectionDepth`,
+    and `drawCollectionBackdrop(for:in:rect:)`.
+  - Removed, because nothing used them: `SGFGame.subscript(id:)`, `PartialDate`'s `Comparable`
+    conformance, and `BoardRenderer.compactCellSize`, whose number the renderer's type comment
+    now gives.
+
+  One app test makes its date with `PartialDate(sgfDate:)` instead, so the app's tests still
+  use only the public API, as the products do.
+
+These follow-ups are version 2.0.5 (6), with no behavior change. SGFKit's 201 tests (171 in
+SGFKitTests, 30 in SGFRenderingTests) and the app's 57 pass, as before.
