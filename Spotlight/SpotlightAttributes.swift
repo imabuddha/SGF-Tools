@@ -133,7 +133,7 @@ struct SpotlightAttributes: Equatable {
     static func day(of date: PartialDate) -> Date? {
         guard let month = date.month, let day = date.day else { return nil }
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        calendar.timeZone = .gmt
         return calendar.date(from: DateComponents(year: date.year, month: month, day: day, hour: 12))
     }
 }
@@ -148,6 +148,7 @@ extension SpotlightAttributes {
     /// megabyte there, but the parsed games take 30 times the file's size in memory for a
     /// collection of ordinary games, and up to 70 times for one game that is all moves and
     /// variations.
+    ///
     /// Of a larger file, only the games in its first 2 MB are indexed, and Games counts only
     /// those. The largest SGF file found so far, 1.78 MB with 4,002 games, is read in full.
     static let byteLimit = 2 << 20

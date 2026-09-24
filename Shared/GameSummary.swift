@@ -126,7 +126,7 @@ struct GameSummary: Sendable, Equatable {
     static func describeDate(_ written: String, locale: Locale = .current) -> String {
         guard let date = PartialDate(sgfDate: written), date.description == written else { return written }
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        calendar.timeZone = .gmt
         guard let day = calendar.date(from: DateComponents(year: date.year, month: date.month ?? 1, day: date.day ?? 1))
         else { return written }
         var style = Date.FormatStyle(date: .omitted, time: .omitted, locale: locale, calendar: calendar,
