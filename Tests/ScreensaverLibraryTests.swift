@@ -123,6 +123,53 @@ struct ScreensaverLibraryTests {
         #expect(seen.contains(games[1]))
     }
 
+    /// As a screen plays: its next game is picked while its current one is still on it.
+    @Test(arguments: [2, 3, 10, 50, 150])
+    func aScreenNeverShowsAGameTwiceInARow(count: Int) throws {
+        let folder = try TemporaryFolder()
+        let url = folder.url.appendingPathComponent("playlist")
+        try writePlaylist(count, to: url)
+        let log = RecordingLog()
+        let library = GameLibrary(playlist: PlaylistStore(url: url, log: log), direct: nil, ownGame: ownGame, log: log,
+                                  generator: SeededGenerator(seed: 11))
+        var current = try #require(library.pick(for: 1, allowsDirect: true)).identity
+        var seen: Set<String> = [current]
+        for _ in 0 ..< 300 {
+            let next = try #require(library.pick(for: 1, allowsDirect: true)).identity
+            #expect(next != current)
+            library.release(current, from: 1)
+            current = next
+            seen.insert(next)
+        }
+        #expect(seen.count == count)
+    }
+
+    @Test func aScreenNeverShowsAGameTwiceInARowInDirectMode() throws {
+        let folder = try TemporaryFolder()
+        let log = RecordingLog()
+        let paths = (0 ..< 3).map { "/Volumes/Disk/game \($0).sgf" }
+        let library = GameLibrary(playlist: PlaylistStore(url: folder.url.appendingPathComponent("none"), log: log),
+                                  direct: Self.direct(paths, log: log), ownGame: ownGame, log: log,
+                                  generator: SeededGenerator(seed: 11))
+        var current = try #require(library.pick(for: 1, allowsDirect: true))
+        for _ in 0 ..< 100 {
+            let next = try #require(library.pick(for: 1, allowsDirect: true))
+            #expect(next.source == .direct)
+            #expect(next.identity != current.identity)
+            library.release(current.identity, from: 1)
+            current = next
+        }
+    }
+
+    @Test func avoidsFewerRecentGamesBeforeAScreensOwn() {
+        let recent = (0 ..< 300).map { "game \($0)" }
+        let avoided = GameLibrary.avoided(others: ["other"], own: ["game 299"], recent: recent)
+        #expect(avoided.map(\.count) == [201, 101, 51, 26, 13, 7, 4, 2, 2, 1])
+        #expect(avoided.dropLast().allSatisfy { $0.isSuperset(of: ["other", "game 299"]) })
+        #expect(avoided.last == ["other"])
+        #expect(GameLibrary.avoided(others: [], own: [], recent: []) == [[], []])
+    }
+
     @Test func noRepeatsAmongTheLast200() throws {
         let folder = try TemporaryFolder()
         let url = folder.url.appendingPathComponent("playlist")

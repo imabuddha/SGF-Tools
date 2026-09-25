@@ -9,9 +9,9 @@ import Synchronization
 /// 2. **Direct mode**, never in a preview: Spotlight, and the files themselves.
 /// 3. **The screensaver's own game**, with a hint to open SGF Tools.
 ///
-/// For every screen, a pick avoids the games on the other screens and the last 200 shown, as far
-/// as the source can. Picks run one at a time on the library's queue, off the main thread, since
-/// a pick may read a file.
+/// For every screen, a pick avoids the games on the screens and the last 200 shown, as far as the
+/// source can (see ``avoided(others:own:recent:)``). Picks run one at a time on the library's
+/// queue, off the main thread, since a pick may read a file.
 final class GameLibrary: @unchecked Sendable {
     /// The number of recent games a pick avoids.
     static let recentLimit = 200
@@ -63,12 +63,12 @@ final class GameLibrary: @unchecked Sendable {
     /// it's allowed, then the own game. The game counts as on the screen until it is released.
     /// Views go through ``requestGame(for:allowsDirect:completion:)``; the tests call this.
     func pick(for screen: Int, allowsDirect: Bool) -> SaverGame? {
-        let (others, recent, isFirst) = shown.withLock { shown in
+        let (others, own, recent, isFirst) = shown.withLock { shown in
             let others = Set(shown.onScreen.filter { $0.key != screen }.values.joined())
-            return (others, Set(shown.recent), shown.onScreen.values.allSatisfy(\.isEmpty))
+            return (others, Set(shown.onScreen[screen] ?? []), shown.recent, shown.onScreen.values.allSatisfy(\.isEmpty))
         }
         if isFirst { direct?.sessionDidStart() }
-        let avoided = [others.union(recent), others]
+        let avoided = Self.avoided(others: others, own: own, recent: recent)
 
         var game: SaverGame?
         if let playlist {
@@ -118,6 +118,27 @@ final class GameLibrary: @unchecked Sendable {
     /// A screen has stopped: it holds no games.
     func releaseAll(from screen: Int) {
         shown.withLock { _ = $0.onScreen.removeValue(forKey: screen) }
+    }
+
+    /// What a pick avoids, in the order it gives up on: the games on every screen and the last
+    /// ``recentLimit`` shown; then fewer of the recent games, half as many each time; then only
+    /// the games on the screens; then only those on the other screens. A source takes any game
+    /// after the last. So no game is on two screens at once, and no screen shows a game twice in
+    /// a row, while a collection has another to show, however small it is.
+    ///
+    /// - Parameters:
+    ///   - others: The games on the other screens.
+    ///   - own: The games on this screen: the one playing, while the next is picked.
+    ///   - recent: The games shown most recently, oldest first.
+    static func avoided(others: Set<String>, own: Set<String>, recent: [String]) -> [Set<String>] {
+        let screens = others.union(own)
+        var avoided: [Set<String>] = []
+        var window = min(recentLimit, recent.count)
+        while window > 0 {
+            avoided.append(screens.union(recent.suffix(window)))
+            window /= 2
+        }
+        return avoided + [screens, others]
     }
 
     /// Runs a source's pick with the library's generator.
