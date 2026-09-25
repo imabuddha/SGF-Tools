@@ -268,7 +268,8 @@ importer 15 seconds later, and only then were the build products deleted; the co
     now gives.
 
   One app test makes its date with `PartialDate(sgfDate:)` instead, so the app's tests still
-  use only the public API, as the products do.
+  use only the public API, as the products do. (`BoardSize.sgf` is public again in 2.1.0, by
+  the same rule: the screensaver's playlist, in the app's shared code, writes it.)
 
 - **John confirmed the two judgment calls (later the same day):** the core members above stay
   public even where only the tests use them today, and `PartialDate` stays without `Comparable`,

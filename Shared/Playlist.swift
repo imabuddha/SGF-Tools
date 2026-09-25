@@ -106,9 +106,7 @@ enum Playlist {
         let info = GameInfo(game: game)
         guard isGame(info) else { return nil }
         var sgf = "(;GM[1]FF[4]CA[UTF-8]"
-        if let size = game.declaredBoardSize {
-            sgf += size.columns == size.rows ? "SZ[\(size.columns)]" : "SZ[\(size.columns):\(size.rows)]"
-        }
+        if let size = game.declaredBoardSize { sgf += "SZ[\(size.sgf)]" }
         let details: [(String, String?)] = [
             ("PB", info.blackPlayer), ("BR", info.blackRank), ("PW", info.whitePlayer), ("WR", info.whiteRank),
             ("RE", info.result), ("EV", info.event), ("DT", info.date),

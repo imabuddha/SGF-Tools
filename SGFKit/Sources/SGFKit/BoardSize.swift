@@ -50,7 +50,7 @@ public struct BoardSize: Sendable, Hashable, CustomStringConvertible {
     var isSquare: Bool { columns == rows }
 
     /// The size as an SZ value: `"19"` for a square board, `"19:13"` otherwise.
-    var sgf: String { isSquare ? "\(columns)" : "\(columns):\(rows)" }
+    public var sgf: String { isSquare ? "\(columns)" : "\(columns):\(rows)" }
 
     /// The size for display, such as `"19x19"`.
     public var description: String { "\(columns)x\(rows)" }
