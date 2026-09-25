@@ -110,6 +110,11 @@ final class GameLibrary: @unchecked Sendable {
         }
     }
 
+    /// The games a screen holds: the one playing, and the next one while it's prepared.
+    func games(on screen: Int) -> [String] {
+        shown.withLock { $0.onScreen[screen] ?? [] }
+    }
+
     /// A screen has stopped: it holds no games.
     func releaseAll(from screen: Int) {
         shown.withLock { _ = $0.onScreen.removeValue(forKey: screen) }

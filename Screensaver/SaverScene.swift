@@ -13,9 +13,21 @@ struct PreparedGame: Sendable {
     /// The screen's backing scale, which the images are drawn at.
     let scale: CGFloat
     let details: CGImage?
-    let firstBoard: CGImage?
+    /// The board before the first move, once drawn. The screensaver draws the next game's only
+    /// when the current game has reached its last move, so that a screen holds two boards at a
+    /// time.
+    var firstBoard: CGImage?
     /// How long the first board took to draw, in milliseconds.
-    let firstBoardTime: Double
+    var firstBoardTime: Double?
+}
+
+extension PreparedGame {
+    /// Draws the board before the first move, off the main thread.
+    mutating func drawFirstBoard() {
+        let start = ContinuousClock.now
+        firstBoard = SaverScene.boardImage(of: game, afterMoves: 0, side: layout.board.width, scale: scale)
+        firstBoardTime = (ContinuousClock.now - start) / .milliseconds(1)
+    }
 }
 
 /// One screen's layers, and applying a moment of the timeline to them (see
@@ -53,18 +65,17 @@ final class SaverScene {
 
     // MARK: - Preparing, off the main thread
 
-    /// Lays a game out for a screen and draws its details and its first board, or returns `nil`
-    /// if the screen has no area.
-    nonisolated static func prepare(_ game: SaverGame, screen: CGSize, scale: CGFloat,
+    /// Lays a game out for a screen and draws its details, and its first board if asked, or
+    /// returns `nil` if the screen has no area.
+    nonisolated static func prepare(_ game: SaverGame, screen: CGSize, scale: CGFloat, drawingFirstBoard: Bool = true,
                                     using generator: inout some RandomNumberGenerator) -> PreparedGame? {
         let detailsSize = SaverLayout.isPreview(screen) ? nil : DetailsRenderer.size(of: game.details, on: screen)
         guard let layout = SaverLayout(screen: screen, details: detailsSize, using: &generator) else { return nil }
         let details = layout.details == nil ? nil : DetailsRenderer.makeImage(of: game.details, on: screen, scale: scale)
-        let start = ContinuousClock.now
-        let firstBoard = boardImage(of: game, afterMoves: 0, side: layout.board.width, scale: scale)
-        return PreparedGame(game: game, layout: layout, timeline: SaverTimeline(moveCount: game.moveCount), scale: scale,
-                            details: details, firstBoard: firstBoard,
-                            firstBoardTime: (ContinuousClock.now - start) / .milliseconds(1))
+        var prepared = PreparedGame(game: game, layout: layout, timeline: SaverTimeline(moveCount: game.moveCount),
+                                    scale: scale, details: details)
+        if drawingFirstBoard { prepared.drawFirstBoard() }
+        return prepared
     }
 
     /// The board after a number of moves, the last one marked with a ring (a pass marks

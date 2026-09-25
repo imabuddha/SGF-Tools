@@ -763,9 +763,14 @@ The first draft, 2.1.0 (8), follows the design above, except:
 7. **The bundle test doesn't link ScreenSaver.framework.** It declares the view's initializer in
    an `@objc` protocol instead, because the framework links Photos, which starts Contacts in the
    test process.
+8. **A screen's game loop is in `Screensaver/SaverPlayer.swift`**, not in the view, so that the
+   tests can play games on a scene with a clock they move; the view keeps its life in the host
+   and the timer. The next game is prepared while the current one plays, but its first board is
+   drawn only once the current game reaches its last move, so a screen holds two boards at a time.
 
 Checked headlessly, on 2026-09-25:
-- the package's tests and the app's logic tests, which include the screensaver's; the Release
+- the package's tests and the app's logic tests, which include the screensaver's, among them a
+  game played through on a scene without a window, and three screens playing at once; the Release
   bundle with `plutil`, `lipo`, `codesign`, and `nm`; and the bundle test, which loaded it and made
   its view at 1920x1080 and 300x190
 - `Tests/SandboxCheck/check.sh`: every step passed, with 64,020 games from Spotlight for both the
