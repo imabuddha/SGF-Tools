@@ -3,38 +3,6 @@ import Foundation
 import SGFKit
 import Testing
 
-/// Reads for direct mode that answer by path, as the builder's tests do: "denied", "locked",
-/// "gone", "cloud", and "problem" give those outcomes, "slow" waits for `release` and then gives
-/// a game, and anything else is a game.
-func scriptedReader(release: DispatchSemaphore? = nil, reads: Counter? = nil) -> GameFileReader {
-    var reader = GameFileReader()
-    reader.status = { path in
-        if path.contains("gone") { return .failure(.init(code: ENOENT)) }
-        return .success(.init(inode: 1, size: 1000, modified: [0, 0], isDataless: path.contains("cloud")))
-    }
-    reader.readPrefix = { path, _ in
-        reads?.increment()
-        if path.contains("denied") { return .failure(.init(code: EPERM)) }
-        if path.contains("locked") { return .failure(.init(code: EACCES)) }
-        if path.contains("problem") { return .success(Data("(;AB[dd];W[pp])".utf8)) }
-        if path.contains("slow") { release?.wait() }
-        return .success(Data(namedGame(moves: 30).utf8))
-    }
-    return reader
-}
-
-/// Writes a playlist of `count` games, from files named `prefix 0.sgf` and on, to a URL, replacing
-/// any file there.
-func writePlaylist(_ count: Int, prefix: String = "game", to url: URL) throws {
-    let game = try game(namedGame(moves: 30))
-    let lines = (0 ..< count).compactMap { Playlist.line(for: game, url: URL(fileURLWithPath: "/Games/\(prefix) \($0).sgf")) }
-    try Data(playlistText(lines).utf8).write(to: url, options: .atomic)
-}
-
-/// The screensaver's own game, from the test bundle, which carries johnVsGnu.sgf as the
-/// screensaver's does.
-let ownGame: @Sendable () -> SaverGame? = { SaverGame.own(in: Bundle(for: RecordingLog.self)) }
-
 @Suite("Screensaver: the game library")
 struct ScreensaverLibraryTests {
     static let home = URL(fileURLWithPath: "/Users/tester", isDirectory: true)

@@ -18,17 +18,7 @@ struct PlaylistBuilderTests {
         builder.findPaths = { paths }
         builder.mountedVolumes = { volumes }
         builder.now = { made }
-        builder.reader.status = { path in
-            if path.contains("gone") { return .failure(.init(code: ENOENT)) }
-            return .success(.init(inode: 1, size: 1000, modified: [0, 0], isDataless: path.contains("cloud")))
-        }
-        builder.reader.readPrefix = { path, _ in
-            if path.contains("denied") { return .failure(.init(code: EPERM)) }
-            if path.contains("locked") { return .failure(.init(code: EACCES)) }
-            if path.contains("problem") { return .success(Data("(;AB[dd];W[pp])".utf8)) }
-            let number = Int(path.filter(\.isNumber)) ?? 0
-            return .success(Data(namedGame(moves: 30 + number % 20).utf8))
-        }
+        builder.reader = scriptedReader { path in 30 + (Int(path.filter(\.isNumber)) ?? 0) % 20 }
         return builder
     }
 

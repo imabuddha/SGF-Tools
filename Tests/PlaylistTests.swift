@@ -2,44 +2,8 @@ import Foundation
 import SGFKit
 import Testing
 
-/// Moves for a synthetic game, as SGF nodes: Black fills every other row and White the rows
-/// between, from `firstRow` down, each leaving the last column empty, so nothing is captured.
-/// Moves listed in `passes` (counting from 1) are passes.
-func fillerMoves(_ count: Int, columns: Int = 19, firstRow: Int = 1, whiteFirst: Bool = false,
-                 passes: Set<Int> = []) -> String {
-    let letters = Array("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-    var sgf = ""
-    var placed = [0, 0]  // black, white
-    for number in stride(from: 1, through: count, by: 1) {
-        let isBlack = (number % 2 == 1) != whiteFirst
-        let property = isBlack ? "B" : "W"
-        if passes.contains(number) {
-            sgf += ";\(property)[]"
-            continue
-        }
-        let index = placed[isBlack ? 0 : 1]
-        let perRow = columns - 1
-        let row = firstRow - 1 + (index / perRow) * 2 + (isBlack ? 0 : 1)
-        sgf += ";\(property)[\(letters[index % perRow])\(letters[row])]"
-        placed[isBlack ? 0 : 1] += 1
-    }
-    return sgf
-}
-
-/// A game that qualifies for the screensaver: both players named, and `moves` moves.
-func namedGame(size: String = "19", moves: Int = 60, extraRoot: String = "") -> String {
-    "(;GM[1]FF[4]SZ[\(size)]PB[Black Tester]BR[3d]PW[White Tester]WR[5d]RE[W+R]EV[Fixture Cup]"
-        + "DT[2009-05-01]\(extraRoot)" + fillerMoves(moves, columns: Int(size.prefix { $0 != ":" }) ?? 19) + ")"
-}
-
-/// A playlist holding lines, with a header.
-func playlistText(_ lines: [String], found: Int? = nil, made: Date = Date(timeIntervalSince1970: 1_790_000_000)) -> String {
-    Playlist.text(of: .init(made: made, found: found ?? lines.count, games: lines.count))
-        + lines.map { $0 + "\n" }.joined()
-}
-
 /// A game written as a playlist line and read back.
-func roundTrip(_ game: SGFGame, sourceLocation: SourceLocation = #_sourceLocation) throws -> SGFGame {
+private func roundTrip(_ game: SGFGame, sourceLocation: SourceLocation = #_sourceLocation) throws -> SGFGame {
     let url = URL(fileURLWithPath: "/Volumes/Fixture Disk/Games/a game.sgf")
     let line = try #require(Playlist.line(for: game, url: url), sourceLocation: sourceLocation)
     #expect(!line.contains("\n") && !line.contains("\r"), sourceLocation: sourceLocation)

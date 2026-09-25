@@ -21,12 +21,8 @@ final class FakeInstance: SaverInstance {
 @Suite("Screensaver: which views play")
 @MainActor
 struct ScreensaverRegistryTests {
-    final class Clock: @unchecked Sendable {
-        var now = 100.0
-    }
-
     let log = RecordingLog()
-    let clock = Clock()
+    let clock = TestClock(100)
     let registry: InstanceRegistry
 
     init() {

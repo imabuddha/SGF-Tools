@@ -3,33 +3,6 @@ import Foundation
 import SGFKit
 import Testing
 
-/// A temporary folder, removed when the test ends.
-final class TemporaryFolder {
-    let url: URL
-
-    init() throws {
-        url = FileManager.default.temporaryDirectory.appendingPathComponent("SGFToolsTests-\(UUID().uuidString)")
-        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
-    }
-
-    deinit {
-        // Make anything a test locked readable again, so it can be removed.
-        if let items = FileManager.default.enumerator(atPath: url.path) {
-            for case let item as String in items { chmod(url.appendingPathComponent(item).path, 0o755) }
-        }
-        chmod(url.path, 0o755)
-        try? FileManager.default.removeItem(at: url)
-    }
-
-    /// Writes a file in the folder and returns its path.
-    @discardableResult
-    func write(_ text: String, to name: String) throws -> String {
-        let file = url.appendingPathComponent(name)
-        try Data(text.utf8).write(to: file)
-        return file.path
-    }
-}
-
 @Suite("Playlist: reading a candidate file")
 struct GameFileReaderTests {
     @Test func aGame() throws {
@@ -130,18 +103,6 @@ struct GameFileReaderTests {
         #expect(!status.isDataless)
         #expect(status.inode != 0)
     }
-}
-
-/// A thread-safe count, for closures that tests hand to the code under test.
-final class Counter: @unchecked Sendable {
-    private let lock = NSLock()
-    private var count = 0
-
-    func increment() {
-        lock.withLock { count += 1 }
-    }
-
-    var value: Int { lock.withLock { count } }
 }
 
 @Suite("Playlist: candidates from Spotlight")

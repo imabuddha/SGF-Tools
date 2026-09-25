@@ -8,11 +8,7 @@ import Testing
 @Suite("Screensaver: playing a screen's games")
 @MainActor
 struct ScreensaverPlayerTests {
-    final class Clock: @unchecked Sendable {
-        var now = 1000.0
-    }
-
-    let clock = Clock()
+    let clock = TestClock(1000)
     let log = RecordingLog()
     let folder: TemporaryFolder
     let library: GameLibrary
