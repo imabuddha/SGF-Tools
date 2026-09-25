@@ -239,9 +239,42 @@ enum CharsetDetection {
 /// Decoding of byte ranges to strings.
 enum TextDecoding {
     /// Decodes bytes as UTF-8, or returns `nil` if they aren't valid UTF-8.
+    ///
+    /// Programs that wrap long lines with soft line breaks (a backslash before a line break) by
+    /// counting bytes can put one inside a character. So bytes that aren't valid UTF-8 are
+    /// checked again without their soft line breaks, which FF[4] Text removes anyway.
     static func utf8(_ bytes: Slice<UnsafeBufferPointer<UInt8>>) -> String? {
-        String(validating: bytes, as: UTF8.self)
+        if let string = String(validating: bytes, as: UTF8.self) { return string }
+        guard bytes.contains(backslash) else { return nil }
+        return String(validating: removingSoftLineBreaks(bytes), as: UTF8.self)
     }
+
+    /// The bytes without their soft line breaks: each backslash before a line break (`\n`,
+    /// `\r\n`, `\n\r`, or `\r`) is removed with the line break. Other escapes are kept whole.
+    static func removingSoftLineBreaks(_ bytes: Slice<UnsafeBufferPointer<UInt8>>) -> [UInt8] {
+        func isLineBreak(_ byte: UInt8) -> Bool { byte == 0x0A || byte == 0x0D }
+        var result: [UInt8] = []
+        result.reserveCapacity(bytes.count)
+        var index = bytes.startIndex
+        while index < bytes.endIndex {
+            let byte = bytes[index]
+            index += 1
+            guard byte == backslash, index < bytes.endIndex else {
+                result.append(byte)
+                continue
+            }
+            let escaped = bytes[index]
+            index += 1
+            if isLineBreak(escaped) {
+                if index < bytes.endIndex, isLineBreak(bytes[index]), bytes[index] != escaped { index += 1 }
+            } else {
+                result += [byte, escaped]
+            }
+        }
+        return result
+    }
+
+    private static let backslash: UInt8 = 0x5C
 
     /// Decodes bytes as Windows-1252. The five bytes Windows-1252 leaves undefined become the
     /// Latin-1 control characters with the same numbers, so decoding never fails.

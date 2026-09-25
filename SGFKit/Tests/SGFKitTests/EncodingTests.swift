@@ -77,6 +77,40 @@ struct EncodingTests {
         #expect(collection.warnings.isEmpty)
     }
 
+    @Test(arguments: ["\n", "\r\n", "\n\r", "\r"])
+    func aSoftLineBreakInsideAUTF8Character(lineBreak: String) throws {
+        // Programs that wrap long lines with soft line breaks (a backslash before a line break)
+        // by counting bytes can put one inside a character: here inside "é" (C3 A9) and "が"
+        // (E3 81 8C). The game must still be read as UTF-8, not in a charset detected for it.
+        let softBreak = ascii("\\" + lineBreak)
+        let bytes = ascii("(;GM[1]CA[UTF-8]C[Black: j'ai d") + [0xC3] + softBreak + [0xA9]
+            + ascii("j\u{E0} vu \u{E7}a]GC[\u{3042}\u{308A}") + [0xE3, 0x81] + softBreak + [0x8C]
+            + ascii("\u{3068}\u{3046}];B[pd])")
+        let collection = parse(bytes: bytes)
+        let game = try #require(collection.games.first)
+        #expect(game.root["C"]?.value.text == "Black: j'ai d\u{E9}j\u{E0} vu \u{E7}a")
+        #expect(game.root["GC"]?.value.text == "\u{3042}\u{308A}\u{304C}\u{3068}\u{3046}")
+        #expect(game.encoding == .utf8)
+        #expect(collection.warnings.isEmpty)
+    }
+
+    @Test func removingSoftLineBreaksKeepsOtherEscapes() throws {
+        // "C:\\" ends in an escaped backslash, so the line break after it is a hard one.
+        let bytes = ascii("(;C[C:\\\\\ncaf") + [0xC3] + ascii("\\\n") + [0xA9] + ascii(" \\] \\\\ \\:];B[pd])")
+        let game = try firstGame(bytes: bytes)
+        #expect(game.root["C"]?.value.text == "C:\\\ncaf\u{E9} ] \\ :")
+        #expect(game.encoding == .utf8)
+    }
+
+    @Test func aSoftLineBreakInsideAUTF8CharacterOfALatin1Game() throws {
+        // Declared Latin-1, but the text is UTF-8, as before, once the character is joined.
+        let collection = parse(bytes: ascii("(;CA[ISO-8859-1]PB[Jos") + [0xC3] + ascii("\\\n") + [0xA9] + ascii("])"))
+        let game = try #require(collection.games.first)
+        #expect(game.root["PB"]?.value.simpleText == "Jos\u{E9}")
+        #expect(game.encoding == .utf8)
+        #expect(collection.warnings.map(\.kind) == [.encodingFallback(declared: "ISO-8859-1", used: "UTF-8")])
+    }
+
     @Test func utf8ByteOrderMarkWithUTF8Content() throws {
         let collection = parse(bytes: [0xEF, 0xBB, 0xBF] + ascii("(;PB[Jos") + [0xC3, 0xA9] + ascii("])"))
         #expect(collection.games.first?.root["PB"]?.value.simpleText == "Jos\u{E9}")
