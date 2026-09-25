@@ -62,6 +62,15 @@ struct ThumbnailTests {
         #expect(Thumbnail.contextSize(fitting: .zero) == CGSize(width: 1, height: 1))
     }
 
+    @Test func contextSizeOfAnAbsurdSizeIsLimited() {
+        let limit = CGSize(width: 16384, height: 16384)
+        for side in [CGFloat.infinity, .greatestFiniteMagnitude, 1e300, 20000] {
+            #expect(Thumbnail.contextSize(fitting: CGSize(width: side, height: side)) == limit)
+        }
+        #expect(Thumbnail.contextSize(fitting: CGSize(width: 16384, height: 20000)) == limit)
+        #expect(Thumbnail.contextSize(fitting: CGSize(width: CGFloat.nan, height: .nan)) == CGSize(width: 1, height: 1))
+    }
+
     @Test func johnVsGnu() throws {
         let thumbnail = try #require(try Thumbnail(contentsOf: Fixtures.johnVsGnu()))
         #expect(thumbnail.position.movesShown == 50)

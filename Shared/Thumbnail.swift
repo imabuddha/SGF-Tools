@@ -41,9 +41,14 @@ struct Thumbnail: Sendable {
         }
     }
 
-    /// The size to draw a thumbnail at: the largest square that fits the size Quick Look allows.
+    /// The size to draw a thumbnail at: the largest square that fits the size Quick Look allows,
+    /// up to ``maximumSide``.
     static func contextSize(fitting maximumSize: CGSize) -> CGSize {
-        let side = max(1, min(maximumSize.width, maximumSize.height).rounded(.down))
+        let side = max(1, min(maximumSize.width, maximumSize.height, maximumSide).rounded(.down))
         return CGSize(width: side, height: side)
     }
+
+    /// The largest side of a thumbnail, in points: far beyond any size Finder shows, so that an
+    /// infinite or absurd size from Quick Look can't become the size of the context.
+    private static let maximumSide: CGFloat = 16384
 }
