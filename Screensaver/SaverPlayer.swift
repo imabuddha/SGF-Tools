@@ -48,6 +48,9 @@ final class SaverPlayer {
     ///   - scale: The screen's backing scale, when a game is prepared.
     ///   - describeScreen: The screen, for the log.
     ///   - clock: Seconds, as `CACurrentMediaTime`; the tests set it.
+    ///   - generator: Chooses the random delay before the first game, and nothing else: each
+    ///     game's layout is chosen on the drawing queue with the system's generator, so a seed
+    ///     doesn't repeat the layouts.
     init(scene: SaverScene, screen: Int, library: GameLibrary, log: any SaverLogging,
          screenSize: @escaping () -> CGSize, scale: @escaping () -> CGFloat,
          describeScreen: @escaping () -> String = { "" }, clock: @escaping () -> Double = { CACurrentMediaTime() },
@@ -227,7 +230,7 @@ final class SaverPlayer {
         let median = times.isEmpty ? 0 : times[times.count / 2]
         let side = Int((current.layout.board.width * current.scale).rounded())
         log.notice(.play, """
-            Screen \(screen) (\(describeScreen())): played a game from the \(current.game.source.rawValue), \
+            Screen \(screen) (\(describeScreen())): played a game from \(current.game.source), \
             \(current.game.boardSize), \(current.game.moveCount) moves; drawing \(String(format: "%.1f", median)) ms \
             median, \(String(format: "%.1f", times.last ?? 0)) ms slowest; board \(side)x\(side) pixels
             """)

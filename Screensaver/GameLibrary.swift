@@ -98,7 +98,7 @@ final class GameLibrary: @unchecked Sendable {
             shown.recent.append(game.identity)
             if shown.recent.count > Self.recentLimit { shown.recent.removeFirst(shown.recent.count - Self.recentLimit) }
         }
-        log.info(.play, "Screen \(screen): picked a game from the \(game.source.rawValue)", path: game.identity)
+        log.info(.play, "Screen \(screen): picked a game from \(game.source)", path: game.identity)
         return game
     }
 

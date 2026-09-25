@@ -5,13 +5,22 @@ import SGFKit
 /// point of each move, its details, and where it came from.
 struct SaverGame: Sendable {
     /// Where a game came from (see `docs/screensaver.md`, 1.8).
-    enum Source: String, Sendable {
+    enum Source: String, Sendable, CustomStringConvertible {
         /// A line of the playlist the app wrote.
         case playlist
         /// A file read in direct mode.
         case direct
         /// The game the screensaver carries.
         case own = "own game"
+
+        /// The source for the log, as in "picked a game from the playlist".
+        var description: String {
+            switch self {
+            case .playlist: "the playlist"
+            case .direct: "direct mode"
+            case .own: "the screensaver's own game"
+            }
+        }
     }
 
     /// The line added to the details of the screensaver's own game.
