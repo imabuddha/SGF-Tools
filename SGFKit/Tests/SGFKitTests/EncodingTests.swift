@@ -276,6 +276,42 @@ struct EncodingTests {
         #expect(game.encoding == .windowsCP1252)
     }
 
+    @Test(arguments: ["", "CA[UTF-8]"])
+    func shortFrenchTextInUTF8WithAStrayByte(declaration: String) throws {
+        // Western text in UTF-8, with one stray Windows-1252 byte ("¨"), so neither charset reads
+        // the whole game. Read as Windows-1252, the UTF-8 is garbled ("dÃ©jÃ ") and "¨" doesn't
+        // read as Western, and macOS's detection alone took the game for Shift_JIS ("dﾃｩjﾃ").
+        let bytes = ascii("(;GM[1]\(declaration);B[pd]C[Black: j'ai déjà vu ça];W[dp]C[White: héhé, très bien]"
+            + ";B[pp]C[Black: yosé ?];W[dd]C[White: hehehe ") + [0xA8] + ascii("])")
+        let collection = parse(bytes: bytes)
+        let game = try #require(collection.games.first)
+        #expect(game.mainLine.compactMap { $0["C"]?.value.text }
+            == ["Black: j'ai déjà vu ça", "White: héhé, très bien", "Black: yosé ?", "White: hehehe ¨"])
+        #expect(game.encoding == .utf8)
+        #expect(collection.warnings.map(\.kind)
+            == (declaration.isEmpty ? [] : [.encodingFallback(declared: "UTF-8", used: "UTF-8 and Windows-1252")]))
+    }
+
+    @Test func westernTextInUTF8WithAStrayByteInTheSameValue() throws {
+        // The stray "é" reads as Western text in Windows-1252, and so does the garbled UTF-8, so
+        // the game was read as Windows-1252: "dÃ©jÃ  vu".
+        let bytes = ascii("(;GM[1]PB[Andr") + [0xE9] + ascii("]C[j'ai déjà vu ça, dit Andr") + [0xE9] + ascii("];B[pd])")
+        let game = try firstGame(bytes: bytes)
+        #expect(game.root["PB"]?.value.simpleText == "André")
+        #expect(game.root["C"]?.value.text == "j'ai déjà vu ça, dit André")
+        #expect(game.encoding == .utf8)
+    }
+
+    @Test func textInOtherCharsetsDoesNotReadAsWesternUTF8() {
+        // 茅 is C3 A9 in GBK, as "é" is in UTF-8; the rest of 茅以升 isn't UTF-8.
+        #expect(!CharsetDetection.looksWesternInUTF8(encoded("茅以升", .GB_18030_2000)))
+        #expect(!CharsetDetection.looksWesternInUTF8(encoded("김민준", .EUC_KR)))
+        #expect(!CharsetDetection.looksWesternInUTF8(encoded("山田太郎", String.Encoding.shiftJIS)))
+        #expect(!CharsetDetection.looksWesternInUTF8(encoded("Émile Ängelholm, l’été", .windowsCP1252)))
+        // UTF-8 that isn't Western: Japanese, with a stray byte.
+        #expect(!CharsetDetection.looksWesternInUTF8(ascii("ありがとう") + [0xA8]))
+    }
+
     @Test func eachGameInACollectionHasItsOwnCharset() throws {
         let bytes = ascii("(;CA[UTF-8]PB[Jos") + [0xC3, 0xA9] + ascii("])")
             + ascii("(;CA[ISO-8859-1]PB[Jos") + [0xE9] + ascii("])")

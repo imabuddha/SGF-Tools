@@ -9,10 +9,12 @@ import Foundation
 ///   literal `&#65279;` that some web downloads leave at the start. A game tree starts at a `(`
 ///   followed, after optional whitespace, by `;`.
 /// - Each game's text is decoded with the charset its CA property names. Without CA, UTF-8 is
-///   tried first. When the text should be UTF-8 but isn't, its charset is detected among the
-///   usual Chinese, Korean, Japanese, and Western ones, with Windows-1252 (which covers Latin-1)
-///   as the last resort. When the text isn't valid in another declared charset, the parser falls
-///   back to Windows-1252 or, for a file labeled Latin-1 that is really UTF-8, to UTF-8.
+///   tried first, with any character that a soft line break splits joined again. When the text
+///   should be UTF-8 but isn't, its charset is detected among the usual Chinese, Korean,
+///   Japanese, and Western ones, with Windows-1252 (which covers Latin-1) as the last resort;
+///   Western text in UTF-8 with a few stray bytes stays UTF-8, with those bytes in Windows-1252.
+///   When the text isn't valid in another declared charset, the parser falls back to
+///   Windows-1252 or, for a file labeled Latin-1 that is really UTF-8, to UTF-8.
 /// - UTF-16 files (with or without a byte-order mark) are converted to UTF-8 first.
 /// - Lowercase letters in property identifiers are ignored, as FF[1]-FF[3] allowed, so
 ///   `AddBlack` reads as `AB`.
@@ -412,6 +414,11 @@ private struct ByteParser {
             if detected == .windowsCP1252 {
                 return DecodedValues(strings: windows1252(), encoding: .windowsCP1252,
                                      fallback: fallback(to: CharsetDetection.name(of: .windowsCP1252)))
+            }
+            if detected == .utf8 {
+                // Western text in UTF-8 with a few stray bytes, which are read as Windows-1252.
+                return DecodedValues(strings: ranges.map { TextDecoding.utf8WithStrayBytes(bytes[$0]) },
+                                     encoding: .utf8, fallback: fallback(to: "UTF-8 and Windows-1252"))
             }
             let (strings, _) = decodeEach(as: detected)
             return DecodedValues(strings: strings, encoding: detected,

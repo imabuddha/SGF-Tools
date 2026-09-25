@@ -140,6 +140,11 @@ struct Charset {
 /// European text in Windows-1252 (see ``looksWestern(_:)``) stays Windows-1252, as it was before
 /// detection existed, unless a non-ASCII byte comes right before a backslash (see
 /// ``hasBackslashAfterNonASCII(_:)``).
+///
+/// Nor does that detection consider UTF-8, and Western text in UTF-8 with a stray byte or two
+/// reads as neither UTF-8 nor Windows-1252. So text whose UTF-8 characters read as Western
+/// European text (see ``looksWesternInUTF8(_:)``) is read as UTF-8 first, with the stray bytes
+/// in Windows-1252.
 enum CharsetDetection {
     /// The charsets to choose from, each as the Windows superset that decodes the most files:
     /// GB18030 (for GB2312 and GBK), CP949 (for EUC-KR), CP932 (for Shift_JIS), Big5-HKSCS
@@ -154,15 +159,18 @@ enum CharsetDetection {
     /// At most this many bytes are passed to detection, so a huge file stays fast.
     static let maximumSampleSize = 65536
 
-    /// The charset of text that isn't valid UTF-8: one of ``candidates``.
+    /// The charset of text that isn't valid UTF-8: UTF-8 with stray bytes, or one of
+    /// ``candidates``.
     ///
     /// - Parameter sample: The game's values that contain non-ASCII bytes, separated by line
     ///   breaks.
-    /// - Returns: The detected charset, or Windows-1252 if detection finds none of the others
-    ///   or the text reads as Western European text in Windows-1252 with no non-ASCII byte right
-    ///   before a backslash.
+    /// - Returns: UTF-8 if the text reads as Western European text in UTF-8 apart from a few
+    ///   stray bytes. Otherwise the detected charset, or Windows-1252 if detection finds none of
+    ///   the others or the text reads as Western European text in Windows-1252 with no non-ASCII
+    ///   byte right before a backslash.
     static func detect(_ sample: [UInt8]) -> String.Encoding {
         let sample = sample.count > maximumSampleSize ? Array(sample[..<maximumSampleSize]) : sample
+        if looksWesternInUTF8(sample) { return .utf8 }
         let western = sample.withUnsafeBufferPointer { TextDecoding.windows1252($0[...]) }
         if looksWestern(western), !hasBackslashAfterNonASCII(sample) { return .windowsCP1252 }
         var converted: NSString?
@@ -203,6 +211,33 @@ enum CharsetDetection {
             guard run <= 3, isWestern(scalar) else { return false }
         }
         return true
+    }
+
+    /// Whether bytes that aren't valid UTF-8 are Western European text in UTF-8 with a few
+    /// stray bytes: they have multibyte UTF-8 characters, every one a Latin letter or a common
+    /// punctuation mark or symbol, and more of them than bytes that aren't part of one.
+    ///
+    /// French in UTF-8 with a stray Windows-1252 "¨", for one, is garbled in Windows-1252
+    /// ("dÃ©jÃ "), where "è" becomes "Ã¨", which doesn't even read as Western, and detection
+    /// alone takes it for Shift_JIS or GBK. Text in those charsets has a few byte pairs that
+    /// are UTF-8 by chance, such as 茅 (C3 A9, "é" in UTF-8), but many more that aren't.
+    static func looksWesternInUTF8(_ sample: [UInt8]) -> Bool {
+        var characters = 0
+        var strayBytes = 0
+        var index = 0
+        while index < sample.count {
+            if sample[index] < 0x80 {
+                index += 1
+            } else if let (scalar, length) = TextDecoding.utf8Character(in: sample, at: index) {
+                guard isWestern(scalar) else { return false }
+                characters += 1
+                index += length
+            } else {
+                strayBytes += 1
+                index += 1
+            }
+        }
+        return characters > strayBytes
     }
 
     /// Whether a non-ASCII byte comes right before a backslash that doesn't start a soft line
@@ -297,6 +332,41 @@ enum TextDecoding {
 
     private static let backslash: UInt8 = 0x5C
 
+    /// Decodes bytes as UTF-8, reading each byte that isn't part of a UTF-8 character as
+    /// Windows-1252, so decoding never fails. Soft line breaks are removed first when the bytes
+    /// aren't valid UTF-8, as by ``utf8(_:)``.
+    static func utf8WithStrayBytes(_ bytes: Slice<UnsafeBufferPointer<UInt8>>) -> String {
+        if let string = utf8(bytes) { return string }
+        let bytes = removingSoftLineBreaks(bytes)
+        var scalars = String.UnicodeScalarView()
+        scalars.reserveCapacity(bytes.count)
+        var index = 0
+        while index < bytes.count {
+            if bytes[index] < 0x80 {
+                scalars.append(Unicode.Scalar(bytes[index]))
+                index += 1
+            } else if let (scalar, length) = utf8Character(in: bytes, at: index) {
+                scalars.append(scalar)
+                index += length
+            } else {
+                scalars.append(windows1252Scalar(bytes[index]))
+                index += 1
+            }
+        }
+        return String(scalars)
+    }
+
+    /// The multibyte UTF-8 character that starts at `index`, and its length in bytes, or `nil`
+    /// if the bytes there aren't one.
+    static func utf8Character(in bytes: [UInt8], at index: Int) -> (scalar: Unicode.Scalar, length: Int)? {
+        let lead = bytes[index]
+        let length = lead >= 0xF0 ? 4 : lead >= 0xE0 ? 3 : lead >= 0xC0 ? 2 : 0
+        guard length > 0, index + length <= bytes.count,
+              let character = String(validating: bytes[index ..< index + length], as: UTF8.self)
+        else { return nil }
+        return (character.unicodeScalars.first!, length)
+    }
+
     /// Decodes bytes as Windows-1252. The five bytes Windows-1252 leaves undefined become the
     /// Latin-1 control characters with the same numbers, so decoding never fails.
     static func windows1252(_ bytes: Slice<UnsafeBufferPointer<UInt8>>) -> String {
@@ -306,13 +376,14 @@ enum TextDecoding {
         var scalars = String.UnicodeScalarView()
         scalars.reserveCapacity(bytes.count)
         for byte in bytes {
-            if (0x80 ... 0x9F).contains(byte) {
-                scalars.append(Unicode.Scalar(windows1252High[Int(byte) - 0x80])!)
-            } else {
-                scalars.append(Unicode.Scalar(byte))
-            }
+            scalars.append(windows1252Scalar(byte))
         }
         return String(scalars)
+    }
+
+    /// The Windows-1252 character of a byte, as ``windows1252(_:)`` decodes it.
+    private static func windows1252Scalar(_ byte: UInt8) -> Unicode.Scalar {
+        (0x80 ... 0x9F).contains(byte) ? Unicode.Scalar(windows1252High[Int(byte) - 0x80])! : Unicode.Scalar(byte)
     }
 
     /// Decodes bytes with a Foundation encoding, or returns `nil` if they aren't valid in it.
