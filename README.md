@@ -62,7 +62,8 @@ variables, set when running `xcodebuild test`, save what they draw or check more
 - `TEST_RUNNER_SGF_PREVIEW_SAMPLES`: a folder for PNGs of the preview in light and dark mode
 - `TEST_RUNNER_SGF_SCREENSAVER_SAMPLES`: a folder for PNGs of the screensaver at chosen moments
   of a game, on a few screens and in the preview
-- `TEST_RUNNER_SGF_SCREENSAVER_THUMBNAIL=Screensaver`: draws the screensaver's thumbnails again
+- `TEST_RUNNER_SGF_SCREENSAVER_THUMBNAIL="$PWD/Screensaver"`: draws the screensaver's thumbnails
+  again
 - `TEST_RUNNER_SGF_SCREENSAVER_BUNDLE`: the path of a built `SGF Tools.saver`, which a test then
   loads to make its view as macOS would, without a window.
 
@@ -140,12 +141,13 @@ run `killall legacyScreenSaver` first.
 can't ask for access to Documents or other disks, where SGF files usually are. So SGF Tools.app
 chooses the games: when you click **Update Screensaver Games**, or when you open it with the
 screensaver installed and its games more than a week old, it asks Spotlight for every game that
-names both players and has at least 20 moves, reads up to 10,000 of them at random, and writes
-each one's details and first 50 moves to
+names both players and has at least 20 moves, reads them in a random order until 10,000
+qualify, and writes each one's file path, details, and first 50 moves to
 `~/Library/Application Support/SGF Tools/Screensaver Games.sgfplaylist`, which the screensaver
-plays from. Without that file, the screensaver asks Spotlight and reads the files itself, which
-macOS may refuse, and failing that plays John Mifsud's 2009 game against GNU Go, with a line
-saying to open SGF Tools.
+plays from. If it could read fewer games than the list already holds because macOS refused some
+files or a disk isn't connected, it keeps the games it chose before. Without that file, the
+screensaver asks Spotlight and reads the files itself, which macOS may refuse, and failing that
+plays John Mifsud's 2009 game against GNU Go, with a line saying to open SGF Tools.
 
 **The log.** The screensaver logs what it does, and why a screen stays black, under
 `com.pragmaphilia.SGFTools.Screensaver`, and the app logs its choice of games under

@@ -4,10 +4,12 @@
 <dict>
 	<key>com.apple.security.app-sandbox</key>
 	<true/>
-	<!-- For the screensaver's playlist (docs/screensaver.md, 1.5): read-only access to the whole
-	     disk, as the screensaver's host has, lets Spotlight return games to the app and the app
-	     read them, with macOS still asking for the folders and volumes its privacy settings
-	     guard. The playlist's folder is the one place in ~/Library the app may write. -->
+	<!-- For the screensaver's playlist (docs/screensaver.md, 1.5). The first exception, the
+	     screensaver's host's own, lets Spotlight return games to the app and the app read them,
+	     with macOS still asking for the folders and volumes its privacy settings guard. As the
+	     sandbox profile grants it, it also lets the app run programs and issue read extensions
+	     anywhere. The second makes the playlist's folder the one place in ~/Library the app may
+	     write, and lets programs there run. -->
 	<key>com.apple.security.temporary-exception.files.absolute-path.read-only</key>
 	<array>
 		<string>/</string>

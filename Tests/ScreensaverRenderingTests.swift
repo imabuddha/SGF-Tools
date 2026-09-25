@@ -11,7 +11,8 @@ import Testing
 /// When the environment variable `SGF_SCREENSAVER_SAMPLES` names a folder (with `xcodebuild test`,
 /// set `TEST_RUNNER_SGF_SCREENSAVER_SAMPLES`), the images are written there as PNGs. When
 /// `SGF_SCREENSAVER_THUMBNAIL` names a folder (`TEST_RUNNER_SGF_SCREENSAVER_THUMBNAIL`, set to
-/// `Screensaver`), the screensaver's `thumbnail.png` and `thumbnail@2x.png` are drawn there.
+/// `"$PWD/Screensaver"` from the repository's folder, since the tests don't run there), the
+/// screensaver's `thumbnail.png` and `thumbnail@2x.png` are drawn there.
 @Suite("Screensaver: rendering")
 @MainActor
 struct ScreensaverRenderingTests {

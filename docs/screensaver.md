@@ -12,8 +12,8 @@ the first real run, which the logging in section 9 is designed to answer).
 
 - **SGF Tools.app chooses the games.** When John clicks Update Screensaver Games, or when the app
   opens and its list is more than a week old, it asks Spotlight for every qualifying game, reads
-  up to 10,000 of them at random, and writes each one's details and first 50 moves, as a small
-  SGF game, to one playlist file in `~/Library/Application Support/SGF Tools/`.
+  them in a random order until 10,000 qualify, and writes each one's details and first 50 moves,
+  as a small SGF game, to one playlist file in `~/Library/Application Support/SGF Tools/`.
 - **The screensaver plays from that file.** No privacy setting guards it, and the screensaver's
   host can read it (verified with probes signed with the host's entitlements).
 - **If there's no playlist, the screensaver asks Spotlight and reads the files itself** ("direct
@@ -118,7 +118,8 @@ prompt for the host while a screensaver runs or denies silently, and whether the
 holds a grant on the test Mac (the TCC database can't be read without Full Disk Access).
 
 The external volume can also be unmounted or asleep. Its Spotlight index is on the volume, so a
-query then finds only what's in Documents; a playlist keeps playing.
+query then finds only what's in Documents; a playlist keeps playing, and an update keeps it
+(1.5).
 
 ### 1.4 Why the playlist comes first
 
@@ -152,9 +153,13 @@ is allowed.
 
 The first is the host's own; it lets Spotlight return results to the app and lets the app read
 the files, with TCC still asking for the places it guards. The second makes the playlist's folder,
-and nothing else in `~/Library`, writable (verified with the probe). Temporary exceptions keep an
-app out of the Mac App Store, which SGF Tools isn't in. The Quick Look extensions and the
-importer keep their own entitlements.
+and nothing else in `~/Library`, writable (verified with the probe). As `application.sb` grants
+them, the first also lets the app run programs and issue read extensions anywhere, and the
+second lets programs in the playlist's folder run. The host has the same `/` exception, so this
+adds little, but the app parses thousands of SGF files it didn't write with these rights; the
+read exception could be narrowed to `/Users/` and `/Volumes/`, where the games are (question 2).
+Temporary exceptions keep an app out of the Mac App Store, which SGF Tools isn't in. The Quick
+Look extensions and the importer keep their own entitlements.
 
 **Reasons for the permission requests**, in `App/Info.plist`: `NSDocumentsFolderUsageDescription`,
 `NSDesktopFolderUsageDescription`, `NSDownloadsFolderUsageDescription`,
@@ -182,9 +187,15 @@ wrong ("441 games in Documents couldn't be read: access not allowed"). The closi
 3. Turn each game into a playlist line (1.6).
 4. Write the file with `Data.write(to:options: .atomic)`, so the saver sees the old playlist or the
    new one, never part of one (verified: the app-like probe did exactly this). A file the saver
-   has open keeps its old contents.
+   has open keeps its old contents. **Unless the old playlist is kept:** when the new one would
+   have fewer games than it, and has none, or macOS refused some reads, or a volume that holds
+   some of the old playlist's games isn't mounted. Then the window shows the old playlist and a
+   line saying why, and the next update tries again.
 5. Tally everything by location (1.7): found, left out and why, read, refused by error, missing,
    not a game, the time, and the size written. The tallies go to the log and the status line.
+
+The app quits when its window closes, but waits for an update under way to finish, since the
+playlist is written only at the end.
 
 At about 1 ms to parse a game (`spotlight-notes.md`) and a fast disk, 10,000 games take seconds,
 not minutes (untested). A new random 10,000 each time means the saver works through the whole
@@ -210,7 +221,10 @@ file:///Volumes/Go%20Archive/Games/example.sgf	(;GM[1]FF[4]CA[UTF-8]SZ[19]PB[Bla
 ```
 
 - **The URL** (`URL.absoluteString`, so it holds no tab or line break) is for the log and for
-  later features; the saver never opens it.
+  later features; the saver never opens it. It copies the names and folders of files in places
+  TCC guards to one it doesn't, where the user's other processes, including other screensavers
+  in the host, may read them; the README says the playlist holds the paths. An opaque identity,
+  such as a hash of the path, would do for telling games apart.
 - **The root** gets `GM[1]`, `FF[4]`, `CA[UTF-8]`, `SZ` as written, and PB, BR, PW, WR, RE, EV, and
   DT from the first game's `GameInfo`, each escaped (`\` and `]`), with tabs and line breaks
   turned into spaces.
@@ -264,8 +278,10 @@ startup disk (the rest of `/`), and one class for each volume under `/Volumes`.
 | dataless | `SF_DATALESS` | A cloud file; never read |
 | not a game | parses, doesn't qualify | The file changed since it was indexed |
 | denied | `EPERM` (Cocoa error 257 over POSIX 1) | TCC, since the sandbox allows `/` |
-| unreadable | `EACCES` (POSIX 13) | The file's own permissions |
-| timed out | no answer within the caller's limit | Blocked, probably waiting on TCC |
+| unreadable | `EACCES` (POSIX 13), or another error | The file's own permissions |
+
+A read that doesn't answer in time is the caller's to handle: the builder waits, and direct mode
+abandons it (1.8).
 
 ### 1.8 How the saver picks a game
 
@@ -282,22 +298,26 @@ logging every step:
    line.
 2. **Direct mode**, never in the preview. `GameCandidates` runs once per process, with a 10-second
    limit, and again when its list is an hour old at the start of a later session. Reads run on a
-   dedicated queue, never the main thread or Swift's cooperative pool, with at most two at a time
-   and a limit of 3 seconds each. A read that times out is abandoned (its thread stays blocked
-   until macOS answers) and counts against its class.
+   dedicated queue, never the main thread or Swift's cooperative pool, one at a time, with a
+   limit of 3 seconds each. A read that times out is abandoned (its thread stays blocked until
+   macOS answers) and counts against its class.
    - A class is **denied** after 2 `denied` outcomes, or 3 time-outs in a row; the library stops
      picking from it, until a late read from it succeeds.
    - A class is skipped after 5 `unreadable` outcomes.
    - `missing`, `dataless`, and `not a game` just pick again.
-   - Direct mode gives up for the process after 20 failed picks in a row, 3 abandoned reads, a
-     query that fails or times out, or when every class is denied or skipped.
+   - Direct mode gives up for the process after 20 failed picks in a row, when 6 abandoned reads
+     (two classes' worth) haven't come back, after a query that fails or times out, or when every
+     class is denied or skipped. An abandoned read that comes back no longer counts.
 3. **The saver's own game:** `johnVsGnu.sgf`, John Mifsud's 2009 game against GNU Go (already in
    the repository, and drawn by the app icon), from the saver's bundle, which the view hands the
    library as `Bundle(for: ScreensaverView.self)`, never `Bundle.main`, which is the host. Under
    the details, one more line: "Open SGF Tools to choose games for this screensaver."
 
-For every screen, a pick avoids the games on the other screens and the last 200 shown. The next
-game is picked, read, and parsed while the current one plays, so a game never waits on a read.
+For every screen, a pick avoids the games on the screens and the last 200 shown. When a small
+collection can't, it avoids fewer recent games, half as many each time, then only the games on
+the screens, then only those on the other screens, so that no game is on two screens at once and
+no screen shows a game twice in a row while there's another. The next game is picked, read, and
+parsed while the current one plays, so a game never waits on a read.
 
 ## 2. Targets and files
 
@@ -349,7 +369,9 @@ the view, so the view's Objective-C class exists only in the bundle. It already 
 
 ```yaml
     sources:
-      - Tests
+      - path: Tests
+        excludes:
+          - SandboxCheck
       - Shared
       - App/ContentView.swift
       - App/PlaylistBuilder.swift
@@ -479,8 +501,8 @@ shorter side, and a random number generator that the tests seed:
 4. The details go at a random place in that band, at least m from every edge and from the board.
 5. A portrait screen is the same turned: the details go above or below the board, with their
    height in place of their width.
-6. If s comes out under 60% of the shorter side, an unusual shape, that game has no details
-   (logged).
+6. If s comes out under 60% of the shorter side, an unusual shape, or the details are too tall
+   for the band, that game has no details and the board is centered (logged).
 
 So the board moves a little from game to game, which also spares the screen a fixed image. On a
 16-inch MacBook Pro (1728 by 1117 points), the board is 961 points and the side bands share 767.
@@ -514,23 +536,28 @@ that the saver is ending, though it's sometimes missed when the saver starts and
 
 **The rule:** a view plays only while
 - `startAnimation` has been called and `stopAnimation` hasn't since; or it has been in a window
-  for 5 seconds without `startAnimation`, which is logged, so a host that never calls it doesn't
-  leave the screen black
+  for 5 seconds without `startAnimation` ever being called, which is logged, so a host that never
+  calls it doesn't leave the screen black. The host's calls win over this fallback.
 - it has a window and a size that isn't empty
-- it's **the newest live view for its key**: its display (`CGDirectDisplayID` from its window's
-  screen), or "preview" for a preview; a view with no screen yet waits
-- no `willstop` has arrived since it last started
+- no `willstop` has arrived since its last `startAnimation`, or since `didstart`. A `willstop`
+  less than 2 seconds after a view's `startAnimation` doesn't stop that view (logged): the
+  notifications and the host's calls aren't ordered, so it may be the previous session's.
+- it's **the newest live view for its key** of those that meet the rules above: its display
+  (`CGDirectDisplayID` from its window's screen), or "preview" for a preview. A view has a key
+  only while it's in a window, so a view the host makes and never shows competes with none; a
+  view with no screen yet waits.
 - its window isn't occluded. Occlusion is trusted only after the window has once reported
   itself visible, so a host that misreports it can't keep the saver black.
 
 `InstanceRegistry`, on the main actor, holds every view weakly with its serial number and key,
 and checks the rule again on `startAnimation`, `stopAnimation`, `viewDidMoveToWindow`, a screen
-change, an occlusion change, a size change, a new view, a view's `deinit`, and `willstop`.
+change, an occlusion change, a size change, a new view, a view's `deinit`, `willstop`, and
+`didstart`.
 
 **Pausing** cancels the timer and pending drawing, drops the layers' images, and gives the game
 back to the library, so a forgotten view costs a few kilobytes and no CPU. **Resuming** starts a
-new game after the random delay. `didstart` and `didstop` are only logged, and `deinit` logs, so
-the log shows whether the host ever frees a view.
+new game after the random delay. `didstop` is only logged, and `deinit` logs, so the log shows
+whether the host ever frees a view.
 
 **No `exit(0)`.** Aerial and ScreenSaverMinimal exit the host on `willstop`, but that's reported
 to leave black screens that needed a restart on macOS 26, and it would also end a preview in the
@@ -581,25 +608,31 @@ Fixtures are synthetic, made in code as the existing tests make theirs, plus joh
    pass; each gets the right outcome.
 4. **The reader,** on files in a temporary folder: missing, a file over 2 MB with its game at the
    start, a cut-off file, and each outcome of the table in 1.7 from an injected read function
-   (`EPERM`, `EACCES`, a time-out).
-5. **Candidates:** location classes from paths, and every exclusion.
+   (`EPERM`, `EACCES`, and other errors).
+5. **Candidates:** location classes from paths, and every exclusion; the query, built from the
+   importer's attribute names, and the sandbox check's copy of it.
 6. **The builder,** with paths and reads injected: the 10,000 cap, a seeded shuffle giving the
-   same file twice, the tallies, the temporary file renamed into place, and an unwritable folder
-   reported.
+   same file twice, the tallies, the temporary file renamed into place, an unwritable folder
+   reported, and the old playlist kept when no game could be read, reads were refused, or its
+   volume is away, but replaced when its games are gone.
 7. **The library:** the order playlist, direct, own game; no game on two screens at once; no
-   repeats among the last 200; the playlist read again when it's replaced; a preview never uses
-   direct mode; each rule of direct mode in 1.8 (two `denied` deny a class, `missing` doesn't,
-   time-outs, a late success clears a class, giving up); and the log lines, through a logger
-   protocol.
+   repeats among the last 200; no game twice in a row on a screen, for playlists of 2 to 150
+   games and in direct mode; the playlist read again when it's replaced, and a playlist that
+   can't be opened logged once; a preview never uses direct mode; each rule of direct mode in 1.8
+   (two `denied` deny a class, `missing` doesn't, time-outs, a late success clears a class, a
+   blocked class denied while another plays, late reads no longer counting, giving up); and the
+   log lines, through a logger protocol.
 8. **The timeline:** the state at chosen times for a 50-move and a 23-move game; ticks at
    irregular times land on the right move.
 9. **The layout:** for 1920x1080, 2560x1440, 1728x1117, 3440x1440, 1080x1920, 1024x768, 1024x1024,
    300x190, and 0x0, over 1,000 seeds: the board fits, the details are on screen, at least m from
    the board and every edge, and on more than one side over the seeds; a preview has no details;
    empty bounds give no layout.
-10. **The registry:** the newest view per display plays; `willstop` pauses all; `startAnimation`
-    on an older view is ignored; a preview is its own key; occlusion before the first "visible"
-    is ignored.
+10. **The registry:** the newest view per display plays; `willstop` pauses all, until
+    `startAnimation` or `didstart`, except a view that has just started; `startAnimation` on an
+    older view is ignored; `stopAnimation` stops a view the fallback started, and the fallback
+    never starts a view that has had `startAnimation`; a newer view that can't play doesn't pause
+    an older one; a preview is its own key; occlusion before the first "visible" is ignored.
 11. **The details:** the wording and order, missing fields, and truncation.
 
 **Rendering tests**, as `PreviewRenderingTests` does: build one screen's layer tree without a
@@ -607,8 +640,9 @@ window, set the timeline to fixed times, render it with `CALayer.render(in:)` in
 check pixels: black outside the board and details, wood in the board, light text in the details'
 rect. With `TEST_RUNNER_SGF_SCREENSAVER_SAMPLES` set to a folder, PNGs are written for 1920x1080,
 1728x1117, 1080x1920, and a 300x190 preview, half faded in, after moves 1, 25, and 50, and during
-the fade-out. With `TEST_RUNNER_SGF_SCREENSAVER_THUMBNAIL` set to `Screensaver`, a test draws
-`thumbnail.png` and `thumbnail@2x.png`, as the app icon's artwork is drawn.
+the fade-out. With `TEST_RUNNER_SGF_SCREENSAVER_THUMBNAIL` set to `"$PWD/Screensaver"`, from the
+repository's folder, a test draws `thumbnail.png` and `thumbnail@2x.png`, as the app icon's
+artwork is drawn.
 
 **The bundle**, after building the "SGF Tools Screensaver" scheme: `plutil -p` shows the principal
 class, the identifier, the versions, and macOS 26.0; `lipo -archs` is `arm64`; `codesign -dv`
@@ -622,11 +656,13 @@ before a release (not part of `xcodebuild test`): it builds a small probe twice 
 (a sandboxed command-line tool needs an `Info.plist` with a bundle identifier in its
 `__TEXT,__info_plist` section, or it stops with SIGTRAP before `main`), signs one with the host's
 public file entitlements, read from the installed host so that a change shows, and one with
-`App/SGFTools.entitlements`. Then the app probe writes a test file in
-`~/Library/Application Support/SGF Tools/`, the host probe reads it and is refused a write there,
-both count SGF files in Spotlight, and the test file is removed. It never opens an SGF file, so it
-can't raise a permission request. It leaves two small containers,
-`com.pragmaphilia.SGFTools.SandboxCheck.*`, in `~/Library/Containers`.
+`App/SGFTools.entitlements`. Then both probes find `~/Library/Application Support/SGF Tools/`
+through `getpwuid`, as the app and the saver do, and it's compared with the folder `dscl` gives;
+the app probe writes a test file there, the host probe reads it and is refused a write there,
+both count the screensaver's games in Spotlight, with the query a test keeps equal to
+`GameCandidates.query`, and get every result's path as `GameCandidates` does, and the test file
+is removed. It never opens an SGF file, so it can't raise a permission request. It leaves two
+small containers, `com.pragmaphilia.SGFTools.SandboxCheck.*`, in `~/Library/Containers`.
 
 **The existing suites**, `swift test` in SGFKit and `xcodebuild … test` for the app's tests, still
 pass.
@@ -690,11 +726,13 @@ pass.
    the host-like probe could list, with the app's exception changed to that absolute path.
 2. **The app's permission requests.** Whether macOS asks at all for the fixed external disk, and
    whether a request appears for each read or once, is untested. An ad hoc signed app is a new
-   client for TCC after every build, so macOS may ask again. If John declines, the playlist holds
-   only what the app could read, and the window says what it couldn't.
+   client for TCC after every build, so macOS may ask again. If John declines, the app keeps the
+   playlist it had, if that has more games, or else writes only what it could read, and the
+   window says what it couldn't.
 3. **Direct mode can raise a request for legacyScreenSaver**, perhaps when nobody is there to
-   answer it, and a read waiting on it blocks a thread. The 3-second limit and giving up after 3
-   abandoned reads bound the cost; the preview never runs direct mode.
+   answer it, and a read waiting on it blocks a thread. The 3-second limit, denying a class
+   after 3 time-outs in a row, and giving up when 6 abandoned reads haven't come back bound the
+   cost; the preview never runs direct mode.
 4. **The host's lifecycle on macOS 27 is untested**, since no third-party saver has run on the
    test Mac: views that pile up, `startAnimation` and `willstop` that don't come, a wrong
    occlusion state, and a second display that stays black. Section 8's rule has a fallback for
@@ -714,7 +752,9 @@ Each has a default, which the first draft builds.
 1. **Playing from the playlist.** The app reads the files and the saver plays what it took,
    instead of reading the file while it runs. *Default: yes.*
 2. **The app's sandbox:** two temporary exceptions (read-only everywhere, and read-write on its one
-   folder), or no sandbox for the app? *Default: the exceptions.*
+   folder), or no sandbox for the app? As the sandbox profile grants them, they also let the
+   app run programs and issue read extensions (1.5); the read exception could be narrowed to
+   `/Users/` and `/Volumes/`. *Default: the exceptions, on `/`.*
 3. **Freshness:** a new playlist when the app opens and the old one is a week old, and the button;
    or a background helper that refreshes it? *Default: the former.*
 4. **How many:** a new random 10,000 at each update, or all of them (about 38 MB)? *Default:
@@ -723,6 +763,10 @@ Each has a default, which the first draft builds.
    thumbnails? (63,893 of the test Mac's 64,020 games are 19x19.) *Default: 50.*
 6. **The result is shown from the start**, as the plan says, or held back until the last move?
    *Default: from the start.*
+7. **Paths in the playlist:** each line starts with its file's URL, for the log and later
+   features, which puts the names of files in Documents and on other disks where any of the
+   user's processes may read them (1.6); or an opaque identity, such as a hash of the path?
+   *Default: the URLs, as the README says.*
 
 ## 14. Later
 
@@ -750,12 +794,9 @@ The first draft, 2.1.0 (8), follows the design above, except:
    also means 19x19.
 2. **Spotlight's paths** come from each result's `MDItem`: `MDQueryGetAttributeValueOfResultAtIndex`
    gives no `kMDItemPath`, even with it among the query's value attributes.
-3. **Direct mode's read slots.** With two slots, after two reads that never come back, a third
-   waits up to the read limit for a slot, and direct mode then gives up ("every read slot is
-   blocked") before a third read can be abandoned. `unreadable` also covers errors other than
-   `EACCES`, with their `errno` in the log, and `ENOTDIR` counts as missing.
-4. **A pick relaxes what it avoids:** first the other screens' games and the last 200 shown, then
-   only the other screens' games, then nothing, so that a small playlist still plays.
+3. **Direct mode's errors.** `unreadable` also covers errors other than `EACCES`, with their
+   `errno` in the log, and `ENOTDIR` counts as missing.
+4. **A pick relaxes what it avoids** in steps, so that a small playlist still plays (1.8).
 5. **A new size or backing scale** starts a new game after the random delay, rather than drawing
    the current one again.
 6. **The thumbnails stay PNGs** (`COMBINE_HIDPI_IMAGES` is off), as in Apple's own savers; Xcode
@@ -767,16 +808,29 @@ The first draft, 2.1.0 (8), follows the design above, except:
    tests can play games on a scene with a clock they move; the view keeps its life in the host
    and the timer. The next game is prepared while the current one plays, but its first board is
    drawn only once the current game reaches its last move, so a screen holds two boards at a time.
+9. **`BoardSize.sgf` is public again**, since the playlist line writes it (code review, L4).
 
-Checked headlessly, on 2026-09-25:
-- the package's tests and the app's logic tests, which include the screensaver's, among them a
-  game played through on a scene without a window, and three screens playing at once; the Release
-  bundle with `plutil`, `lipo`, `codesign`, and `nm`; and the bundle test, which loaded it and made
-  its view at 1920x1080 and 300x190
-- `Tests/SandboxCheck/check.sh`: every step passed, with 64,020 games from Spotlight for both the
-  host-like and the app-like probe
-- the builder on the test Mac's games, from an unsandboxed command-line tool with a release build
-  of SGFKit: 10,000 games of 64,020 chosen in 2.9 seconds, 5.2 MB. Every line of a playlist of
+**After the code review**, the same day, the sections above were revised where the reviewers
+found the first build wrong: what a pick avoids, so that a small collection never shows a screen
+the same game twice in a row, and direct mode's reads, one at a time, with a limit on those that
+haven't come back rather than on all abandoned reads, so that a blocked location is denied and
+the others still play (1.8); an update that keeps a playlist with more games, and the app waiting
+for an update before it quits (1.5); the reader's outcomes (1.7); which views play (section 8);
+the rights the entitlements grant (1.5); and the sandbox check (section 10). A playlist that can
+be found but not opened is now logged once, and each game's source is named in words in the log.
+
+Checked headlessly, on 2026-09-25, after the review's fixes:
+- the package's tests (213) and the app's logic tests (162), which include the screensaver's,
+  among them a game played through on a scene without a window, and three screens playing at
+  once; the Release bundle with `plutil`, `lipo`, `codesign`, and `nm`; and the bundle test, which
+  loaded it and made its view at 1920x1080 and 300x190
+- the app's sources, type-checked with `swiftc -typecheck` in Swift 6 mode, since the app isn't
+  built
+- `Tests/SandboxCheck/check.sh`: every step passed; both probes found the playlist's folder
+  through `getpwuid`, and each got 64,020 games and 64,020 paths from Spotlight
+- before the review's fixes, which left the lines as they were: the builder on the test Mac's
+  games, from an unsandboxed command-line tool with a release build of SGFKit: 10,000 games of
+  64,020 chosen in 2.9 seconds, 5.2 MB. Every line of a playlist of
   all 63,996 qualifying games outside `~/Library` replays as its file does, position by position
   to move 50, with the same players, ranks, result, event, and date. Lines are 518 bytes on
   average and 1,045 at most.
