@@ -144,16 +144,17 @@ public struct BoardRenderer: Sendable, Hashable {
         guard size.width.isFinite, size.height.isFinite, scale.isFinite,
               size.width > 0, size.height > 0, scale > 0
         else { return nil }
-        let width = Int((size.width * scale).rounded())
-        let height = Int((size.height * scale).rounded())
+        // Checked before converting to Int, which traps on a number too large for an Int.
+        let width = (size.width * scale).rounded()
+        let height = (size.height * scale).rounded()
         guard (1 ... 16384).contains(width), (1 ... 16384).contains(height),
               let space = CGColorSpace(name: CGColorSpace.sRGB),
               let context = CGContext(
-                  data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+                  data: nil, width: Int(width), height: Int(height), bitsPerComponent: 8, bytesPerRow: 0,
                   space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
               )
         else { return nil }
-        context.scaleBy(x: CGFloat(width) / size.width, y: CGFloat(height) / size.height)
+        context.scaleBy(x: width / size.width, y: height / size.height)
         drawing(context, CGRect(origin: .zero, size: size))
         return context.makeImage()
     }

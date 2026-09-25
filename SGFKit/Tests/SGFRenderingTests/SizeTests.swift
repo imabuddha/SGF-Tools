@@ -73,6 +73,22 @@ struct SizeTests {
         #expect(renderer.makeImage(of: board, size: CGSize(width: CGFloat.nan, height: 10)) == nil)
     }
 
+    @Test func sizesTooLargeForAnIntMakeNoImage() {
+        // Each side is finite, but in pixels it is too large for an Int, or infinite.
+        let renderer = BoardRenderer()
+        let board = Board(size: .standard)
+        let sizes: [(CGSize, CGFloat)] = [
+            (CGSize(width: 1e300, height: 1e300), 1),
+            (CGSize(width: 1e19, height: 10), 1),
+            (CGSize(width: 10, height: 1e300), 1e300),
+            (CGSize(width: CGFloat.greatestFiniteMagnitude, height: 10), 2),
+        ]
+        for (size, scale) in sizes {
+            #expect(renderer.makeImage(of: board, size: size, scale: scale) == nil)
+            #expect(renderer.makeCollectionImage(of: board, size: size, scale: scale) == nil)
+        }
+    }
+
     @Test func drawingIntoAnEmptyRectDrawsNothing() throws {
         let context = try bitmapContext(width: 10, height: 10)
         let renderer = BoardRenderer()
