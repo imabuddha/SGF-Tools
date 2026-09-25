@@ -284,10 +284,8 @@ final class ScreensaverGames {
     /// "10,000 games of 64,020, chosen today at 10:32".
     nonisolated static func describe(_ header: Playlist.Header, now: Date, locale: Locale = .current,
                          calendar: Calendar = .current) -> String {
-        let games = header.games.formatted(.number.locale(locale))
         let found = header.found.formatted(.number.locale(locale))
-        let count = header.games == 1 ? "1 game" : "\(games) games"
-        return "\(count) of \(found), chosen \(describe(header.made, now: now, locale: locale, calendar: calendar))"
+        return "\(games(header.games, locale: locale)) of \(found), chosen \(describe(header.made, now: now, locale: locale, calendar: calendar))"
     }
 
     /// "today at 10:32", "yesterday at 10:32", or "on Sep 20, 2026 at 10:32".

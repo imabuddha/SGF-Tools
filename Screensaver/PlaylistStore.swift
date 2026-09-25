@@ -16,13 +16,22 @@ final class PlaylistStore {
         case refused
         /// Another error, with its `errno`.
         case failed(Int32)
-        /// Over ``sizeLimit``, with its size.
+        /// Over ``Playlist/sizeLimit``, with its size.
         case tooLarge(Int)
         case notAPlaylist
         case unsupportedFormat(String?)
         /// No line gave a game: the file has none, or ``badLinesLimit`` in a row were bad.
         case noPlayableLine
         case ready
+
+        /// The state after a failed `stat`, `open`, or `read`, by its `errno`.
+        init(errorCode code: Int32) {
+            self = switch code {
+            case ENOENT: .missing
+            case EPERM: .refused
+            default: .failed(code)
+            }
+        }
 
         var description: String {
             switch self {
@@ -38,9 +47,6 @@ final class PlaylistStore {
             }
         }
     }
-
-    /// The largest playlist read: 64 MB, more than six times what 10,000 games take.
-    static let sizeLimit = 64 << 20
 
     /// After this many bad lines in a row, the playlist counts as having none.
     static let badLinesLimit = 20
@@ -70,11 +76,7 @@ final class PlaylistStore {
     func refresh() -> Bool {
         switch reader.status(url.path) {
         case .failure(let error):
-            let failed: State = switch error.code {
-            case ENOENT: .missing
-            case EPERM: .refused
-            default: .failed(error.code)
-            }
+            let failed = State(errorCode: error.code)
             if failed != state { log.notice(.playlist, "The playlist can't be read: \(failed)") }
             state = failed
             contents = nil
@@ -122,18 +124,20 @@ final class PlaylistStore {
         signature = status
         contents = nil
         badLinesInARow = 0
-        guard status.size <= Self.sizeLimit else {
+        guard status.size <= Playlist.sizeLimit else {
             state = .tooLarge(status.size)
-            log.notice(.playlist, "The playlist is refused: \(status.size) bytes, over \(Self.sizeLimit)")
+            log.notice(.playlist, "The playlist is refused: \(status.size) bytes, over \(Playlist.sizeLimit)")
             return
         }
         let clock = ContinuousClock()
         let start = clock.now
-        switch reader.readPrefix(url.path, Self.sizeLimit) {
+        switch reader.readPrefix(url.path, Playlist.sizeLimit) {
         case .failure(let error):
-            state = error.code == EPERM ? .refused : error.code == ENOENT ? .missing : .failed(error.code)
+            // Read again at the next refresh, logging only a change, as `refresh` does.
+            let failed = State(errorCode: error.code)
+            if failed != state { log.notice(.playlist, "The playlist can't be read: \(failed)") }
+            state = failed
             signature = nil
-            log.notice(.playlist, "The playlist can't be read: \(state)")
         case .success(let data):
             let readTime = clock.now - start
             do {

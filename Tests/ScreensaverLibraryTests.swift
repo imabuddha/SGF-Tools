@@ -242,6 +242,23 @@ struct ScreensaverLibraryTests {
         #expect(store.state == .refused)
         #expect(log.messages(.playlist) == ["The playlist can't be read: refused (EPERM)"])
     }
+
+    /// Found, but not opened: read again at each pick, and logged once.
+    @Test func aPlaylistTheHostMayNotOpenIsLoggedOnce() {
+        var reader = GameFileReader()
+        reader.status = { _ in .success(.init(inode: 1, size: 100, modified: [0, 0], isDataless: false)) }
+        let reads = Counter()
+        reader.readPrefix = { _, _ in
+            reads.increment()
+            return .failure(.init(code: EPERM))
+        }
+        let log = RecordingLog()
+        let store = PlaylistStore(url: URL(fileURLWithPath: "/Users/tester/Library/playlist"), reader: reader, log: log)
+        for _ in 0 ..< 5 { #expect(!store.refresh()) }
+        #expect(store.state == .refused)
+        #expect(reads.value == 5)
+        #expect(log.messages(.playlist) == ["The playlist can't be read: refused (EPERM)"])
+    }
 }
 
 @Suite("Screensaver: direct mode")

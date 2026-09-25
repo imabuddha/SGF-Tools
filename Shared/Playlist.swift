@@ -33,6 +33,9 @@ enum Playlist {
     /// problems.
     static let minimumMoves = 20
 
+    /// The largest playlist read: 64 MB, more than six times what 10,000 games take.
+    static let sizeLimit = 64 << 20
+
     /// The name of the playlist's folder, in the real `~/Library/Application Support`.
     static let folderName = "SGF Tools"
 
@@ -140,14 +143,11 @@ enum Playlist {
     static func escaped(_ text: String) -> String {
         var result = String.UnicodeScalarView()
         for scalar in text.unicodeScalars {
-            switch scalar {
-            case "\\", "]":
+            if scalar == "\\" || scalar == "]" {
                 result.append("\\")
                 result.append(scalar)
-            case "\t", "\n", "\r", "\u{0B}", "\u{0C}":
-                result.append(" ")
-            default:
-                result.append(scalar)
+            } else {
+                result.append(isBreak(scalar) ? " " : scalar)
             }
         }
         return String(result)
@@ -162,12 +162,19 @@ enum Playlist {
         var result = String.UnicodeScalarView()
         var trailingBackslashes = 0
         for scalar in raw.unicodeScalars {
-            let isBreak = scalar == "\t" || scalar == "\n" || scalar == "\r" || scalar == "\u{0B}" || scalar == "\u{0C}"
-            result.append(isBreak ? " " : scalar)
+            result.append(isBreak(scalar) ? " " : scalar)
             trailingBackslashes = scalar == "\\" ? trailingBackslashes + 1 : 0
         }
         if trailingBackslashes % 2 == 1 { result.append("\\") }
         return String(result)
+    }
+
+    /// Whether a scalar is a tab or a line break, which a line can't hold.
+    private static func isBreak(_ scalar: Unicode.Scalar) -> Bool {
+        switch scalar {
+        case "\t", "\n", "\r", "\u{0B}", "\u{0C}": true
+        default: false
+        }
     }
 
     // MARK: - Reading
