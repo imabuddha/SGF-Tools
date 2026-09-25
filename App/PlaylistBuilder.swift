@@ -34,7 +34,7 @@ struct PlaylistBuilder: Sendable {
             case .notAGame: notAGame += 1
             case .missing: missing += 1
             case .dataless: dataless += 1
-            case .denied, .timedOut: denied += 1
+            case .denied: denied += 1
             case .unreadable: unreadable += 1
             }
         }

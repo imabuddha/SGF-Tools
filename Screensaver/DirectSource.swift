@@ -297,7 +297,7 @@ final class DirectSource: @unchecked Sendable {
                         giveUp(&state, "every location is denied or skipped")
                     }
                 }
-            case .missing, .dataless, .notAGame, .timedOut:
+            case .missing, .dataless, .notAGame:
                 break
             }
             state.failedPicksInARow += 1

@@ -24,9 +24,6 @@ struct GameFileReader: Sendable {
         case denied
         /// Refused by the file's own permissions (`EACCES`), or another error, with its code.
         case unreadable(Int32)
-        /// No answer within the caller's limit, probably waiting on a permission request. The
-        /// reader itself never reports this; a caller that stops waiting does.
-        case timedOut
 
         /// A short name for logs and tallies.
         var name: String {
@@ -37,7 +34,6 @@ struct GameFileReader: Sendable {
             case .notAGame: "not a game"
             case .denied: "denied"
             case .unreadable(let code): code == EACCES ? "unreadable" : "unreadable (errno \(code))"
-            case .timedOut: "timed out"
             }
         }
 
