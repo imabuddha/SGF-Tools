@@ -138,7 +138,8 @@ struct Charset {
 /// lowercase letter, as in "Émile", is also a valid Big5 or GBK character, and a lone accented
 /// capital is a half-width katakana in Shift_JIS. So text that reads as ordinary Western
 /// European text in Windows-1252 (see ``looksWestern(_:)``) stays Windows-1252, as it was before
-/// detection existed.
+/// detection existed, unless a non-ASCII byte comes right before a backslash (see
+/// ``hasBackslashAfterNonASCII(_:)``).
 enum CharsetDetection {
     /// The charsets to choose from, each as the Windows superset that decodes the most files:
     /// GB18030 (for GB2312 and GBK), CP949 (for EUC-KR), CP932 (for Shift_JIS), Big5-HKSCS
@@ -158,11 +159,12 @@ enum CharsetDetection {
     /// - Parameter sample: The game's values that contain non-ASCII bytes, separated by line
     ///   breaks.
     /// - Returns: The detected charset, or Windows-1252 if detection finds none of the others
-    ///   or the text reads as Western European text in Windows-1252.
+    ///   or the text reads as Western European text in Windows-1252 with no non-ASCII byte right
+    ///   before a backslash.
     static func detect(_ sample: [UInt8]) -> String.Encoding {
         let sample = sample.count > maximumSampleSize ? Array(sample[..<maximumSampleSize]) : sample
         let western = sample.withUnsafeBufferPointer { TextDecoding.windows1252($0[...]) }
-        if looksWestern(western) { return .windowsCP1252 }
+        if looksWestern(western), !hasBackslashAfterNonASCII(sample) { return .windowsCP1252 }
         var converted: NSString?
         var usedLossyConversion: ObjCBool = false
         let rawValue = NSString.stringEncoding(
@@ -201,6 +203,25 @@ enum CharsetDetection {
             guard run <= 3, isWestern(scalar) else { return false }
         }
         return true
+    }
+
+    /// Whether a non-ASCII byte comes right before a backslash that doesn't start a soft line
+    /// break.
+    ///
+    /// The second byte of many Shift_JIS, GBK, and Big5 characters is a backslash, as in 表
+    /// (95 5C in Shift_JIS). Parsed as UTF-8, before the charset is known, such a character at
+    /// the end of a value escapes the closing bracket, and the value swallows what follows,
+    /// moves included; yet it can still read as Western text in Windows-1252 ("•\"), so that
+    /// reading isn't trusted then. A soft line break (a backslash before a line break) can't
+    /// swallow a bracket, and programs that wrap long lines put one after any character, so it
+    /// doesn't count: detection alone takes Western text such as "ÉTÉ\" before a line break for
+    /// Shift_JIS.
+    static func hasBackslashAfterNonASCII(_ sample: [UInt8]) -> Bool {
+        sample.indices.dropLast().contains { index in
+            guard sample[index] >= 0x80, sample[index + 1] == 0x5C else { return false }
+            let next = index + 2 < sample.count ? sample[index + 2] : nil
+            return next != 0x0A && next != 0x0D
+        }
     }
 
     /// Latin letters, and the punctuation marks and symbols Western text commonly uses. Left

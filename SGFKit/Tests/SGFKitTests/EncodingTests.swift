@@ -216,6 +216,33 @@ struct EncodingTests {
     }
 
     @Test(arguments: [
+        "(;GM[1]PB[Black]PW[White]EV[日本代表];B[pd];W[dp])",
+        "(;GM[1]PB[ソ]PW[表];B[pd];W[dp])",
+    ])
+    func shiftJISEndingInABackslashTrailByteWithoutACharset(sgf: String) throws {
+        // 表 (95 5C) and ソ (83 5C) end in a backslash byte. Without CA, the tree is first
+        // parsed as UTF-8, where that byte escapes the closing bracket, so the value swallows
+        // what follows, moves included. Its bytes also read as Western text in Windows-1252
+        // ("“ú–{‘ã•\", "ƒ\"), which must not stop Shift_JIS from being detected.
+        let collection = parse(bytes: encoded(sgf, String.Encoding.shiftJIS))
+        let game = try #require(collection.games.first)
+        let reference = try firstGame(sgf)
+        #expect(game.root.properties == reference.root.properties)
+        #expect(game.mainLineMoves == reference.mainLineMoves)
+        #expect(game.encoding == CharsetDetection.cp932)
+        #expect(collection.warnings.isEmpty)
+    }
+
+    @Test func westernTextWithASoftLineBreakAfterAnAccentedLetter() throws {
+        // Programs that wrap long lines put a soft line break after any character. macOS's
+        // detection alone takes "ÉTÉ" before one for Shift_JIS.
+        let bytes = ascii("(;GM[1]C[") + encoded("ÉTÉ", .windowsCP1252) + ascii("\\\n chaud];B[pd])")
+        let game = try firstGame(bytes: bytes)
+        #expect(game.root["C"]?.value.text == "ÉTÉ chaud")
+        #expect(game.encoding == .windowsCP1252)
+    }
+
+    @Test(arguments: [
         ("张三", CFStringEncodings.GB_18030_2000, CharsetDetection.gb18030),
         ("圍棋比賽", CFStringEncodings.big5, CharsetDetection.big5),
     ])
