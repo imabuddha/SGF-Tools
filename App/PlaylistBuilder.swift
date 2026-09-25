@@ -131,7 +131,7 @@ struct PlaylistBuilder: Sendable {
             for (candidate, result) in zip(batch, read(batch)) where lines.count < gameLimit {
                 tallies[candidate.location, default: Tally()].add(result.outcome)
                 if case .game(let game) = result.outcome,
-                   let line = Playlist.line(for: game, url: URL(fileURLWithPath: candidate.path)) {
+                   let line = Playlist.line(for: game, url: URL(fileURLWithPath: candidate.path, isDirectory: false)) {
                     lines.append(line)
                 }
             }

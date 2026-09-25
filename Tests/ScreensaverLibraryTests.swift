@@ -313,8 +313,7 @@ struct ScreensaverDirectModeTests {
         let paths = (0 ..< 5).map { "/Users/tester/Documents/slow \($0).sgf" } + ["/Volumes/Disk/problem.sgf"]
         var limits = DirectSource.Limits()
         limits.readTimeout = 0.05
-        limits.concurrentReads = 8
-        limits.abandonedReads = 10
+        limits.blockedReads = 10
         limits.failedPicksInARow = 12
         let source = Self.source(paths, log: log, reader: scriptedReader(release: release), limits: limits)
         var generator = SeededGenerator(seed: 5)
@@ -332,31 +331,73 @@ struct ScreensaverDirectModeTests {
         #expect(log.messages(.direct, level: .notice).contains("Documents may be read again"))
     }
 
-    @Test func threeAbandonedReadsGiveUp() {
+    @Test func sixReadsThatDontComeBackGiveUp() {
         let log = RecordingLog()
         let release = DispatchSemaphore(value: 0)
-        defer { for _ in 0 ..< 8 { release.signal() } }
+        defer { for _ in 0 ..< 6 { release.signal() } }
         let paths = (0 ..< 3).map { "/Users/tester/Documents/slow \($0).sgf" } + (0 ..< 3).map { "/Volumes/Disk/slow \($0).sgf" }
         var limits = DirectSource.Limits()
         limits.readTimeout = 0.05
-        limits.concurrentReads = 8
+        limits.timeoutsInARow = 10
         let source = Self.source(paths, log: log, reader: scriptedReader(release: release), limits: limits)
         var generator = SeededGenerator(seed: 2)
         #expect(source.pick(avoiding: [], using: &generator) == nil)
-        #expect(source.reasonGivenUp == "3 abandoned reads")
+        #expect(source.reasonGivenUp == "6 abandoned reads haven't come back")
     }
 
-    @Test func twoBlockedReadsHoldEveryReadSlot() {
+    /// A location whose reads never come back is denied, and the others still give games.
+    @Test func aBlockedLocationIsDeniedAndTheOthersStillPlay() throws {
         let log = RecordingLog()
         let release = DispatchSemaphore(value: 0)
-        defer { for _ in 0 ..< 4 { release.signal() } }
-        let paths = (0 ..< 6).map { "/Volumes/Disk/slow \($0).sgf" }
+        defer { for _ in 0 ..< 3 { release.signal() } }
+        let paths = (0 ..< 50).map { "/Volumes/Disk/slow \($0).sgf" } + (0 ..< 50).map { "/Users/tester/Documents/game \($0).sgf" }
         var limits = DirectSource.Limits()
         limits.readTimeout = 0.05
         let source = Self.source(paths, log: log, reader: scriptedReader(release: release), limits: limits)
-        var generator = SeededGenerator(seed: 2)
-        #expect(source.pick(avoiding: [], using: &generator) == nil)
-        #expect(source.reasonGivenUp == "every read slot is blocked")
+        var generator = SeededGenerator(seed: 6)
+        for _ in 0 ..< 30 {
+            let game = try #require(source.pick(avoiding: [], using: &generator))
+            #expect(game.identity.hasPrefix("file:///Users/tester/Documents/"))
+        }
+        #expect(source.health(of: .volume("Disk")) == .denied)
+        #expect(source.health(of: .documents) == .ok)
+        #expect(source.reasonGivenUp == nil)
+        #expect(log.messages(.direct, level: .info).count { $0.contains("timed out") } == 3)
+    }
+
+    /// Reads that time out but come back later, as on a disk that takes a while to wake, hold no
+    /// thread once they're back, so however many there are, direct mode goes on.
+    @Test func readsThatComeBackLateNoLongerCount() async throws {
+        let log = RecordingLog()
+        let release = DispatchSemaphore(value: 0)
+        let paths = (0 ..< 3).map { "/Volumes/Disk/slow \($0).sgf" } + (0 ..< 7).map { "/Volumes/Disk/game \($0).sgf" }
+        var limits = DirectSource.Limits()
+        limits.readTimeout = 0.02
+        limits.timeoutsInARow = 100
+        let source = Self.source(paths, log: log, reader: scriptedReader(release: release), limits: limits)
+        var generator = SeededGenerator(seed: 4)
+        var released = 0
+        for _ in 0 ..< 40 {
+            #expect(source.pick(avoiding: [], using: &generator) != nil)
+            // macOS answers each read that timed out before the next pick.
+            let timedOut = log.messages(.direct, level: .info).count { $0.contains("timed out") }
+            while released < timedOut {
+                release.signal()
+                released += 1
+            }
+            for _ in 0 ..< 200 where log.messages(.direct, level: .notice).count(where: { $0.contains("came back") }) < timedOut {
+                try await Task.sleep(for: .milliseconds(5))
+            }
+        }
+        #expect(released > limits.blockedReads)
+        #expect(source.reasonGivenUp == nil)
+    }
+
+    @Test func anIdentityIsMadeWithoutLookingAtTheDisk() throws {
+        let folder = try TemporaryFolder()
+        let directory = folder.url.appendingPathComponent("x.sgf")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        #expect(DirectSource.identity(of: directory.path).hasSuffix("/x.sgf"))
     }
 
     @Test func aQueryThatFailsOrTakesTooLongGivesUp() {

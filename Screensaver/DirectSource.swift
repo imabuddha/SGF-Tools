@@ -14,12 +14,15 @@ import Synchronization
 ///   read from it succeeds.
 /// - A location is **skipped** after 5 `unreadable` outcomes.
 /// - `missing`, `dataless`, and `not a game` just pick again.
-/// - Direct mode gives up for the process after 20 failed picks in a row, 3 abandoned reads, a
-///   query that fails or times out, or when every location is denied or skipped.
+/// - Direct mode gives up for the process after 20 failed picks in a row, when 6 abandoned reads
+///   haven't come back, after a query that fails or times out, or when every location is denied
+///   or skipped.
 ///
-/// `pick` runs on the game library's queue, and blocks while it reads. Reads run on a queue of
-/// their own, never the main thread or Swift's cooperative pool, since a read waiting on macOS
-/// blocks its thread until macOS answers.
+/// `pick` runs on the game library's queue, and blocks while it reads, one read at a time. Reads
+/// run on a queue of their own, never the main thread or Swift's cooperative pool, since a read
+/// waiting on macOS blocks its thread until macOS answers. So the threads held are one for the
+/// read under way and one for each abandoned read that hasn't come back, which the limit on those
+/// bounds.
 final class DirectSource: @unchecked Sendable {
     /// The limits of 1.8, which the tests shorten.
     struct Limits: Sendable {
@@ -29,8 +32,10 @@ final class DirectSource: @unchecked Sendable {
         var timeoutsInARow = 3
         var unreadableOutcomes = 5
         var failedPicksInARow = 20
-        var abandonedReads = 3
-        var concurrentReads = 2
+        /// Abandoned reads that haven't come back yet. Each holds a thread until macOS answers,
+        /// and a location is denied after ``timeoutsInARow`` of them, so this is two locations'
+        /// worth.
+        var blockedReads = 6
         /// A candidate list this old, in seconds, is asked for again when a new session starts.
         var refreshAge: Double = 3600
     }
@@ -56,7 +61,8 @@ final class DirectSource: @unchecked Sendable {
         var queriedAt: Double?
         var sessionStarted = false
         var failedPicksInARow = 0
-        var abandonedReads = 0
+        /// Reads that were abandoned and haven't come back yet.
+        var blockedReads = 0
         var givenUp: String?
     }
 
@@ -71,7 +77,6 @@ final class DirectSource: @unchecked Sendable {
     private let readQueue = DispatchQueue(label: "com.pragmaphilia.SGFTools.Screensaver.reads", qos: .utility,
                                           attributes: .concurrent)
     private let queryQueue = DispatchQueue(label: "com.pragmaphilia.SGFTools.Screensaver.query", qos: .utility)
-    private let readSlots: DispatchSemaphore
 
     /// - Parameters:
     ///   - query: Asks Spotlight for the qualifying paths.
@@ -90,7 +95,6 @@ final class DirectSource: @unchecked Sendable {
         self.limits = limits
         self.log = log
         self.clock = clock
-        readSlots = DispatchSemaphore(value: limits.concurrentReads)
     }
 
     /// Why direct mode gave up for the process, or `nil` if it hasn't.
@@ -112,7 +116,7 @@ final class DirectSource: @unchecked Sendable {
     func pick(avoiding avoided: [Set<String>], using generator: inout some RandomNumberGenerator) -> SaverGame? {
         guard reasonGivenUp == nil, loadCandidates() else { return nil }
         while true {
-            let choice: (path: String, location: LocationClass)? = state.withLock { state in
+            let open: [LocationClass: Location]? = state.withLock { state in
                 if state.givenUp != nil { return nil }
                 if state.failedPicksInARow >= limits.failedPicksInARow {
                     giveUp(&state, "\(state.failedPicksInARow) failed picks in a row")
@@ -123,9 +127,10 @@ final class DirectSource: @unchecked Sendable {
                     giveUp(&state, "every location is denied or skipped")
                     return nil
                 }
-                return Self.choose(from: open, avoiding: avoided, using: &generator)
+                return open
             }
-            guard let (path, location) = choice else { return nil }
+            guard let open else { return nil }
+            let (path, location) = Self.choose(from: open, avoiding: avoided, using: &generator)
             if let game = read(path, in: location) { return game }
         }
     }
@@ -216,9 +221,11 @@ final class DirectSource: @unchecked Sendable {
         return random()
     }
 
-    /// What tells a file's game apart from others: its URL, as the playlist writes it.
+    /// What tells a file's game apart from others: its URL, as the playlist writes it. Made
+    /// without looking at the disk, which `URL(fileURLWithPath:)` alone does to learn whether
+    /// the path is a folder.
     static func identity(of path: String) -> String {
-        URL(fileURLWithPath: path).absoluteString
+        URL(fileURLWithPath: path, isDirectory: false).absoluteString
     }
 
     // MARK: - Reading
@@ -226,11 +233,6 @@ final class DirectSource: @unchecked Sendable {
     /// Reads a candidate with a time limit and applies the outcome to its location. Returns the
     /// game if it is one.
     private func read(_ path: String, in location: LocationClass) -> SaverGame? {
-        guard readSlots.wait(timeout: .now() + limits.readTimeout) == .success else {
-            // Every slot is held by a read that never came back.
-            state.withLock { giveUp(&$0, "every read slot is blocked") }
-            return nil
-        }
         /// The read's result, or whether the pick stopped waiting for it.
         struct Pending {
             var result: GameFileReader.Result?
@@ -239,13 +241,12 @@ final class DirectSource: @unchecked Sendable {
         let pending = Locked(Pending())
         let done = DispatchSemaphore(value: 0)
         let start = ContinuousClock.now
-        readQueue.async { [reader, readSlots] in
+        readQueue.async { [reader] in
             let result = reader.read(path)
             let wasAbandoned = pending.withLock { pending in
                 pending.result = result
                 return pending.abandoned
             }
-            readSlots.signal()
             done.signal()
             if wasAbandoned { self.finishLate(result, path: path, location: location, start: start) }
         }
@@ -262,14 +263,14 @@ final class DirectSource: @unchecked Sendable {
         guard let result else {
             log.info(.direct, "\(location): timed out after \(milliseconds) ms, abandoned", path: path)
             state.withLock { state in
-                state.abandonedReads += 1
+                state.blockedReads += 1
                 state.failedPicksInARow += 1
                 state.locations[location]?.timeoutsInARow += 1
                 if let entry = state.locations[location], entry.health == .ok, entry.timeoutsInARow >= limits.timeoutsInARow {
                     deny(&state, location, "\(entry.timeoutsInARow) time-outs in a row")
                 }
-                if state.abandonedReads >= limits.abandonedReads {
-                    giveUp(&state, "\(state.abandonedReads) abandoned reads")
+                if state.blockedReads >= limits.blockedReads {
+                    giveUp(&state, "\(state.blockedReads) abandoned reads haven't come back")
                 }
             }
             return nil
@@ -304,15 +305,15 @@ final class DirectSource: @unchecked Sendable {
         }
     }
 
-    /// A read that was abandoned has come back. A game from a denied location means macOS has
-    /// since allowed it, so the location may be read again.
+    /// A read that was abandoned has come back, and holds its thread no longer. A game from a
+    /// denied location means macOS has since allowed it, so the location may be read again.
     private func finishLate(_ result: GameFileReader.Result, path: String, location: LocationClass,
                             start: ContinuousClock.Instant) {
         let milliseconds = Int((ContinuousClock.now - start) / .milliseconds(1))
         log.notice(.direct, "\(location): a read abandoned earlier came back after \(milliseconds) ms: \(result.outcome.name)")
-        guard case .game = result.outcome else { return }
         state.withLock { state in
-            guard state.locations[location]?.health == .denied else { return }
+            state.blockedReads -= 1
+            guard case .game = result.outcome, state.locations[location]?.health == .denied else { return }
             state.locations[location]?.health = .ok
             state.locations[location]?.denied = 0
             state.locations[location]?.timeoutsInARow = 0
