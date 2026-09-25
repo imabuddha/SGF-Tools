@@ -9,12 +9,15 @@
 # with the host's public file entitlements, read from the installed host so that a change shows,
 # and one with App/SGFTools.entitlements, and checks the round trip the design depends on:
 #
-# 1. the app-like probe writes a test file in ~/Library/Application Support/SGF Tools/
-# 2. the host-like probe reads it
-# 3. the host-like probe may not write there
-# 4. both get the same count of the screensaver's games from Spotlight, which filters its answers
-#    by the sandbox: with the sandbox alone, the count is 0
-# 5. the app-like probe removes the test file.
+# 1. both probes find ~/Library/Application Support/SGF Tools/ through the real home folder, from
+#    getpwuid, as the app and the screensaver do, since a sandbox's NSHomeDirectory() is its
+#    container
+# 2. the app-like probe writes a test file there
+# 3. the host-like probe reads it
+# 4. the host-like probe may not write there
+# 5. both get the same count of the screensaver's games from Spotlight, which filters its answers
+#    by the sandbox (with the sandbox alone, the count is 0), and a path for every one
+# 6. the app-like probe removes the test file.
 #
 # It never opens an SGF file, so it can't raise a permission request. It leaves two small
 # containers, com.pragmaphilia.SGFTools.SandboxCheck.Host and .App, in ~/Library/Containers.
@@ -88,13 +91,21 @@ expect() {
 }
 
 print
+for probe in host app; do
+    output=$("$work/$probe" folder 2>&1)
+    if [[ $output == "ok $folder" ]]; then
+        report PASS "The $probe finds the playlist's folder through the real home folder: ${output#ok }"
+    else
+        report FAIL "The $probe finds the playlist's folder at \"${output#ok }\", not \"$folder\""
+    fi
+done
 expect ok "The app writes the playlist's folder" app write "$testFile"
 expect ok "The host reads what the app wrote" host read "$testFile"
 expect refused "The host may not write the playlist's folder" host write "$folder/Sandbox Check $$ host.txt"
 hostCount=$("$work/host" count 2>&1)
 appCount=$("$work/app" count 2>&1)
-if [[ $hostCount == "ok "* && $hostCount == "$appCount" && $hostCount != "ok 0 games" ]]; then
-    report PASS "The host and the app get the same games from Spotlight: ${hostCount#ok }"
+if [[ $hostCount == "ok "* && $hostCount == "$appCount" && $hostCount != "ok 0 games"* ]]; then
+    report PASS "The host and the app get the same games and paths from Spotlight: ${hostCount#ok }"
 else
     report FAIL "Spotlight: the host got \"$hostCount\", the app \"$appCount\""
 fi

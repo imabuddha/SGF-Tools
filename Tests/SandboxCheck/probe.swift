@@ -3,21 +3,22 @@
 // see what each may do with the playlist's folder and with Spotlight. It never opens an SGF file,
 // so it can't raise a permission request.
 //
+//     probe folder          prints the playlist's folder, found as the app and the screensaver
+//                           find it, through the real home folder from getpwuid
 //     probe write <path>    creates the file's folder if needed, and writes the file
-//     probe read <path>     reads the file and prints its contents
+//     probe read <path>     reads the file and prints its size in bytes
 //     probe remove <path>   removes the file
-//     probe count           counts, with Spotlight, the SGF files that are games for the screensaver
+//     probe count           counts, with Spotlight, the SGF files that are games for the
+//                           screensaver, and gets each one's path as GameCandidates does
 //
 // Each prints one line, "ok …" or "refused …", and exits 0 or 1.
 
 import CoreServices
 import Foundation
 
-/// The query of Shared/GameCandidates.swift.
-let query = """
-    kMDItemContentType == "com.red-bean.sgf" && com_breedingpinetrees_sgf_black == "*" && \
-    com_breedingpinetrees_sgf_white == "*" && com_breedingpinetrees_sgf_moves >= 20
-    """
+/// The query of Shared/GameCandidates.swift, as its value reads. A test of the app's checks that
+/// the two match.
+let query = #"kMDItemContentType == "com.red-bean.sgf" && com_breedingpinetrees_sgf_black == "*" && com_breedingpinetrees_sgf_white == "*" && com_breedingpinetrees_sgf_moves >= 20"#
 
 func finish(_ ok: Bool, _ message: String) -> Never {
     print("\(ok ? "ok" : "refused") \(message)")
@@ -31,8 +32,12 @@ func describe(_ error: any Error) -> String {
 }
 
 let arguments = CommandLine.arguments
-guard arguments.count >= 2 else { finish(false, "usage: probe write|read|remove <path>, or probe count") }
+guard arguments.count >= 2 else { finish(false, "usage: probe write|read|remove <path>, or probe folder|count") }
 switch (arguments[1], arguments.count > 2 ? URL(fileURLWithPath: arguments[2]) : nil) {
+case ("folder", nil):
+    // As Playlist.realHomeDirectory and Playlist.defaultURL find it.
+    guard let entry = getpwuid(getuid()), let directory = entry.pointee.pw_dir else { finish(false, "no home folder") }
+    finish(true, String(cString: directory) + "/Library/Application Support/SGF Tools")
 case ("write", let url?):
     do {
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
@@ -61,7 +66,16 @@ case ("count", nil):
     }
     MDQuerySetSearchScope(spotlight, [kMDQueryScopeComputer] as CFArray, 0)
     guard MDQueryExecute(spotlight, CFOptionFlags(kMDQuerySynchronous.rawValue)) else { finish(false, "the query failed") }
-    finish(true, "\(MDQueryGetResultCount(spotlight)) games")
+    // Each result's path, as GameCandidates.spotlightPaths gets it: a count alone doesn't show
+    // that the paths come back.
+    let count = MDQueryGetResultCount(spotlight)
+    var paths = 0
+    for index in 0 ..< count {
+        guard let result = MDQueryGetResultAtIndex(spotlight, index) else { continue }
+        let item = Unmanaged<MDItem>.fromOpaque(result).takeUnretainedValue()
+        if MDItemCopyAttribute(item, kMDItemPath) is String { paths += 1 }
+    }
+    finish(paths == count, "\(count) games, \(paths) paths")
 default:
-    finish(false, "usage: probe write|read|remove <path>, or probe count")
+    finish(false, "usage: probe write|read|remove <path>, or probe folder|count")
 }

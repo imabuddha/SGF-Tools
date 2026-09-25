@@ -192,8 +192,18 @@ struct GameCandidatesTests {
     }
 
     @Test func theQueryNamesTheImportersAttributes() {
-        #expect(GameCandidates.query.contains("kMDItemContentType == \"com.red-bean.sgf\""))
-        #expect(GameCandidates.query.contains("com_breedingpinetrees_sgf_moves >= 20"))
-        #expect(!GameCandidates.query.contains("\n"))
+        let name = SpotlightAttributes.Name.self
+        #expect(GameCandidates.query == """
+            kMDItemContentType == "com.red-bean.sgf" && \(name.black) == "*" && \(name.white) == "*" && \
+            \(name.moves) >= \(Playlist.minimumMoves)
+            """)
+    }
+
+    /// The sandbox check's probe asks Spotlight the same question, from its own copy of the query.
+    @Test func theSandboxChecksProbeAsksTheSameQuery() throws {
+        let probe = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .appendingPathComponent("SandboxCheck/probe.swift")
+        let source = try String(contentsOf: probe, encoding: .utf8)
+        #expect(source.contains("let query = #\"\(GameCandidates.query)\"#"))
     }
 }
