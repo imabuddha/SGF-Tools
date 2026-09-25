@@ -24,7 +24,7 @@ struct SGFToolsApp: App {
 }
 
 /// Chooses the screensaver's games when the app opens, if they are due, and quits the app when
-/// its window closes, as single-window utilities do.
+/// its window closes, as single-window utilities do, once an update of the games has finished.
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         ScreensaverGames.shared.appDidLaunch()
@@ -32,5 +32,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         true
+    }
+
+    /// Waits for an update of the screensaver's games to finish, which writes the playlist only
+    /// at its end, so that quitting doesn't throw away the files read so far.
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        let games = ScreensaverGames.shared
+        guard games.isUpdating else { return .terminateNow }
+        games.afterUpdate { NSApplication.shared.reply(toApplicationShouldTerminate: true) }
+        return .terminateLater
     }
 }
