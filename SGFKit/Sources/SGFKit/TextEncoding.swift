@@ -8,7 +8,8 @@ struct Charset {
         /// UTF-8. If it isn't, the charset is detected; see ``CharsetDetection``.
         case utf8
         /// The charset ``CharsetDetection`` found for text that should have been UTF-8 but
-        /// wasn't.
+        /// wasn't. UTF-8 here means Western text in UTF-8 with stray bytes, which are read as
+        /// Windows-1252.
         case detected(String.Encoding)
         /// CA names Latin-1, Windows-1252, or ASCII: Windows-1252, a superset of the printable
         /// Latin-1 characters, unless the text is valid UTF-8 with non-ASCII characters in it.
