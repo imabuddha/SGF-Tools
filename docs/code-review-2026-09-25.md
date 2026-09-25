@@ -185,7 +185,8 @@ These come later, as John decided, and are not fixed here:
 4. Short French text detected as Chinese, Japanese, or Korean.
 5. An implicit root with no `;`.
 
-`GameResult`'s wording also stays as John decided.
+`GameResult`'s wording also stays as John decided. *The five defects were fixed in 2.0.6; see
+the outcome.*
 
 ## Outcome
 
@@ -235,7 +236,7 @@ importer 15 seconds later, and only then were the build products deleted; the co
 
 - On an external disk, `mdimport` given a single file stores nothing (B5); that may be worth a
   report to Apple.
-- The five known defects above.
+- The five known defects above. *Fixed in 2.0.6; see below.*
 
 ### John's decisions, 2026-09-25
 
@@ -271,3 +272,56 @@ importer 15 seconds later, and only then were the build products deleted; the co
 
 These follow-ups are version 2.0.5 (6), with no behavior change. SGFKit's 201 tests (171 in
 SGFKitTests, 30 in SGFRenderingTests) and the app's 57 pass, as before.
+
+### The known defects, fixed in 2.0.6
+
+The five known defects came from a stress test of SGFKit over 72,491 real SGF files, which found
+no crashes and no hangs. John had the fixes made, and `GameResult`'s wording stays as it is. Each
+fix has tests with synthetic fixtures, written first and failing before the fix. To see what the
+fixes do to real files, every game of the 72,491 was compared before and after, by its charset,
+its nodes, the text of its values, and the warnings: four files read differently, all as
+intended. The blind spots: no real file has Shift_JIS without CA that ends a value in a backslash
+byte (3), or Western text in UTF-8 with a stray byte (4), so those fixes are checked by their
+tests alone, and the thumbnail's limit (1) by a unit test, not through Quick Look.
+
+1. **Absurd sizes.** `BoardRenderer.makeImage` and `makeCollectionImage` check the image's size
+   in pixels as a `CGFloat` before converting it to `Int`, so a size too large for an `Int`, or
+   infinite, makes no image instead of trapping. The same conversion in the app went with
+   `Thumbnail.makeImage` in 2.0.4 (D3); what was left, `Thumbnail.contextSize(fitting:)`, now
+   limits the thumbnail to 16,384 points a side, so that an infinite or absurd size from Quick
+   Look doesn't become the size of the context. As a regression guard, 1,280 images at the sizes
+   and scales that thumbnails and previews use are byte for byte as before.
+2. **A soft line break inside a UTF-8 character.** A value that isn't valid UTF-8 is checked
+   again without its soft line breaks, which FF[4] Text removes anyway. Three KGS review files
+   whose comments had been read as GB18030, Shift_JIS, and Big5 ("d茅j脿 vu 莽a", "abonnﾃｩ",
+   "yos矇") are read as UTF-8 now ("déjà vu ça", "abonné", "yosé"). The same applies to a game
+   declared Latin-1 whose text is UTF-8.
+3. **Shift_JIS with no CA, and a trail byte that is a backslash.** Text with a non-ASCII byte
+   right before a backslash is no longer taken as Western without asking macOS's detection,
+   which finds Shift_JIS, and the tree is parsed again with it, so the moves are back. A soft
+   line break doesn't count: it can't swallow a bracket, programs that wrap lines put one after
+   any character, and detection alone takes Western text such as `ÉTÉ\` before a line break for
+   Shift_JIS.
+4. **Short French text read as Chinese or Japanese.** The report's three files are the KGS files
+   of item 2. The weakness behind them remains for Western text in UTF-8 made invalid some other
+   way, such as by one stray byte: it reads as neither UTF-8 nor Western text in Windows-1252,
+   where "très" becomes "trÃ¨s", and macOS's detection, which never picks UTF-8, took "héhé" and
+   "yosé" for Shift_JIS. The Western check now looks at the UTF-8 reading first: when every
+   multibyte UTF-8 character is a Latin letter or common punctuation, and they outnumber the
+   stray bytes, the game is read as UTF-8, each stray byte as Windows-1252, with a fallback
+   warning if it declared UTF-8. The German, Chinese, and curly-quote files that detection
+   already read correctly read as before.
+5. **An implicit root.** A `(` followed by a property whose identifier is all uppercase letters,
+   then `[`, starts a game tree too, and those properties become its root node, with a new
+   warning. Text in parentheses, such as "(Diagram 2)", still doesn't start a game. One World
+   Amateur Go Championship record has its game of 282 moves instead of none.
+
+**Public API:** `SGFWarning.Kind` gains `missingSemicolon`. Inside SGFKit, charset detection can
+return UTF-8.
+
+**Tests:** SGFKit's package went from 201 tests (171 in SGFKitTests, 30 in SGFRenderingTests) to
+213 (182 and 31), and the app's from 57 to 58. The timings are as before: the renderer's median
+for the 512x512 board of 112 stones at 1.2 ms flat and 2.6 ms shaded, johnVsGnu's thumbnail at
+7.5 ms, and parsing all 72,491 files within the noise of a busy machine.
+
+The version is 2.0.6 (7). Neither the app nor its extensions were built or run.

@@ -1,6 +1,6 @@
 # SGF Tools 2.0: the plan
 
-Decisions as of 2026-09-24. The background is in `old-version-analysis.md`.
+Decisions as of 2026-09-25. The background is in `old-version-analysis.md`.
 
 ## Platform
 
@@ -54,11 +54,18 @@ Decided by John on 2026-09-24:
   charset detection among GB18030, CP949 (EUC-KR), CP932 (Shift_JIS), Big5, and Windows-1252,
   with Windows-1252 as the last resort. Text that reads as ordinary Western European text in
   Windows-1252 stays Windows-1252, because the detection alone takes short Western text such as
-  "Émile" for Big5 or Shift_JIS. A Latin-1 label is read as Windows-1252, as browsers do.
+  "Émile" for Big5 or Shift_JIS, unless a non-ASCII byte comes right before a backslash that
+  isn't a soft line break, as the second byte of a Shift_JIS, GBK, or Big5 character can. A
+  Latin-1 label is read as Windows-1252, as browsers do.
+- Western text in UTF-8 with a few stray bytes stays UTF-8, and the stray bytes are read as
+  Windows-1252. A soft line break inside a UTF-8 character, left by a program that wraps lines
+  by counting bytes, doesn't make the text invalid: the UTF-8 check is repeated without soft line
+  breaks.
 - Text that was already garbled on disk (double-encoded UTF-8, literal U+FFFD) is left as it is.
 - "The first 50 moves" counts passes, so move 50 matches the move numbers in other SGF programs.
 - A point off the board (including `tt` on boards up to 19x19) is a pass. Several setup properties
   in one node apply in the order AB, AW, AE.
+- Properties right after a game tree's `(`, with no `;`, are its root node, with a warning.
 
 ## The screensaver, first draft
 
