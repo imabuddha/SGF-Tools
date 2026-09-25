@@ -43,8 +43,8 @@ struct ScreensaverRegistryTests {
             facts.windowSince = now
             facts.hasSize = true
             facts.key = key
-            facts.started = true
         }
+        registry.animationStarted(view.serial)
         return view
     }
 
@@ -63,8 +63,8 @@ struct ScreensaverRegistryTests {
     @Test func startAnimationOnAnOlderViewIsIgnored() {
         let older = startedView(on: .display(1))
         let newer = startedView(on: .display(1))
-        registry.update(older.serial) { $0.started = false }
-        registry.update(older.serial) { $0.started = true }
+        registry.animationStopped(older.serial)
+        registry.animationStarted(older.serial)
         #expect(!older.playing && newer.playing)
     }
 
@@ -72,12 +72,31 @@ struct ScreensaverRegistryTests {
         let one = startedView(on: .display(1))
         let two = startedView(on: .display(2))
         let preview = startedView(on: .preview)
+        clock.now += 10
         registry.willStop()
         #expect(!one.playing && !two.playing && !preview.playing)
         #expect(one.reasons.last == "willstop")
-        registry.update(one.serial) { $0.started = false }
-        registry.update(one.serial) { $0.started = true }
+        // The host calls startAnimation again, without stopAnimation, as it does for a screen.
+        registry.animationStarted(one.serial)
         #expect(one.playing && !two.playing)
+        // A new session.
+        registry.didStart()
+        #expect(two.playing && preview.playing)
+    }
+
+    @Test func aWillStopRightAfterStartAnimationIsThePreviousSessions() {
+        let older = startedView(on: .display(1))
+        clock.now += 60
+        let newer = startedView(on: .display(1))
+        clock.now += 0.5
+        registry.willStop()
+        #expect(newer.playing && !older.playing)
+        #expect(log.messages(.lifecycle).contains("View 2: willstop ignored, 500 ms after startAnimation"))
+        #expect(registry.facts(of: older.serial)?.stoppedByWillStop == true)
+        clock.now += 60
+        registry.willStop()
+        #expect(!newer.playing && newer.reasons.last == "willstop")
+        #expect(!older.playing, "the older view doesn't take over")
     }
 
     @Test func aPreviewIsItsOwnKey() {
@@ -127,6 +146,43 @@ struct ScreensaverRegistryTests {
         registry.checkStartFallback(view.serial)
         #expect(view.playing)
         #expect(log.messages(.lifecycle).contains("View 1: 5 s in a window without startAnimation; playing anyway"))
+        // The host's calls win over the fallback.
+        registry.animationStopped(view.serial)
+        #expect(!view.playing && view.reasons.last == "not started")
+    }
+
+    @Test func aViewThatHasStartedAndStoppedWaitsForStartAnimation() {
+        let view = FakeInstance(serial: registry.makeSerial())
+        registry.add(view)
+        let now = clock.now
+        registry.update(view.serial) { facts in
+            facts.windowSince = now
+            facts.hasSize = true
+            facts.key = .preview
+        }
+        registry.animationStarted(view.serial)
+        registry.animationStopped(view.serial)
+        clock.now += 5
+        registry.checkStartFallback(view.serial)
+        #expect(!view.playing)
+    }
+
+    @Test func aNewerViewThatCannotPlayDoesNotPauseTheOlder() {
+        let preview = startedView(on: .preview)
+        // Made by the host but not shown: no window or size yet.
+        let extra = FakeInstance(serial: registry.makeSerial())
+        registry.add(extra)
+        registry.update(extra.serial) { $0.key = .preview }
+        #expect(preview.playing && !extra.playing)
+        let now = clock.now
+        registry.update(extra.serial) { facts in
+            facts.windowSince = now
+            facts.hasSize = true
+        }
+        #expect(preview.playing, "in a window, but not started")
+        registry.animationStarted(extra.serial)
+        #expect(!preview.playing && extra.playing)
+        #expect(preview.reasons.last == "view 2 is newer on the preview")
     }
 
     @Test func aFreedViewNoLongerCompetes() {

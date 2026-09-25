@@ -19,12 +19,14 @@ protocol SaverInstance: AnyObject {
 /// only for the preview; and `com.apple.screensaver.willstop` is the sign that the screensaver
 /// is ending, though it's sometimes missed. So a view plays only while:
 /// - `startAnimation` has been called and `stopAnimation` hasn't since, or it has been in a
-///   window for 5 seconds without `startAnimation`, so that a host that never calls it doesn't
-///   leave the screen black
+///   window for 5 seconds without `startAnimation` ever being called, so that a host that never
+///   calls it doesn't leave the screen black
 /// - it has a window and a size that isn't empty
-/// - it's the newest live view for its key: its display, or the preview; a view with no screen
-///   yet waits
-/// - no `willstop` has arrived since it last started
+/// - no `willstop` has arrived since it last started, or since `didstart`. A `willstop` less
+///   than 2 seconds after a view's `startAnimation` doesn't stop that view: the notifications
+///   and the host's calls aren't ordered, so it may be the previous session's.
+/// - it's the newest live view for its key, its display or the preview, of those that meet the
+///   rules above; a view with no screen yet waits
 /// - its window isn't occluded. Occlusion is trusted only after the window has once reported
 ///   itself visible, so a host that misreports it can't keep the screensaver black.
 ///
@@ -48,6 +50,9 @@ final class InstanceRegistry {
     struct Facts: Equatable, Sendable {
         /// `startAnimation` has been called, and `stopAnimation` hasn't since.
         var started = false
+        /// When `startAnimation` was last called, by the registry's clock, or `nil` if it never
+        /// has been.
+        var startedAt: Double?
         /// When the view got its window, by the registry's clock, or `nil` if it has none.
         var windowSince: Double?
         /// The view has been in a window for 5 seconds without `startAnimation`.
@@ -62,10 +67,18 @@ final class InstanceRegistry {
         var hasBeenVisible = false
 
         var hasWindow: Bool { windowSince != nil }
+
+        /// Whether the view could play, all else aside: it has started, no `willstop` has
+        /// stopped it, and it has a window and a size. The newest such view on a key plays.
+        var isEligible: Bool { (started || startedByFallback) && !stoppedByWillStop && hasWindow && hasSize }
     }
 
     /// How long a view waits in a window for `startAnimation` before playing anyway, in seconds.
     static let startFallbackDelay: Double = 5
+
+    /// How soon after a view's `startAnimation` a `willstop` is taken for the previous
+    /// session's, and doesn't stop the view, in seconds.
+    static let willStopGrace: Double = 2
 
     static let shared = InstanceRegistry(log: SaverLog.shared)
 
@@ -111,7 +124,6 @@ final class InstanceRegistry {
         guard var entry = entries[serial] else { return }
         let before = entry.facts
         change(&entry.facts)
-        if entry.facts.started, !before.started { entry.facts.stoppedByWillStop = false }
         if entry.facts.windowSince != before.windowSince, entry.facts.hasWindow { entry.facts.stoppedByWillStop = false }
         if !entry.facts.hasWindow { entry.facts.startedByFallback = false }
         if entry.facts.isVisible == true { entry.facts.hasBeenVisible = true }
@@ -119,19 +131,54 @@ final class InstanceRegistry {
         reevaluate()
     }
 
+    /// `startAnimation`: the view plays, whatever came before. A `willstop` that arrived earlier
+    /// no longer counts, and the host's call replaces the fallback's.
+    func animationStarted(_ serial: Int) {
+        let now = clock()
+        update(serial) { facts in
+            facts.started = true
+            facts.startedAt = now
+            facts.startedByFallback = false
+            facts.stoppedByWillStop = false
+        }
+    }
+
+    /// `stopAnimation`: the view stops, even if the fallback started it.
+    func animationStopped(_ serial: Int) {
+        update(serial) { facts in
+            facts.started = false
+            facts.startedByFallback = false
+        }
+    }
+
     /// Plays a view that has been in a window for ``startFallbackDelay`` seconds without
-    /// `startAnimation`. Views call this that long after they get a window.
+    /// `startAnimation` ever being called. Views call this that long after they get a window.
     func checkStartFallback(_ serial: Int) {
-        guard let facts = entries[serial]?.facts, !facts.started, !facts.startedByFallback,
+        guard let facts = entries[serial]?.facts, facts.startedAt == nil, !facts.startedByFallback,
               let since = facts.windowSince, clock() - since >= Self.startFallbackDelay - 0.01
         else { return }
         log.notice(.lifecycle, "View \(serial): \(Int(Self.startFallbackDelay)) s in a window without startAnimation; playing anyway")
         update(serial) { $0.startedByFallback = true }
     }
 
-    /// `com.apple.screensaver.willstop` arrived: every view stops until it starts again.
+    /// `com.apple.screensaver.willstop` arrived: every view stops until it starts again, or until
+    /// `didstart`, except one whose `startAnimation` came less than ``willStopGrace`` seconds ago.
     func willStop() {
-        for serial in entries.keys { entries[serial]?.facts.stoppedByWillStop = true }
+        let now = clock()
+        for serial in entries.keys.sorted() {
+            if let startedAt = entries[serial]?.facts.startedAt, now - startedAt < Self.willStopGrace {
+                log.notice(.lifecycle, "View \(serial): willstop ignored, \(Int((now - startedAt) * 1000)) ms after startAnimation")
+                continue
+            }
+            entries[serial]?.facts.stoppedByWillStop = true
+        }
+        reevaluate()
+    }
+
+    /// `com.apple.screensaver.didstart` arrived: a screensaver session has started, so a
+    /// `willstop` that came before it no longer stops any view.
+    func didStart() {
+        for serial in entries.keys { entries[serial]?.facts.stoppedByWillStop = false }
         reevaluate()
     }
 
@@ -149,7 +196,8 @@ final class InstanceRegistry {
         guard facts.hasWindow else { return (false, "no window") }
         guard facts.hasSize else { return (false, "empty size") }
         guard let key = facts.key else { return (false, "no screen yet") }
-        let newest = entries.filter { $0.value.instance != nil && $0.value.facts.key == key }.keys.max() ?? serial
+        let newest = entries.filter { $0.value.instance != nil && $0.value.facts.key == key && $0.value.facts.isEligible }
+            .keys.max() ?? serial
         guard newest == serial else { return (false, "view \(newest) is newer on \(key)") }
         guard !(facts.hasBeenVisible && facts.isVisible == false) else { return (false, "occluded") }
         return (true, "the newest view on \(key)")

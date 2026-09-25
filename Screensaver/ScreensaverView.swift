@@ -80,13 +80,13 @@ final class ScreensaverView: ScreenSaverView, SaverInstance {
     override func startAnimation() {
         super.startAnimation()
         Self.log.notice(.lifecycle, "View \(serial): startAnimation")
-        registry.update(serial) { $0.started = true }
+        registry.animationStarted(serial)
     }
 
     override func stopAnimation() {
         super.stopAnimation()
         Self.log.notice(.lifecycle, "View \(serial): stopAnimation")
-        registry.update(serial) { $0.started = false }
+        registry.animationStopped(serial)
     }
 
     override func viewDidMoveToWindow() {
@@ -158,8 +158,10 @@ final class ScreensaverView: ScreenSaverView, SaverInstance {
     }
 
     /// The views this one competes with: the previews, or those on its display. `nil` while it
-    /// has no screen.
+    /// has no window or no screen, so that a view the host makes and never shows competes with
+    /// none.
     private var key: InstanceRegistry.Key? {
+        guard window != nil else { return nil }
         if SaverLayout.isPreview(bounds.size) { return .preview }
         return displayID.map { .display($0) }
     }
@@ -247,6 +249,7 @@ final class ScreensaverView: ScreenSaverView, SaverInstance {
                 MainActor.assumeIsolated {
                     log.notice(.lifecycle, "com.apple.screensaver.\(name); \(InstanceRegistry.shared.liveCount) live views")
                     if name == "willstop" { InstanceRegistry.shared.willStop() }
+                    if name == "didstart" { InstanceRegistry.shared.didStart() }
                 }
             }
         }
