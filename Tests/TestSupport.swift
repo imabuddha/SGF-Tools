@@ -142,3 +142,29 @@ struct SeededGenerator: RandomNumberGenerator, Sendable {
         return value ^ (value >> 31)
     }
 }
+
+/// A screensaver log that keeps its lines, for tests to check.
+final class RecordingLog: SaverLogging, @unchecked Sendable {
+    struct Line: Sendable {
+        let level: SaverLogLevel
+        let category: SaverLogCategory
+        let message: String
+        let path: String?
+    }
+
+    private let lock = NSLock()
+    private var recorded: [Line] = []
+
+    func log(_ level: SaverLogLevel, _ category: SaverLogCategory, _ message: String, path: String?) {
+        lock.withLock { recorded.append(Line(level: level, category: category, message: message, path: path)) }
+    }
+
+    /// The messages of a category, optionally only those at a level.
+    func messages(_ category: SaverLogCategory, level: SaverLogLevel? = nil) -> [String] {
+        lock.withLock {
+            recorded.filter { $0.category == category && (level == nil || $0.level == level) }.map(\.message)
+        }
+    }
+
+    var lines: [Line] { lock.withLock { recorded } }
+}

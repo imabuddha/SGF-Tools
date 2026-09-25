@@ -155,8 +155,9 @@ enum Playlist {
 
     /// A raw value, escapes and all, made fit for one line: a tab or line break becomes a space,
     /// and a backslash left unpaired at the end, which would escape the closing `]`, gets its
-    /// pair. Neither changes the value as a point, a compressed list, or a pass: a point is two
-    /// letters and nothing else, so a value with a space or a backslash in it was never one.
+    /// pair. Neither changes what the value means as a point, a compressed list, or a pass: a
+    /// point ignores the whitespace around it, and whitespace or a backslash inside a value
+    /// already kept it from being a point.
     private static func cleaned(_ raw: String) -> String {
         var result = String.UnicodeScalarView()
         var trailingBackslashes = 0
@@ -250,15 +251,23 @@ enum Playlist {
 
         /// The game line at an index, parsed, or `nil` if it has no tab or no game.
         func entry(at index: Int) -> Entry? {
-            let range = lines[index]
-            let bytes = data[data.startIndex + range.lowerBound ..< data.startIndex + range.upperBound]
-            guard let tab = bytes.firstIndex(of: 0x09) else { return nil }
-            let url = String(decoding: bytes[..<tab], as: UTF8.self)
-            let sgf = bytes[bytes.index(after: tab)...]
-            guard !url.isEmpty,
+            guard let (url, sgf) = parts(at: index), !url.isEmpty,
                   let game = SGFParser.parse(Data(sgf), options: .init(stopAfterFirstGame: true)).games.first
             else { return nil }
             return Entry(url: url, game: game)
+        }
+
+        /// The URL of the game line at an index, without parsing its game, or `nil` if it has no
+        /// tab.
+        func url(at index: Int) -> String? {
+            parts(at: index)?.url
+        }
+
+        private func parts(at index: Int) -> (url: String, sgf: Data.SubSequence)? {
+            let range = lines[index]
+            let bytes = data[data.startIndex + range.lowerBound ..< data.startIndex + range.upperBound]
+            guard let tab = bytes.firstIndex(of: 0x09) else { return nil }
+            return (String(decoding: bytes[..<tab], as: UTF8.self), bytes[bytes.index(after: tab)...])
         }
     }
 }
