@@ -6,7 +6,9 @@ import Synchronization
 
 /// Chooses the screensaver's games and writes its playlist (see `docs/screensaver.md`, 1.5): it
 /// asks Spotlight for every qualifying game, reads files in a random order until
-/// ``gameLimit`` of them qualify, and writes each one's line (see ``Playlist``).
+/// ``gameLimit`` of them qualify, and writes each one's line (see ``Playlist``). It keeps the
+/// playlist already there instead when the new one would have fewer games because files
+/// couldn't be read (see ``KeptPlaylist``).
 ///
 /// The app does this rather than the screensaver because the files are almost all in places
 /// that macOS's privacy settings guard. The app can ask for access while someone is at the Mac,
@@ -54,9 +56,30 @@ struct PlaylistBuilder: Sendable {
         var bytesWritten: Int
         /// How long it took.
         var seconds: Double
+        /// The playlist already there, if it was kept rather than replaced.
+        var kept: KeptPlaylist?
 
-        /// The playlist's header.
+        /// The new playlist's header.
         var header: Playlist.Header { .init(made: made, found: found, games: games) }
+    }
+
+    /// A playlist already there that a build kept, rather than replace it with one that has
+    /// fewer games because files couldn't be read, not because the games are gone: macOS
+    /// refused them, or a volume isn't connected. Spotlight's index of a volume is on the
+    /// volume, so it finds nothing there while the volume is away.
+    struct KeptPlaylist: Sendable, Equatable {
+        enum Reason: Sendable, Equatable {
+            /// No game could be found or read.
+            case noGames
+            /// macOS refused some of the reads.
+            case refused
+            /// Volumes that hold some of the kept playlist's games aren't connected, by name.
+            case volumesMissing([String])
+        }
+
+        /// The kept playlist's header.
+        var header: Playlist.Header
+        var reason: Reason
     }
 
     /// Why a build failed.
@@ -91,14 +114,18 @@ struct PlaylistBuilder: Sendable {
     /// Reads each file.
     var reader = GameFileReader()
 
+    /// The volumes mounted under `/Volumes`; replaced by the tests.
+    var mountedVolumes: @Sendable () -> [LocationClass] = { GameCandidates.mountedVolumes() }
+
     /// The time; replaced by the tests.
     var now: @Sendable () -> Date = { Date() }
 
     private static let log = Logger(subsystem: "com.pragmaphilia.SGFTools", category: "playlist")
 
     /// Chooses games and writes the playlist to `url`, replacing any file there in one step, so
-    /// that the screensaver reads the old playlist or the new one, never part of one. There is
-    /// no time limit: a read that waits on a permission request waits for the answer.
+    /// that the screensaver reads the old playlist or the new one, never part of one, unless the
+    /// old one is kept (see ``KeptPlaylist``). There is no time limit: a read that waits on a
+    /// permission request waits for the answer.
     ///
     /// - Parameter progress: Called after each batch of reads with the games chosen so far and
     ///   the number wanted, on the builder's thread.
@@ -139,6 +166,13 @@ struct PlaylistBuilder: Sendable {
         }
 
         let made = now()
+        if let kept = playlistToKeep(at: url, games: lines.count, tallies: tallies) {
+            let report = Report(made: made, found: candidates.found, excluded: candidates.excluded, tallies: tallies,
+                                games: lines.count, bytesWritten: 0, seconds: (clock.now - start) / .seconds(1),
+                                kept: kept)
+            Self.logReport(report)
+            return report
+        }
         var text = Playlist.text(of: .init(made: made, found: candidates.found, games: lines.count))
         for line in lines { text += line + "\n" }
         let data = Data(text.utf8)
@@ -159,6 +193,28 @@ struct PlaylistBuilder: Sendable {
         return report
     }
 
+    /// The playlist at `url`, if there is one with more games than the new one would have, and the
+    /// new one has fewer because files couldn't be read: it has none, macOS refused some reads,
+    /// or a volume that holds some of the old playlist's games isn't connected.
+    private func playlistToKeep(at url: URL, games: Int, tallies: [LocationClass: Tally]) -> KeptPlaylist? {
+        guard case .success(let data) = GameFileReader.readPrefix(ofFileAt: url.path, limit: Playlist.sizeLimit),
+              let old = try? Playlist.Contents(data: data), old.count > games
+        else { return nil }
+        if games == 0 { return KeptPlaylist(header: old.header, reason: .noGames) }
+        if tallies.values.contains(where: { $0.denied > 0 }) { return KeptPlaylist(header: old.header, reason: .refused) }
+        let mounted = Set(mountedVolumes())
+        let home = home.standardizedFileURL.path
+        var missing: Set<String> = []
+        for index in 0 ..< old.count {
+            guard let path = old.url(at: index).flatMap(URL.init(string:))?.path,
+                  case .volume(let name) = GameCandidates.location(of: path, home: home),
+                  !mounted.contains(.volume(name))
+            else { continue }
+            missing.insert(name)
+        }
+        return missing.isEmpty ? nil : KeptPlaylist(header: old.header, reason: .volumesMissing(missing.sorted()))
+    }
+
     /// Reads a batch of files, ``concurrentReads`` at a time, and returns the results in the
     /// batch's order.
     private func read(_ batch: [GameCandidates.Candidate]) -> [GameFileReader.Result] {
@@ -175,11 +231,21 @@ struct PlaylistBuilder: Sendable {
 
     private static func logReport(_ report: Report) {
         let excluded = report.excluded.sorted { $0.key < $1.key }.map { "\($0.key.rawValue) \($0.value)" }
-        log.notice("""
-            Wrote \(report.games, privacy: .public) games of \(report.found, privacy: .public) found, \
-            \(report.bytesWritten, privacy: .public) bytes, in \(report.seconds, format: .fixed(precision: 2), privacy: .public) s; \
-            left out: \(excluded.isEmpty ? "none" : excluded.joined(separator: ", "), privacy: .public)
-            """)
+        if let kept = report.kept {
+            log.notice("""
+                Kept the playlist of \(kept.header.games, privacy: .public) games made \
+                \(kept.header.made.formatted(.iso8601), privacy: .public): \(String(describing: kept.reason), privacy: .public); \
+                the new one would have had \(report.games, privacy: .public) games of \(report.found, privacy: .public) found, \
+                in \(report.seconds, format: .fixed(precision: 2), privacy: .public) s; \
+                left out: \(excluded.isEmpty ? "none" : excluded.joined(separator: ", "), privacy: .public)
+                """)
+        } else {
+            log.notice("""
+                Wrote \(report.games, privacy: .public) games of \(report.found, privacy: .public) found, \
+                \(report.bytesWritten, privacy: .public) bytes, in \(report.seconds, format: .fixed(precision: 2), privacy: .public) s; \
+                left out: \(excluded.isEmpty ? "none" : excluded.joined(separator: ", "), privacy: .public)
+                """)
+        }
         for (location, tally) in report.tallies.sorted(by: { $0.key < $1.key }) {
             log.notice("""
                 \(location.description, privacy: .public): found \(tally.found, privacy: .public), \
@@ -212,6 +278,9 @@ final class ScreensaverGames {
 
     /// Whether an update is running.
     private(set) var isUpdating = false
+
+    /// What to do when the update under way finishes.
+    private var afterUpdateActions: [@MainActor () -> Void] = []
 
     let playlistURL: URL
 
@@ -252,6 +321,13 @@ final class ScreensaverGames {
         }
     }
 
+    /// Runs `action` once no update is running: at once, or when the one under way finishes. The
+    /// app quits this way, so that closing its window doesn't throw away the files read so far.
+    func afterUpdate(_ action: @escaping @MainActor () -> Void) {
+        guard isUpdating else { return action() }
+        afterUpdateActions.append(action)
+    }
+
     private func show(_ header: Playlist.Header?, updatingIfStale installed: Bool) {
         guard !isUpdating else { return }
         if let header { status = Self.describe(header, now: Date()) }
@@ -269,14 +345,22 @@ final class ScreensaverGames {
         isUpdating = false
         switch result {
         case .success(let report):
-            status = report.found == 0
-                ? "Spotlight found no games that name both players and have at least \(Playlist.minimumMoves) moves."
-                : Self.describe(report.header, now: Date())
-            problems = Self.problems(in: report)
+            if let kept = report.kept {
+                status = Self.describe(kept.header, now: Date())
+                problems = [Self.describe(kept, games: report.games)] + Self.problems(in: report)
+            } else {
+                status = report.found == 0
+                    ? "Spotlight found no games that name both players and have at least \(Playlist.minimumMoves) moves."
+                    : Self.describe(report.header, now: Date())
+                problems = Self.problems(in: report)
+            }
         case .failure(let error):
             status = error.description
             problems = []
         }
+        let actions = afterUpdateActions
+        afterUpdateActions = []
+        for action in actions { action() }
     }
 
     // MARK: - Wording
@@ -299,6 +383,18 @@ final class ScreensaverGames {
         let day = date.formatted(Date.FormatStyle(date: .abbreviated, time: .omitted, locale: locale,
                                                   calendar: calendar, timeZone: calendar.timeZone))
         return "on \(day) at \(time)"
+    }
+
+    /// Why the games chosen before were kept, such as "Only 441 games could be read this time, so
+    /// the games chosen before are kept."
+    nonisolated static func describe(_ kept: PlaylistBuilder.KeptPlaylist, games: Int, locale: Locale = .current) -> String {
+        let reason = switch kept.reason {
+        case .noGames: "No games could be found or read this time"
+        case .refused: "Only \(Self.games(games, locale: locale)) could be read this time"
+        case .volumesMissing(let names) where names.count == 1: "The volume \(names[0]) isn’t connected"
+        case .volumesMissing(let names): "The volumes \(names.formatted(.list(type: .and).locale(locale))) aren’t connected"
+        }
+        return "\(reason), so the games chosen before are kept."
     }
 
     /// A line for each location where files couldn't be read, such as "441 games in Documents

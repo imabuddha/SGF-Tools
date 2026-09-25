@@ -8,14 +8,15 @@ struct PlaylistBuilderTests {
     static let home = URL(fileURLWithPath: "/Users/tester", isDirectory: true)
     static let made = Date(timeIntervalSince1970: 1_790_000_000)
 
-    /// A builder whose Spotlight answers `paths` and whose reads answer by path: a path with
-    /// "denied", "locked", "gone", "cloud", or "problem" in it gives that outcome, and any other
-    /// a game with 30 + its number of moves.
-    static func builder(paths: [String], limit: Int = 10) -> PlaylistBuilder {
+    /// A builder whose Spotlight answers `paths`, on a Mac with the volume Disk, and whose reads
+    /// answer by path: a path with "denied", "locked", "gone", "cloud", or "problem" in it gives
+    /// that outcome, and any other a game with 30 + its number of moves.
+    static func builder(paths: [String], limit: Int = 10, volumes: [LocationClass] = [.volume("Disk")]) -> PlaylistBuilder {
         var builder = PlaylistBuilder()
         builder.gameLimit = limit
         builder.home = home
         builder.findPaths = { paths }
+        builder.mountedVolumes = { volumes }
         builder.now = { made }
         builder.reader.status = { path in
             if path.contains("gone") { return .failure(.init(code: ENOENT)) }
@@ -145,6 +146,62 @@ struct PlaylistBuilderTests {
         #expect(throws: PlaylistBuilder.BuildError.spotlight("Failure()")) {
             try builder.build(writingTo: folder.url.appendingPathComponent("playlist"), using: &generator)
         }
+    }
+
+    @Test func keepsThePlaylistWhenNoGameCanBeRead() throws {
+        let folder = try TemporaryFolder()
+        let url = folder.url.appendingPathComponent("playlist")
+        var generator = SeededGenerator(seed: 1)
+        _ = try Self.builder(paths: Self.gamePaths(12)).build(writingTo: url, using: &generator)
+        let before = try Data(contentsOf: url)
+        let kept = PlaylistBuilder.KeptPlaylist(header: .init(made: Self.made, found: 12, games: 10), reason: .noGames)
+
+        // Every read refused, as after Don't Allow.
+        let denied = (0 ..< 12).map { "/Volumes/Disk/Games/denied \($0).sgf" }
+        let report = try Self.builder(paths: denied).build(writingTo: url, using: &generator)
+        #expect(report.kept == kept)
+        #expect(report.games == 0 && report.bytesWritten == 0)
+        #expect(try Data(contentsOf: url) == before)
+
+        // Nothing found, as when the only volume is away.
+        #expect(try Self.builder(paths: []).build(writingTo: url, using: &generator).kept == kept)
+        #expect(try Data(contentsOf: url) == before)
+    }
+
+    @Test func keepsThePlaylistWhenSomeReadsAreRefused() throws {
+        let folder = try TemporaryFolder()
+        let url = folder.url.appendingPathComponent("playlist")
+        var generator = SeededGenerator(seed: 2)
+        _ = try Self.builder(paths: Self.gamePaths(12)).build(writingTo: url, using: &generator)
+        let paths = Self.gamePaths(3, in: "/Users/tester/Documents") + (0 ..< 9).map { "/Volumes/Disk/Games/denied \($0).sgf" }
+        let report = try Self.builder(paths: paths).build(writingTo: url, using: &generator)
+        #expect(report.kept?.reason == .refused)
+        #expect(report.games == 3)
+        #expect(try Playlist.Contents(data: Data(contentsOf: url)).count == 10)
+        let locale = Locale(identifier: "en_US")
+        #expect(ScreensaverGames.describe(try #require(report.kept), games: report.games, locale: locale)
+            == "Only 3 games could be read this time, so the games chosen before are kept.")
+        #expect(ScreensaverGames.problems(in: report, locale: locale)
+            == ["9 games in the volume Disk couldn’t be read: access not allowed"])
+    }
+
+    @Test func keepsThePlaylistWhileAVolumeWithItsGamesIsAway() throws {
+        let folder = try TemporaryFolder()
+        let url = folder.url.appendingPathComponent("playlist")
+        var generator = SeededGenerator(seed: 3)
+        _ = try Self.builder(paths: Self.gamePaths(12)).build(writingTo: url, using: &generator)
+        // With the volume away, Spotlight finds only what's in Documents.
+        let documents = Self.gamePaths(4, in: "/Users/tester/Documents")
+        let away = try Self.builder(paths: documents, volumes: [.volume("Other Disk")]).build(writingTo: url, using: &generator)
+        #expect(away.kept?.reason == .volumesMissing(["Disk"]))
+        #expect(try Playlist.Contents(data: Data(contentsOf: url)).count == 10)
+        #expect(ScreensaverGames.describe(try #require(away.kept), games: away.games, locale: Locale(identifier: "en_US"))
+            == "The volume Disk isn’t connected, so the games chosen before are kept.")
+
+        // With the volume back and the games gone from it, the smaller playlist replaces the old.
+        let gone = try Self.builder(paths: documents).build(writingTo: url, using: &generator)
+        #expect(gone.kept == nil)
+        #expect(try Playlist.Contents(data: Data(contentsOf: url)).count == 4)
     }
 
     @Test func noGamesFoundStillWritesAPlaylist() throws {
