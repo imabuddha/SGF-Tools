@@ -41,7 +41,13 @@ targets:
     platform: macOS
     sources:
       - App
+      # The screensaver's playlist, which the app writes (see docs/screensaver.md).
+      - Shared/Playlist.swift
+      - Shared/GameCandidates.swift
+      - Shared/GameFileReader.swift
     dependencies:
+      - package: SGFKit
+        product: SGFKit
       - target: SGFToolsThumbnail
       - target: SGFToolsPreview
       - target: SGFToolsSpotlight
@@ -131,6 +137,7 @@ targets:
       - Tests
       - Shared
       - App/ContentView.swift
+      - App/PlaylistBuilder.swift
       - Spotlight/SpotlightAttributes.swift
       - path: SGFKit/Tests/SGFRenderingTests/Fixtures/johnVsGnu.sgf
         buildPhase: resources

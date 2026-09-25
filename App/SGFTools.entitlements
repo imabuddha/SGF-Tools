@@ -4,5 +4,17 @@
 <dict>
 	<key>com.apple.security.app-sandbox</key>
 	<true/>
+	<!-- For the screensaver's playlist (docs/screensaver.md, 1.5): read-only access to the whole
+	     disk, as the screensaver's host has, lets Spotlight return games to the app and the app
+	     read them, with macOS still asking for the folders and volumes its privacy settings
+	     guard. The playlist's folder is the one place in ~/Library the app may write. -->
+	<key>com.apple.security.temporary-exception.files.absolute-path.read-only</key>
+	<array>
+		<string>/</string>
+	</array>
+	<key>com.apple.security.temporary-exception.files.home-relative-path.read-write</key>
+	<array>
+		<string>/Library/Application Support/SGF Tools/</string>
+	</array>
 </dict>
 </plist>

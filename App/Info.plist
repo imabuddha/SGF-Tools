@@ -24,10 +24,20 @@
 	<string>public.app-category.utilities</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	<key>NSDesktopFolderUsageDescription</key>
+	<string>SGF Tools reads your SGF files to choose games for its screensaver.</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>SGF Tools reads your SGF files to choose games for its screensaver.</string>
+	<key>NSDownloadsFolderUsageDescription</key>
+	<string>SGF Tools reads your SGF files to choose games for its screensaver.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Pragmaphilia Labs
 Copyright © 2026 John Mifsud. SGF Tools 1.x © 2009-2010 Jason Foreman and John Mifsud.
 MIT License.</string>
+	<key>NSNetworkVolumesUsageDescription</key>
+	<string>SGF Tools reads your SGF files to choose games for its screensaver.</string>
+	<key>NSRemovableVolumesUsageDescription</key>
+	<string>SGF Tools reads your SGF files to choose games for its screensaver.</string>
 	<key>UTImportedTypeDeclarations</key>
 	<array>
 		<dict>
