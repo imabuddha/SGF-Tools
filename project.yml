@@ -128,6 +128,36 @@ targets:
         INFOPLIST_FILE: Spotlight/Info.plist
         SKIP_INSTALL: YES
 
+  # The screensaver: a .saver bundle that macOS loads into its sandboxed legacyScreenSaver host.
+  # It plays games from the playlist the app writes (see docs/screensaver.md). It isn't embedded
+  # in the app, so building it doesn't build the app or register its Spotlight importer.
+  SGFToolsScreensaver:
+    type: bundle
+    platform: macOS
+    sources:
+      - Screensaver
+      - Shared/Look.swift
+      - Shared/GameSummary.swift
+      - Shared/Playlist.swift
+      - Shared/GameCandidates.swift
+      - Shared/GameFileReader.swift
+      - path: SGFKit/Tests/SGFRenderingTests/Fixtures/johnVsGnu.sgf
+        buildPhase: resources
+    dependencies:
+      - package: SGFKit
+        product: SGFKit
+      - package: SGFKit
+        product: SGFRendering
+      - sdk: ScreenSaver.framework
+    settings:
+      base:
+        PRODUCT_NAME: SGF Tools
+        PRODUCT_MODULE_NAME: SGFToolsScreensaver
+        PRODUCT_BUNDLE_IDENTIFIER: com.pragmaphilia.SGFTools.Screensaver
+        WRAPPER_EXTENSION: saver
+        INFOPLIST_FILE: Screensaver/Info.plist
+        SKIP_INSTALL: YES
+
   # Logic tests with no host app: they compile the shared sources themselves, so running them
   # never launches SGF Tools.
   SGFToolsTests:
@@ -175,3 +205,9 @@ schemes:
       config: Debug
     archive:
       config: Release
+
+  # Builds only the screensaver, never the app.
+  SGF Tools Screensaver:
+    build:
+      targets:
+        SGFToolsScreensaver: all
