@@ -139,6 +139,13 @@ targets:
       - App/ContentView.swift
       - App/PlaylistBuilder.swift
       - Spotlight/SpotlightAttributes.swift
+      # The screensaver's code, except the view, so that its Objective-C class exists only in
+      # the screensaver's bundle.
+      - path: Screensaver
+        excludes:
+          - ScreensaverView.swift
+          - Info.plist
+          - "*.png"
       - path: SGFKit/Tests/SGFRenderingTests/Fixtures/johnVsGnu.sgf
         buildPhase: resources
     dependencies:
