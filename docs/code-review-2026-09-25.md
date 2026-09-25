@@ -270,6 +270,14 @@ importer 15 seconds later, and only then were the build products deleted; the co
   One app test makes its date with `PartialDate(sgfDate:)` instead, so the app's tests still
   use only the public API, as the products do.
 
+- **John confirmed the two judgment calls (later the same day):** the core members above stay
+  public even where only the tests use them today, and `PartialDate` stays without `Comparable`,
+  since whether "2009" comes before or after "2009-05-01" is the caller's choice.
+- **Six real files stay as they read (John).** They declare UTF-8 but hold one stray byte that
+  isn't UTF-8 and no other non-ASCII text, so detection reads them as Shift_JIS and that one
+  byte shows as a half-width katakana. What the byte was meant to be can't be known, and a rule
+  that trusted the declaration here could misread correct files.
+
 These follow-ups are version 2.0.5 (6), with no behavior change. SGFKit's 201 tests (171 in
 SGFKitTests, 30 in SGFRenderingTests) and the app's 57 pass, as before.
 
