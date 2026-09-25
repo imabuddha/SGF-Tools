@@ -157,6 +157,9 @@ targets:
         WRAPPER_EXTENSION: saver
         INFOPLIST_FILE: Screensaver/Info.plist
         SKIP_INSTALL: YES
+        # thumbnail.png and thumbnail@2x.png stay as they are, as in Apple's own savers, rather
+        # than being combined into thumbnail.tiff.
+        COMBINE_HIDPI_IMAGES: NO
 
   # Logic tests with no host app: they compile the shared sources themselves, so running them
   # never launches SGF Tools.
