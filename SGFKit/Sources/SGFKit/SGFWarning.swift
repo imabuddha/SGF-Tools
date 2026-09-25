@@ -26,6 +26,10 @@ public struct SGFWarning: Sendable, Hashable, CustomStringConvertible {
         /// The data ended with this many game trees or variations still open.
         case missingCloseParenthesis(count: Int)
 
+        /// A game tree's first properties came right after its `(`, with no `;` to start the
+        /// root node, and were read as the root node.
+        case missingSemicolon
+
         /// The charset named by CA is unknown, so the game was decoded as if it had no CA.
         case unknownCharset(String)
 
@@ -65,6 +69,8 @@ public struct SGFWarning: Sendable, Hashable, CustomStringConvertible {
             "merged a repeated \(property) property"
         case .missingCloseParenthesis(let count):
             "the data ends with \(count) unclosed parenthes\(count == 1 ? "is" : "es")"
+        case .missingSemicolon:
+            "read the properties after ( as the root node, which has no ;"
         case .unknownCharset(let name):
             "unknown charset \(name)"
         case .encodingFallback(let declared, let used):

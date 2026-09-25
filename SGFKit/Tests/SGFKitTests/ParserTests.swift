@@ -227,6 +227,33 @@ struct ParserMalformedTests {
         #expect(game.root["C"]?.value.text == "abc")
     }
 
+    @Test func rootPropertiesWithoutASemicolon() throws {
+        // The root node's properties come right after "(", with no ";" to start the node.
+        let text = "(\r\nEV[Fixture Cup]\r\nPB[Black Tester]\r\nPW[White Tester]\r\nRE[W+2.5]\r\n"
+            + ";B[pd]\r\n;W[dd]\r\n;B[pp]\r\n)\r\n"
+        let collection = parse(text)
+        let game = try #require(collection.games.first)
+        #expect(game.root.properties.map(\.identifier) == ["EV", "PB", "PW", "RE"])
+        #expect(game.root["PB"]?.value.simpleText == "Black Tester")
+        #expect(game.mainLineMoveCount == 3)
+        #expect(collection.warnings.map(\.kind) == [.missingSemicolon])
+        #expect(collection.warnings.first?.offset == 3)
+        #expect(parse(text, options: .init(stopAfterFirstGame: true)).games.first?.nodes.count == 4)
+    }
+
+    @Test func aLaterGameWithoutARootSemicolon() {
+        let text = "(;SZ[9];B[ee])\n(SZ[13]CA[UTF-8];B[gg])"
+        #expect(parse(text).games.map { $0.root["SZ"]?.value.raw } == ["9", "13"])
+        #expect(parse(text, options: .init(stopAfterFirstGame: true)).moreGamesFollow)
+    }
+
+    @Test func textInParenthesesIsNotTakenForAGame() {
+        // Without ";", only an identifier of uppercase letters followed by "[" starts a game.
+        let collection = parse("Notes (see diagram[1]), (Diagram[2]), and (Diagram 3).\n(;SZ[9];B[aa])")
+        #expect(collection.games.count == 1)
+        #expect(collection.games.first?.nodes.count == 2)
+    }
+
     @Test func extraCloseParenthesisAfterTheGame() {
         let collection = parse("(;SZ[9];B[aa]))")
         #expect(collection.games.count == 1)

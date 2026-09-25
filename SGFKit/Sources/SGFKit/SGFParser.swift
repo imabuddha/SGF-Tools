@@ -7,7 +7,8 @@ import Foundation
 ///
 /// - Text before, between, and after game trees is skipped, including a byte-order mark or the
 ///   literal `&#65279;` that some web downloads leave at the start. A game tree starts at a `(`
-///   followed, after optional whitespace, by `;`.
+///   followed, after optional whitespace, by `;`, or by a property whose identifier is all
+///   uppercase letters, which makes a root node whose `;` is missing.
 /// - Each game's text is decoded with the charset its CA property names. Without CA, UTF-8 is
 ///   tried first, with any character that a soft line break splits joined again. When the text
 ///   should be UTF-8 but isn't, its charset is detected among the usual Chinese, Korean,
@@ -145,18 +146,32 @@ private struct ByteParser {
         return SGFCollection(games: games, warnings: warnings)
     }
 
-    /// The offset of the next `(` that is followed, after optional whitespace, by `;`.
+    /// The offset of the next `(` that is followed, after optional whitespace, by `;` or by the
+    /// first property of a root node whose `;` is missing.
     private func gameTreeStart(from offset: Int) -> Int? {
         var index = offset
         while index < bytes.count {
             if bytes[index] == ASCII.openParenthesis {
                 var next = index + 1
                 while next < bytes.count, ASCII.isWhitespace(bytes[next]) { next += 1 }
-                if next < bytes.count, bytes[next] == ASCII.semicolon { return index }
+                if next < bytes.count, bytes[next] == ASCII.semicolon || startsRootProperty(at: next) {
+                    return index
+                }
             }
             index += 1
         }
         return nil
+    }
+
+    /// Whether a property that can start a root node with no `;` is at `offset`: an identifier of
+    /// uppercase letters, as FF[4] has them, followed, after optional whitespace, by `[`. Text in
+    /// parentheses, such as "(Diagram 2)" or "(see diagram[1])", doesn't qualify.
+    private func startsRootProperty(at offset: Int) -> Bool {
+        var index = offset
+        while index < bytes.count, ASCII.isUppercase(bytes[index]) { index += 1 }
+        guard index > offset else { return false }
+        while index < bytes.count, ASCII.isWhitespace(bytes[index]) { index += 1 }
+        return index < bytes.count && bytes[index] == ASCII.openBracket
     }
 
     private mutating func reportSkippedText(in range: Range<Int>) {
@@ -281,6 +296,12 @@ private struct ByteParser {
                     current = id
                 }
             case _ where ASCII.isLetter(byte):
+                if current == nil, tree.nodes.isEmpty {
+                    // Properties right after the tree's "(": the root node, whose ";" is missing.
+                    tree.nodes.append(RawNode(parentID: nil))
+                    current = 0
+                    tree.warnings.append(SGFWarning(.missingSemicolon, offset: index))
+                }
                 index = parseProperty(at: index, into: &tree, node: current, leadBytes: leadBytes)
             case _ where ASCII.isWhitespace(byte):
                 index += 1
