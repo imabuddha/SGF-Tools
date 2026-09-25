@@ -371,9 +371,9 @@ the view, so the view's Objective-C class exists only in the bundle. It already 
   settings.
 - A copy downloaded from GitHub would be quarantined and need notarization (reported, forum
   thread 117136); a local build isn't.
-- The first commit of the saver makes the version 2.0.7 (8), and the README gets a
-  "Screensaver" section (installing it, what it shows, the playlist, and the log command) before
-  the push. `plan.md`'s open question points here.
+- The saver makes the version 2.1.0 (8), and the README gets a "Screensaver" section
+  (installing it, what it shows, the playlist, and the log command) before the push.
+  `plan.md`'s open question points here.
 
 **Files:**
 
@@ -738,6 +738,46 @@ Each has a default, which the first draft builds.
 - Drawing the empty board once and only the stones for each move (a new SGFRendering option), if
   the timings call for it.
 - The plan's later options: move sounds, games from a chosen folder, and board and stone sets.
+
+## 15. As built
+
+The first draft, 2.1.0 (8), follows the design above, except:
+
+1. **Values made fit for one line.** A tab or line break in a move or setup value becomes a space
+   rather than being dropped, and a backslash left unpaired at the end of a value (only a value
+   cut off by the end of a file has one) gets its pair. Either way the value means the same point,
+   list, or pass. SZ is written from the size SGFKit read, and left out when it isn't valid, which
+   also means 19x19.
+2. **Spotlight's paths** come from each result's `MDItem`: `MDQueryGetAttributeValueOfResultAtIndex`
+   gives no `kMDItemPath`, even with it among the query's value attributes.
+3. **Direct mode's read slots.** With two slots, after two reads that never come back, a third
+   waits up to the read limit for a slot, and direct mode then gives up ("every read slot is
+   blocked") before a third read can be abandoned. `unreadable` also covers errors other than
+   `EACCES`, with their `errno` in the log, and `ENOTDIR` counts as missing.
+4. **A pick relaxes what it avoids:** first the other screens' games and the last 200 shown, then
+   only the other screens' games, then nothing, so that a small playlist still plays.
+5. **A new size or backing scale** starts a new game after the random delay, rather than drawing
+   the current one again.
+6. **The thumbnails stay PNGs** (`COMBINE_HIDPI_IMAGES` is off), as in Apple's own savers; Xcode
+   would otherwise combine them into `thumbnail.tiff`.
+7. **The bundle test doesn't link ScreenSaver.framework.** It declares the view's initializer in
+   an `@objc` protocol instead, because the framework links Photos, which starts Contacts in the
+   test process.
+
+Checked headlessly, on 2026-09-25:
+- the package's tests and the app's logic tests, which include the screensaver's; the Release
+  bundle with `plutil`, `lipo`, `codesign`, and `nm`; and the bundle test, which loaded it and made
+  its view at 1920x1080 and 300x190
+- `Tests/SandboxCheck/check.sh`: every step passed, with 64,020 games from Spotlight for both the
+  host-like and the app-like probe
+- the builder on the test Mac's games, from an unsandboxed command-line tool with a release build
+  of SGFKit: 10,000 games of 64,020 chosen in 2.9 seconds, 5.2 MB. Every line of a playlist of
+  all 63,996 qualifying games outside `~/Library` replays as its file does, position by position
+  to move 50, with the same players, ranks, result, event, and date. Lines are 518 bytes on
+  average and 1,045 at most.
+
+Not checked, and left for John's test (section 11): anything under TCC, since the tool read with
+the terminal's access; the real host, System Settings, and the app itself, which wasn't built.
 
 ## Appendix: what was checked
 

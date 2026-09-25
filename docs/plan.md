@@ -30,7 +30,7 @@ Decisions as of 2026-09-25. The background is in `old-version-analysis.md`.
    attributes of 1.x under their 1.x names, so old saved searches work, with values from
    SGFKit's game information, and names them in the 10 languages of 1.x (from the
    `legacy-1.x` branch's `SpotlightImporter/*.lproj/schema.strings`).
-5. **The screensaver.**
+5. **The screensaver**: a first draft in 2.1.0 (8), designed in `screensaver.md`.
 
 ## Look
 
@@ -93,3 +93,5 @@ Later options:
   inside the host. If they're refused, the app can keep a small playlist that the screensaver can
   read: for each game, its details and its first 50 moves in a compact string. That's the idea
   behind the 1.x position string, used again for moves.
+  *Answered in `screensaver.md`: the app writes a playlist, each game a short SGF line, and the
+  screensaver reads the files itself only when there is none.*
