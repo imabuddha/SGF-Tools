@@ -94,14 +94,16 @@ enum Look {
     /// When the first game's first move is played, in seconds after its board starts to fade in.
     static let screensaverStartFirstMove: Double = 2
 
-    /// The time between moves, in seconds.
-    static let screensaverMoveInterval: Double = 1
+    /// The time between moves, in seconds. With ``screensaverFinalHold``, it sets the pace: a
+    /// 50-move game plays for about 25 s and holds its last position for 10 s.
+    static let screensaverMoveInterval: Double = 0.5
 
-    /// How long a new stone takes to appear, and captured stones to vanish, in seconds.
+    /// How long a new stone takes to appear, and captured stones to vanish, in seconds: less than
+    /// ``screensaverMoveInterval``.
     static let screensaverMoveFade: Double = 0.3
 
     /// How long the last position stays before the board fades out, in seconds.
-    static let screensaverFinalHold: Double = 5
+    static let screensaverFinalHold: Double = 10
 
     /// How long the board and details take to fade out, in seconds.
     static let screensaverFadeOut: Double = 2

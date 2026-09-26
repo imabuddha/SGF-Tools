@@ -120,9 +120,10 @@ Quick Look extensions that way. To sign with your own team instead, see
 ## Screensaver
 
 The screensaver plays the first 50 moves of a random game on each display: the board fades in
-with the game's players and ranks, result, event, and date beside it, a move a second, and fades
-out after the last position has held for a few seconds. Then another game comes. The board and
-the details move from game to game. It has no options yet, and no sound.
+with the game's players and ranks, result, event, and date beside it, two moves a second, and
+fades out after the last position has held for 10 seconds. Then another game comes, about 40
+seconds a game. The first game after the screensaver starts comes in within a second or two. The
+board and the details move from game to game. It has no options yet, and no sound.
 
 To try it:
 

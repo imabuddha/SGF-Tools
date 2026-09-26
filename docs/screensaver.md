@@ -246,8 +246,8 @@ playlist is written only at the end.
 
 At about 1 ms to parse a game (`spotlight-notes.md`) and a fast disk, 10,000 games take seconds,
 not minutes (untested). A new random 10,000 each time means the saver works through the whole
-collection over the weeks: at a minute a game, 10,000 games are about a week of screensaver time
-on each display.
+collection over the weeks: at about 40 seconds a game (section 4), 10,000 games are almost five
+days of screensaver time on each display.
 
 ### 1.6 The playlist
 
@@ -488,10 +488,10 @@ on synthetic files and paths.
   (about 0.5 ms for 50 moves, verified); each move's image is drawn off the main thread, one move
   ahead, and only the current and next images are kept. A shaded board of 2,800 pixels a side
   took 42 ms (median) in a release build on the test Mac, and 18 ms at 1,800 pixels (verified):
-  about 4% of one core at one move a second.
+  about 8% of one core at two moves a second.
 - **A move** sets the board layer's contents inside a 0.3-second `CATransition` fade, so the new
-  stone appears and captured stones vanish together. A pass is a second with no new stone and no
-  ring.
+  stone appears and captured stones vanish together. A pass is half a second with no new stone
+  and no ring.
 - **The details** are drawn once per game into an image at the screen's scale, by the same code
   that makes the tests' PNGs.
 - **Memory:** one board image is 15 to 31 MB on today's screens, two per screen. They're
@@ -509,10 +509,14 @@ the number of moves played, 50 or the whole main line if it's shorter, passes co
 | 0 | The game layer starts fading in (2 s), showing the position before move 1: an empty board, or handicap and setup stones |
 | 0.75 | The details start fading in (1.5 s) |
 | 3 | Move 1 |
-| 3 + (n − 1) | Move n, one a second, to move N (at 52 s for N = 50) |
-| N + 7 | After the last position has held for 5 s, the board and details fade out (2 s) |
-| N + 9 | Black for 1 s |
-| N + 10 | The next game starts (60 s for N = 50) |
+| 3 + (n − 1) / 2 | Move n, two a second, to move N (at 27.5 s for N = 50) |
+| N / 2 + 12.5 | After the last position has held for 10 s, the board and details fade out (2 s) |
+| N / 2 + 14.5 | Black for 1 s |
+| N / 2 + 15.5 | The next game starts (40.5 s for N = 50) |
+
+The pace is two constants in `Look`: `screensaverMoveInterval`, 0.5 s, and
+`screensaverFinalHold`, 10 s. So a game's length follows its moves: about 25 s of moves and a
+10 s hold for 50 moves, less for a shorter game.
 
 **The first game after a start**, whenever a screen starts playing (full screen, the preview, or
 a new size), comes in quicker, so that there's something to see almost at once: the screen is
@@ -757,8 +761,8 @@ pass.
 4. **The preview.** In System Settings > Wallpaper > Screen Saver, choose SGF Tools (third-party
    savers are under Other). For a minute, the preview should play games with no details, and no
    permission request should appear.
-5. **The saver.** Start it (a hot corner, or waiting), and let it run three games, about three
-   minutes, on every display. Look for: the fades, one move a second, the details in a new place
+5. **The saver.** Start it (a hot corner, or waiting), and let it run three games, about two
+   minutes, on every display. Look for: the fades, two moves a second, the details in a new place
    for each game and clear of the board, a different game on each display, and nothing on screen
    that shouldn't be.
 6. **The host.** Right after stopping it, and again after starting and stopping it five times
@@ -924,6 +928,9 @@ the terminal's access; the real host, System Settings, and the app itself, which
    readable about 5 s after the saver started, after a random wait of up to 3 s and a 2 s fade,
    and John dismissed it twice before then; the preview waited 5 s more for a `startAnimation`
    that never came, and now waits half a second (sections 7 and 8).
+4. **Two moves a second**, not one, and the last position held for 10 s, not 5, John's choice
+   after watching it: a 50-move game takes about 40 s, not a minute (section 4). The playlist
+   still holds 50 moves a game.
 
 ## Appendix: what was checked
 

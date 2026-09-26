@@ -19,9 +19,16 @@ struct ScreensaverRenderingTests {
     static let samples = ProcessInfo.processInfo.environment["SGF_SCREENSAVER_SAMPLES"]
     static let thumbnailFolder = ProcessInfo.processInfo.environment["SGF_SCREENSAVER_THUMBNAIL"]
 
+    /// The timeline of a game of 50 moves or more, such as johnVsGnu's, which isn't a first game.
+    static let timeline = SaverTimeline(moveCount: Playlist.moveLimit)
+
+    /// A moment just after move `number`.
+    static func afterMove(_ number: Int) -> Double { timeline.time(ofMove: number) + 0.25 }
+
     /// The moments the samples show: half faded in, after moves 1, 25, and 50, and fading out.
     static let moments: [(time: Double, name: String)] = [
-        (1, "1-fading-in"), (3.5, "2-move-1"), (27.5, "3-move-25"), (52.5, "4-move-50"), (58, "5-fading-out"),
+        (1, "1-fading-in"), (afterMove(1), "2-move-1"), (afterMove(25), "3-move-25"), (afterMove(50), "4-move-50"),
+        (timeline.fadeOutStart + Look.screensaverFadeOut / 2, "5-fading-out"),
     ]
 
     static func johnVsGnu(as source: SaverGame.Source = .playlist) throws -> SaverGame {
@@ -92,11 +99,11 @@ struct ScreensaverRenderingTests {
     ])
     func aScreen(screen: CGSize, scale: CGFloat, seed: UInt64) throws {
         let game = try Self.johnVsGnu()
-        let playing = try Self.render(game, screen: screen, scale: scale, seed: seed, at: 27.5)
+        let playing = try Self.render(game, screen: screen, scale: scale, seed: seed, at: Self.afterMove(25))
         let layout = playing.prepared.layout
         let board = layout.board
         let details = try #require(layout.details)
-        #expect(playing.prepared.timeline.state(at: 27.5).movesShown == 25)
+        #expect(playing.prepared.timeline.state(at: Self.afterMove(25)).movesShown == 25)
 
         // Black outside the board and the details: the corners, and between the two.
         let corner = CGRect(x: 0, y: 0, width: 8, height: 8)
@@ -123,18 +130,19 @@ struct ScreensaverRenderingTests {
         #expect(abs(half / full - 0.5) < 0.08)
         #expect(fadingIn.brightest(in: details) < 0.2)
         // Faded out, all black.
-        let gone = try Self.render(game, screen: screen, scale: scale, seed: seed, at: 59.5)
+        let black = playing.prepared.timeline.fadeOutEnd + Look.screensaverPause / 2
+        let gone = try Self.render(game, screen: screen, scale: scale, seed: seed, at: black)
         #expect(gone.average(in: CGRect(origin: .zero, size: screen)) { $0[0] + $0[1] + $0[2] } < 0.01)
 
         for (time, name) in Self.moments {
-            let frame = time == 27.5 ? playing : try Self.render(game, screen: screen, scale: scale, seed: seed, at: time)
+            let frame = time == Self.afterMove(25) ? playing : try Self.render(game, screen: screen, scale: scale, seed: seed, at: time)
             try Self.write(frame.image, name: "screen-\(Int(screen.width))x\(Int(screen.height))@\(Int(scale))x-\(name)")
         }
     }
 
     @Test func aPreview() throws {
         let screen = CGSize(width: 300, height: 190)
-        let frame = try Self.render(try Self.johnVsGnu(), screen: screen, scale: 2, seed: 1, at: 27.5)
+        let frame = try Self.render(try Self.johnVsGnu(), screen: screen, scale: 2, seed: 1, at: Self.afterMove(25))
         #expect(frame.prepared.layout.isPreview)
         #expect(frame.prepared.details == nil)
         let board = frame.prepared.layout.board
@@ -149,7 +157,7 @@ struct ScreensaverRenderingTests {
 
     @Test func theOwnGameSaysToOpenSGFTools() throws {
         let game = try Self.johnVsGnu(as: .own)
-        let frame = try Self.render(game, screen: CGSize(width: 2560, height: 1440), scale: 1, seed: 4, at: 30)
+        let frame = try Self.render(game, screen: CGSize(width: 2560, height: 1440), scale: 1, seed: 4, at: Self.afterMove(25))
         let details = try #require(frame.prepared.layout.details)
         #expect(details.height > 6 * 1440 * Look.screensaverDetailFontFraction)
         try Self.write(frame.image, name: "own-game-2560x1440@1x")
@@ -161,7 +169,7 @@ struct ScreensaverRenderingTests {
                 + fillerMoves(60, columns: Int(size.prefix { $0 != ":" }) ?? 19) + ")"
             let game = try #require(SaverGame(game: try game(sgf), source: .playlist, identity: name,
                                               locale: Locale(identifier: "en_US")))
-            let frame = try Self.render(game, screen: CGSize(width: 1920, height: 1080), scale: 1, seed: 7, at: 27.5)
+            let frame = try Self.render(game, screen: CGSize(width: 1920, height: 1080), scale: 1, seed: 7, at: Self.afterMove(25))
             let board = frame.prepared.layout.board
             #expect(frame.average(in: board.insetBy(dx: board.width * 0.3, dy: board.height * 0.45)) { ($0[0] - $0[2]) / 255 } > 0.1)
             try Self.write(frame.image, name: "board-\(name)-1920x1080@1x-move-25")
@@ -172,7 +180,7 @@ struct ScreensaverRenderingTests {
     /// of johnVsGnu, scaled down.
     @Test func thumbnail() throws {
         let screen = CGSize(width: 1800, height: 1160)
-        let frame = try Self.render(try Self.johnVsGnu(), screen: screen, scale: 1, seed: 2, at: 52.5)
+        let frame = try Self.render(try Self.johnVsGnu(), screen: screen, scale: 1, seed: 2, at: Self.afterMove(50))
         for (scale, name) in [(1, "thumbnail.png"), (2, "thumbnail@2x.png")] {
             let bitmap = Bitmap(width: 90 * scale, height: 58 * scale)
             bitmap.context.interpolationQuality = .high

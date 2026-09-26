@@ -11,10 +11,10 @@ import Foundation
 /// | 0 | The board starts fading in (2 s), with the position before move 1 |
 /// | 0.75 | The details start fading in (1.5 s) |
 /// | 3 | Move 1 |
-/// | 3 + (n − 1) | Move n, one a second, to move N |
-/// | N + 7 | After the last position has held for 5 s, the board and details fade out (2 s) |
-/// | N + 9 | Black for 1 s |
-/// | N + 10 | The game is over, and the next one starts |
+/// | 3 + (n − 1) / 2 | Move n, two a second, to move N |
+/// | N / 2 + 12.5 | After the last position has held for 10 s, the board and details fade out (2 s) |
+/// | N / 2 + 14.5 | Black for 1 s |
+/// | N / 2 + 15.5 | The game is over, and the next one starts (40.5 s for N = 50) |
 ///
 /// The first game comes in quicker (see ``Opening/start``), and holds its last position longer
 /// by ``extraHold``. The times come from ``Look``.

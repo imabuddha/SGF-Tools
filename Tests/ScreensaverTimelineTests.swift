@@ -7,9 +7,10 @@ struct ScreensaverTimelineTests {
 
     @Test func aFiftyMoveGame() {
         let timeline = SaverTimeline(moveCount: 50)
-        #expect(timeline.duration == 60)
-        #expect(timeline.fadeOutStart == 57)
-        #expect(timeline.time(ofMove: 50) == 52)
+        #expect(Look.screensaverMoveInterval == 0.5 && Look.screensaverFinalHold == 10)
+        #expect(timeline.duration == 40.5)
+        #expect(timeline.fadeOutStart == 37.5)
+        #expect(timeline.time(ofMove: 50) == 27.5)
         let expected: [(Double, State)] = [
             (-0.5, State(movesShown: 0, showsGame: false, showsDetails: false, isOver: false)),
             (0, State(movesShown: 0, showsGame: true, showsDetails: false, isOver: false)),
@@ -17,16 +18,16 @@ struct ScreensaverTimelineTests {
             (0.75, State(movesShown: 0, showsGame: true, showsDetails: true, isOver: false)),
             (2.99, State(movesShown: 0, showsGame: true, showsDetails: true, isOver: false)),
             (3, State(movesShown: 1, showsGame: true, showsDetails: true, isOver: false)),
-            (3.95, State(movesShown: 1, showsGame: true, showsDetails: true, isOver: false)),
-            (4, State(movesShown: 2, showsGame: true, showsDetails: true, isOver: false)),
-            (27.5, State(movesShown: 25, showsGame: true, showsDetails: true, isOver: false)),
-            (51.99, State(movesShown: 49, showsGame: true, showsDetails: true, isOver: false)),
-            (52, State(movesShown: 50, showsGame: true, showsDetails: true, isOver: false)),
-            (56.99, State(movesShown: 50, showsGame: true, showsDetails: true, isOver: false)),
-            (57, State(movesShown: 50, showsGame: false, showsDetails: true, isOver: false)),
-            (59, State(movesShown: 50, showsGame: false, showsDetails: false, isOver: false)),
-            (59.99, State(movesShown: 50, showsGame: false, showsDetails: false, isOver: false)),
-            (60, State(movesShown: 50, showsGame: false, showsDetails: false, isOver: true)),
+            (3.45, State(movesShown: 1, showsGame: true, showsDetails: true, isOver: false)),
+            (3.5, State(movesShown: 2, showsGame: true, showsDetails: true, isOver: false)),
+            (15.25, State(movesShown: 25, showsGame: true, showsDetails: true, isOver: false)),
+            (27.49, State(movesShown: 49, showsGame: true, showsDetails: true, isOver: false)),
+            (27.5, State(movesShown: 50, showsGame: true, showsDetails: true, isOver: false)),
+            (37.49, State(movesShown: 50, showsGame: true, showsDetails: true, isOver: false)),
+            (37.5, State(movesShown: 50, showsGame: false, showsDetails: true, isOver: false)),
+            (39.5, State(movesShown: 50, showsGame: false, showsDetails: false, isOver: false)),
+            (40.49, State(movesShown: 50, showsGame: false, showsDetails: false, isOver: false)),
+            (40.5, State(movesShown: 50, showsGame: false, showsDetails: false, isOver: true)),
             (400, State(movesShown: 50, showsGame: false, showsDetails: false, isOver: true)),
         ]
         for (time, state) in expected {
@@ -36,16 +37,16 @@ struct ScreensaverTimelineTests {
 
     @Test func aTwentyThreeMoveGame() {
         let timeline = SaverTimeline(moveCount: 23)
-        #expect(timeline.time(ofMove: 23) == 25)
-        #expect(timeline.fadeOutStart == 30)
-        #expect(timeline.duration == 33)
-        #expect(timeline.state(at: 24.99).movesShown == 22)
-        #expect(timeline.state(at: 25).movesShown == 23)
-        #expect(timeline.state(at: 29.99).showsGame)
-        #expect(!timeline.state(at: 30).showsGame)
-        #expect(timeline.state(at: 30).movesShown == 23)
-        #expect(!timeline.state(at: 32.99).isOver)
-        #expect(timeline.state(at: 33).isOver)
+        #expect(timeline.time(ofMove: 23) == 14)
+        #expect(timeline.fadeOutStart == 24)
+        #expect(timeline.duration == 27)
+        #expect(timeline.state(at: 13.99).movesShown == 22)
+        #expect(timeline.state(at: 14).movesShown == 23)
+        #expect(timeline.state(at: 23.99).showsGame)
+        #expect(!timeline.state(at: 24).showsGame)
+        #expect(timeline.state(at: 24).movesShown == 23)
+        #expect(!timeline.state(at: 26.99).isOver)
+        #expect(timeline.state(at: 27).isOver)
     }
 
     @Test func theFades() {
@@ -55,14 +56,14 @@ struct ScreensaverTimelineTests {
         #expect(timeline.gameOpacity(at: 1) == 0.5)
         #expect(timeline.gameOpacity(at: 2) == 1)
         #expect(timeline.gameOpacity(at: 30) == 1)
-        #expect(timeline.gameOpacity(at: 58) == 0.5)
-        #expect(timeline.gameOpacity(at: 59) == 0)
-        #expect(timeline.gameOpacity(at: 59.5) == 0)
+        #expect(timeline.gameOpacity(at: 38.5) == 0.5)
+        #expect(timeline.gameOpacity(at: 39.5) == 0)
+        #expect(timeline.gameOpacity(at: 40) == 0)
         #expect(timeline.detailsOpacity(at: 0.5) == 0)
         #expect(timeline.detailsOpacity(at: 1.5) == 0.5)
         #expect(timeline.detailsOpacity(at: 2.25) == 1)
-        #expect(timeline.detailsOpacity(at: 58) == 1, "the details fade out with the board")
-        #expect(timeline.detailsOpacity(at: 59) == 0)
+        #expect(timeline.detailsOpacity(at: 38.5) == 1, "the details fade out with the board")
+        #expect(timeline.detailsOpacity(at: 39.5) == 0)
     }
 
     /// Ticks come ten times a second, but late and unevenly. Each lands on the move its time
@@ -74,9 +75,9 @@ struct ScreensaverTimelineTests {
         var time = 0.0
         var shown: [Int] = []
         while time < timeline.duration + 1 {
-            time += Double.random(in: 0.02 ... 0.6, using: &generator)
+            time += Double.random(in: 0.02 ... 0.45, using: &generator)
             let state = timeline.state(at: time)
-            let expected = time < 3 ? 0 : min(50, Int(time - 3) + 1)
+            let expected = time < 3 ? 0 : min(50, Int((time - 3) * 2) + 1)
             #expect(state.movesShown == expected, "at \(time) s")
             if shown.last != state.movesShown { shown.append(state.movesShown) }
         }
@@ -84,7 +85,7 @@ struct ScreensaverTimelineTests {
     }
 
     /// The first game after the screensaver starts: in a second, and its first move a second
-    /// later; the rest as usual, with its last position held longer.
+    /// later; the rest at the usual pace, with its last position held longer.
     @Test func theFirstGameComesInQuicker() {
         let usual = SaverTimeline(moveCount: 50)
         let timeline = SaverTimeline(moveCount: 50, opening: .start, extraHold: 2)

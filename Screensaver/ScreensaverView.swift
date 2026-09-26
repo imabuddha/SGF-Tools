@@ -2,7 +2,7 @@ import AppKit
 import QuartzCore
 import ScreenSaver
 
-/// The SGF Tools screensaver: on each screen, the first 50 moves of a random game, one a second,
+/// The SGF Tools screensaver: on each screen, the first 50 moves of a random game, two a second,
 /// with its details beside the board (see `docs/screensaver.md`).
 ///
 /// The view handles its life in the host, and its timer. Its ``SaverPlayer`` plays the games,
