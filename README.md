@@ -28,7 +28,7 @@ There is no release yet, but it can be built and tried. So far:
     game, so Finder, Spotlight, and `mdfind` find games (see [Searching](#searching)).
 - **SGF Tools.saver**, new in 2.1, a screensaver that plays the first 50 moves of random games
   from your collection, a different game on each display (see [Screensaver](#screensaver)). It
-  is a first draft, and hasn't yet run in macOS's screensaver host.
+  is a first draft, tried once in macOS's screensaver host so far.
 
 The plan is in [docs/plan.md](docs/plan.md), and the screensaver's design in
 [docs/screensaver.md](docs/screensaver.md).
@@ -135,7 +135,8 @@ To try it:
 2. Build the "SGF Tools Screensaver" scheme and copy `SGF Tools.saver` from the build products
    into `~/Library/Screen Savers`.
 3. In System Settings > Wallpaper, choose Screen Saver, and pick SGF Tools (third-party
-   screensavers are under Other).
+   screensavers are under Other). With more than one display, select each display in Wallpaper
+   settings and choose SGF Tools for each.
 
 macOS keeps a screensaver's code loaded until its host exits, so after installing a new build,
 run `killall legacyScreenSaver` first.

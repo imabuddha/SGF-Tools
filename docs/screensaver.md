@@ -575,7 +575,10 @@ never one on another screen, and has its own layout and generator. The screens s
 first games together, quickly, and each holds its first game's last position a random 0 to 3
 seconds longer, so the screens don't fade in step afterward (section 4). Each view logs its
 display's ID, frame, and scale. A reported macOS 26 bug hides a third-party saver on a second
-display (FB19206021); that's out of our hands, and the log shows which screens got a view.
+display (FB19206021); that's out of our hands, and the log shows which screens got a view. On
+the test Mac, macOS keeps a separate screensaver choice for each display: the second display
+got no view until SGF Tools was chosen for it too, with that display selected in System
+Settings > Wallpaper (John's test, 2026-09-26).
 
 ## 7. Preview mode
 
@@ -759,8 +762,9 @@ pass.
    ```
 
 4. **The preview.** In System Settings > Wallpaper > Screen Saver, choose SGF Tools (third-party
-   savers are under Other). For a minute, the preview should play games with no details, and no
-   permission request should appear.
+   savers are under Other). With more than one display, select each display in Wallpaper
+   settings and choose SGF Tools for each. For a minute, the preview should play games with no
+   details, and no permission request should appear.
 5. **The saver.** Start it (a hot corner, or waiting), and let it run three games, about two
    minutes, on every display. Look for: the fades, two moves a second, the details in a new place
    for each game and clear of the board, a different game on each display, and nothing on screen
