@@ -26,15 +26,50 @@ enum LocationClass: Hashable, Sendable, Comparable, CustomStringConvertible {
     }
 
     /// The setting in System Settings > Privacy & Security that lets a process read files here.
-    var permission: String {
+    /// Spotlight searches only the Mac's own volumes (see ``GameCandidates/spotlightPaths()``),
+    /// so a volume here is never a network volume.
+    var permission: PrivacySetting {
         switch self {
-        case .documents: "Files & Folders: Documents Folder"
-        case .desktop: "Files & Folders: Desktop Folder"
-        case .downloads: "Files & Folders: Downloads Folder"
-        case .home, .startupDisk: "Full Disk Access"
-        case .volume: "Files & Folders: Removable Volumes or Network Volumes"
+        case .documents: PrivacySetting(pane: .filesAndFolders, item: "Documents Folder")
+        case .desktop: PrivacySetting(pane: .filesAndFolders, item: "Desktop Folder")
+        case .downloads: PrivacySetting(pane: .filesAndFolders, item: "Downloads Folder")
+        case .home, .startupDisk: PrivacySetting(pane: .fullDiskAccess)
+        case .volume: PrivacySetting(pane: .filesAndFolders, item: "Removable Volumes")
         }
     }
+
+    /// Whether macOS's privacy settings guard the whole location, with a switch of its own under
+    /// Files & Folders. Spotlight leaves such a location's files out of an app's results until
+    /// the app may read them.
+    var isGuarded: Bool { permission.pane == .filesAndFolders }
+}
+
+/// A setting in System Settings > Privacy & Security, such as "Files & Folders: Documents
+/// Folder".
+struct PrivacySetting: Hashable, Sendable, CustomStringConvertible {
+    /// A pane of Privacy & Security.
+    enum Pane: String, Sendable {
+        case filesAndFolders = "Files & Folders"
+        case fullDiskAccess = "Full Disk Access"
+
+        /// Opens the pane in System Settings. The anchors are the ones System Settings' Privacy
+        /// & Security extension lists on macOS 27, and the legacy pane's identifier still leads
+        /// to it.
+        var url: URL {
+            let anchor = switch self {
+            case .filesAndFolders: "Privacy_FilesAndFolders"
+            case .fullDiskAccess: "Privacy_AllFiles"
+            }
+            return URL(string: "x-apple.systempreferences:com.apple.preference.security?\(anchor)")!
+        }
+    }
+
+    let pane: Pane
+
+    /// The switch in the pane, for Files & Folders.
+    var item: String?
+
+    var description: String { item.map { "\(pane.rawValue): \($0)" } ?? pane.rawValue }
 }
 
 /// The SGF files that Spotlight says are games for the screensaver, less the places they must
@@ -131,11 +166,15 @@ struct GameCandidates: Sendable {
     /// The volumes mounted under `/Volumes`, for logging a count for each, even when it is 0.
     static func mountedVolumes() -> [LocationClass] {
         let urls = FileManager.default.mountedVolumeURLs(includingResourceValuesForKeys: nil, options: [.skipHiddenVolumes]) ?? []
-        return urls.compactMap { url in
-            let path = url.standardizedFileURL.path
-            guard path.hasPrefix("/Volumes/") else { return nil }
-            return .volume(String(path.dropFirst("/Volumes/".count)))
-        }
+        return urls.compactMap { volumeName(of: $0).map(LocationClass.volume) }
+    }
+
+    /// The name of a volume mounted under `/Volumes`, or `nil` for one mounted anywhere else,
+    /// such as the startup disk at `/`.
+    static func volumeName(of url: URL) -> String? {
+        let path = url.standardizedFileURL.path
+        guard path.hasPrefix("/Volumes/") else { return nil }
+        return String(path.dropFirst("/Volumes/".count))
     }
 
     // MARK: - Spotlight
@@ -153,9 +192,13 @@ struct GameCandidates: Sendable {
         }
     }
 
-    /// Asks Spotlight, on the whole computer, for the paths of the files that match ``query``.
-    /// It runs synchronously, so callers call it off the main thread; on the test Mac, 64,020
-    /// paths took 0.9 seconds.
+    /// Asks Spotlight, on the Mac's own volumes and the home folder, for the paths of the files
+    /// that match ``query``. It runs synchronously, so callers call it off the main thread; on the
+    /// test Mac, 64,020 paths took 0.9 seconds.
+    ///
+    /// Spotlight leaves out the files the calling process isn't allowed to read, by its sandbox
+    /// and by macOS's privacy settings, and asking it never makes macOS ask the user for access
+    /// (see `AccessCheck` in the app).
     static func spotlightPaths() throws(QueryError) -> [String] {
         guard let query = MDQueryCreate(kCFAllocatorDefault, Self.query as CFString, nil, nil) else {
             throw .couldNotCreate

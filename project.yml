@@ -172,6 +172,7 @@ targets:
           # Run by hand, not by xcodebuild test.
           - SandboxCheck
       - Shared
+      - App/AccessCheck.swift
       - App/ContentView.swift
       - App/PlaylistBuilder.swift
       - Spotlight/SpotlightAttributes.swift

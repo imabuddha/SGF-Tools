@@ -103,8 +103,9 @@ extension Feature where Extra == EmptyView {
     }
 }
 
-/// The screensaver's feature: what it does, what games it has, and the button that chooses new
-/// ones.
+/// The screensaver's feature: what it does, what games it has, the button that chooses new
+/// ones, and, when macOS refused the app access to places that may hold games, a button that
+/// opens the setting.
 private struct ScreensaverRow: View {
     let games: ScreensaverGames
 
@@ -125,11 +126,18 @@ private struct ScreensaverRow: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Button("Update Screensaver Games") { games.update() }
-                .disabled(games.isUpdating)
-                .help("Choose a new set of random games for the screensaver. macOS may ask whether SGF "
-                    + "Tools may read the folders and disks that hold them.")
-                .padding(.top, 6)
+            HStack {
+                Button("Update Screensaver Games") { games.update() }
+                    .disabled(games.isUpdating)
+                    .help("Choose a new set of random games for the screensaver. macOS may first ask whether "
+                        + "SGF Tools may read your Documents folder and your other disks.")
+                if let pane = games.settingsPane {
+                    Button("Open System Settings") { NSWorkspace.shared.open(pane.url) }
+                        .help("Open \(pane.rawValue) in Privacy & Security, where you can let SGF Tools read "
+                            + "the folders and disks that hold your games.")
+                }
+            }
+            .padding(.top, 6)
         }
     }
 }

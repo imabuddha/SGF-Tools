@@ -127,8 +127,10 @@ the details move from game to game. It has no options yet, and no sound.
 To try it:
 
 1. Build and install SGF Tools (see [Trying it out](#trying-it-out)), open it, and click
-   **Update Screensaver Games**. macOS asks whether SGF Tools may read the folders and disks
-   that hold your SGF files; allow it. The window then says how many games SGF Tools chose.
+   **Update Screensaver Games**. SGF Tools first asks macOS for access to your Documents folder
+   and your other disks, and macOS asks you once for each; allow them. The window then says how
+   many games SGF Tools chose. If you didn't allow a place, the window says which, and **Open
+   System Settings** takes you to Privacy & Security > Files & Folders, where you can turn it on.
 2. Build the "SGF Tools Screensaver" scheme and copy `SGF Tools.saver` from the build products
    into `~/Library/Screen Savers`.
 3. In System Settings > Wallpaper, choose Screen Saver, and pick SGF Tools (third-party
@@ -144,8 +146,12 @@ screensaver installed and its games more than a week old, it asks Spotlight for 
 names both players and has at least 20 moves, reads them in a random order until 10,000
 qualify, and writes each one's file path, details, and first 50 moves to
 `~/Library/Application Support/SGF Tools/Screensaver Games.sgfplaylist`, which the screensaver
-plays from. If it could read fewer games than the list already holds because macOS refused some
-files or a disk isn't connected, it keeps the games it chose before. Without that file, the
+plays from. Spotlight leaves out the files SGF Tools isn't allowed to read, and asking it never
+makes macOS ask you, so the button first reads the top level of Documents and of each disk on
+the Mac, which does; when SGF Tools chooses by itself on opening, it never asks. Games on the
+Desktop or in Downloads are chosen only if SGF Tools has Full Disk Access. If it could read fewer
+games than the list already holds because macOS refused or hid some files, or a disk isn't
+connected, it keeps the games it chose before. Without that file, the
 screensaver asks Spotlight and reads the files itself, which macOS may refuse, and failing that
 plays John Mifsud's 2009 game against GNU Go, with a line saying to open SGF Tools.
 

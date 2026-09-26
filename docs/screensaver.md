@@ -13,7 +13,9 @@ the first real run, which the logging in section 9 is designed to answer).
 - **SGF Tools.app chooses the games.** When John clicks Update Screensaver Games, or when the app
   opens and its list is more than a week old, it asks Spotlight for every qualifying game, reads
   them in a random order until 10,000 qualify, and writes each one's details and first 50 moves,
-  as a small SGF game, to one playlist file in `~/Library/Application Support/SGF Tools/`.
+  as a small SGF game, to one playlist file in `~/Library/Application Support/SGF Tools/`. On the
+  click, and only then, it first asks macOS for access to Documents and the other disks, since
+  Spotlight hides from it the files it may not read (1.2, 1.5).
 - **The screensaver plays from that file.** No privacy setting guards it, and the screensaver's
   host can read it (verified with probes signed with the host's entitlements).
 - **If there's no playlist, the screensaver asks Spotlight and reads the files itself** ("direct
@@ -89,6 +91,18 @@ What no probe can show is TCC as the real host meets it. A probe's file access i
 the app that launched it, which already has access to Documents and the external volume, so the
 five reads of each above say nothing about the host. Testing that headlessly would risk a
 permission dialog on John's screen, so it wasn't done.
+
+**John's test of 2.1.0 (8), on 2026-09-26, showed that Spotlight also filters by TCC** (verified).
+The app, installed in `/Applications` with the entitlements of 1.5, got no games at all from the
+query that finds 64,020 in Terminal: "Wrote 0 games of 0 found". Every qualifying game is in a
+place TCC guards (1.3), the app had never read any of them, so it held no grant, and no
+permission request appeared. So:
+- Spotlight leaves out of a client's results the files that the client's TCC access doesn't
+  cover, as well as those its sandbox doesn't, and **a Spotlight query never makes macOS ask**.
+- The probes' 64,020 came from Terminal's access, which they inherited, as they did for reads.
+  The row "Spotlight: qualifying games" above holds only for a process with that access.
+- The app has to read each place itself, once, for macOS to ask; then Spotlight answers with
+  what it may read (1.5). There's no API that asks ahead of time (1.3).
 
 ### 1.3 TCC, and where the games are
 
@@ -169,8 +183,36 @@ reads your SGF files to choose games for its screensaver."
 **When it writes the playlist:**
 - when the app opens, if the saver is installed (`SGF Tools.saver` in `~/Library/Screen Savers`
   or `/Library/Screen Savers`) and the playlist is missing or more than 7 days old; so someone
-  who never installs the saver never sees a permission request
-- when John clicks **Update Screensaver Games** in the app's window.
+  who never installs the saver never sees a permission request. This update never asks for
+  access, so it chooses only from the places the app may already read.
+- when John clicks **Update Screensaver Games** in the app's window, which first asks for access.
+
+**Asking for access** (`App/AccessCheck.swift`), on the click only, since Spotlight never asks
+(1.2): before the query, the app reads the top level of each place in turn, off the main thread,
+with `opendir` and one `readdir`. macOS should ask once for a place it hasn't decided on, with
+the reason above, while the read waits for the answer, and not again for a place already allowed
+or refused (untested: John's next test). The status line says "Asking macOS for access to
+Documents…" meanwhile. The places:
+- `~/Documents`;
+- each volume under `/Volumes` that `mountedVolumeURLs(… .skipHiddenVolumes)` lists, is local
+  (`volumeIsLocal`), is shown in Finder (`volumeIsBrowsable`), and isn't the startup disk
+  (`volumeIsRootFileSystem`), by name. That leaves out Recovery, the `/System/Volumes` ones, and
+  network volumes, which the query's scope, `kMDQueryScopeComputer`, doesn't search ("all locally
+  mounted volumes, plus the user's home directory", `MDQuery.h`), so their request would gain
+  nothing. An internal volume that TCC doesn't guard costs a read and no request.
+- **not** Desktop or Downloads, where collections are rarely kept, so that everyone isn't asked
+  about them; their games are chosen only with Full Disk Access. A place that was never asked
+  about has no switch under Files & Folders.
+
+Each read's outcome, `allowed`, `denied` (`EPERM`), or `failed` with its `errno`, and how long it
+waited are logged; a read that took over half a second most likely waited on a request. When
+places were refused, the window names them and the switches to turn on under Privacy & Security
+> Files & Folders, with a button that opens that pane
+(`x-apple.systempreferences:com.apple.preference.security?Privacy_FilesAndFolders`; the anchor
+is in the Privacy & Security extension's `TCCServiceList.plist` and binary on macOS 27, and its
+`legacyBundleIdentifier` is `com.apple.preference.security`, verified). When an update by itself
+found nothing, or kept the playlist because places came up empty, the window says to click the
+button.
 
 **The window** gets a fourth row under the three features, "Screensaver", with a sentence on
 what it does, a status line, and the button (with a tooltip). The status reads, for example,
@@ -179,8 +221,8 @@ wrong ("441 games in Documents couldn't be read: access not allowed"). The closi
 "There is nothing to set up" is reworded to match.
 
 **How it builds the playlist** (`App/PlaylistBuilder.swift`, off the main thread):
-1. Ask Spotlight for the qualifying files (`GameCandidates`, 1.7), and drop the paths it must
-   never open (1.7).
+1. On the click, ask for access (above). Then ask Spotlight for the qualifying files
+   (`GameCandidates`, 1.7), and drop the paths it must never open (1.7).
 2. Shuffle them, and read files until 10,000 games qualify or the list runs out, four at a time,
    with `GameFileReader` (1.7). There's no time limit: a read that waits on a permission request
    waits for John's answer.
@@ -189,8 +231,13 @@ wrong ("441 games in Documents couldn't be read: access not allowed"). The closi
    new one, never part of one (verified: the app-like probe did exactly this). A file the saver
    has open keeps its old contents. **Unless the old playlist is kept:** when the new one would
    have fewer games than it, and has none, or macOS refused some reads, or a volume that holds
-   some of the old playlist's games isn't mounted. Then the window shows the old playlist and a
-   line saying why, and the next update tries again.
+   some of the old playlist's games isn't mounted, or a place TCC guards (Documents, Desktop,
+   Downloads, a volume) holds some of the old games and Spotlight found none there. That place
+   may be hidden rather than empty; the games count as gone only when the update asked for
+   access to it, got it, and none of the first 20 old games there still exists (`stat`). An
+   update by itself never looks there. Then the window shows the old playlist and a line saying
+   why, and the next update tries again. **So no update replaces a playlist with an empty one,
+   or with a smaller one for want of access** (`PlaylistBuilder.playlistToKeep`, tested).
 5. Tally everything by location (1.7): found, left out and why, read, refused by error, missing,
    not a game, the time, and the size written. The tallies go to the log and the status line.
 
@@ -252,7 +299,7 @@ Both the app's builder and the saver's direct mode use the same two files in `Sh
 
 **`GameCandidates`** runs one synchronous `MDQuery`, scoped to the computer, on a background
 thread, and copies the paths into a Swift array (0.9 s and about 6 MB for 64,020 paths,
-verified):
+verified). The results leave out whatever the calling process may not read (1.2):
 
     kMDItemContentType == "com.red-bean.sgf" && com_breedingpinetrees_sgf_black == "*" &&
     com_breedingpinetrees_sgf_white == "*" && com_breedingpinetrees_sgf_moves >= 20
@@ -373,6 +420,7 @@ the view, so the view's Objective-C class exists only in the bundle. It already 
         excludes:
           - SandboxCheck
       - Shared
+      - App/AccessCheck.swift
       - App/ContentView.swift
       - App/PlaylistBuilder.swift
       - Spotlight/SpotlightAttributes.swift
@@ -419,6 +467,7 @@ the view, so the view's Objective-C class exists only in the bundle. It already 
 | `Shared/GameCandidates.swift` | The Spotlight query, the exclusions, and location classes |
 | `Shared/GameFileReader.swift` | `stat`, the bounded read, parsing, qualifying, and the outcome |
 | `App/PlaylistBuilder.swift` | The app's builder, with its status for the window |
+| `App/AccessCheck.swift` | Asking macOS for access to Documents and the volumes, on the click (1.5) |
 | `App/ContentView.swift`, `App/SGFToolsApp.swift` | The Screensaver row; the update when the app opens |
 | `App/SGFTools.entitlements`, `App/Info.plist` | The two exceptions; the reasons |
 | `Tests/Screensaver*.swift`, `Tests/Playlist*.swift` | Section 10 |
@@ -582,7 +631,8 @@ counts, error domains and codes, and timings are public.
 | `play` | Each game | The screen, the source (playlist, direct, or its own game), the board size, the moves, and the drawing time (median and slowest) and image size |
 
 The app logs its builder under `com.pragmaphilia.SGFTools`, category `playlist`, with the tallies
-of 1.5.
+of 1.5, and, on the click, the places it asks about, the volumes it leaves out and why, and each
+place's access and wait.
 
 The first real run answers the open questions: whether the real host reads the playlist
 (`playlist`), whether Spotlight answers inside it and how fast, and whether it can read Documents
@@ -613,8 +663,11 @@ Fixtures are synthetic, made in code as the existing tests make theirs, plus joh
    importer's attribute names, and the sandbox check's copy of it.
 6. **The builder,** with paths and reads injected: the 10,000 cap, a seeded shuffle giving the
    same file twice, the tallies, the temporary file renamed into place, an unwritable folder
-   reported, and the old playlist kept when no game could be read, reads were refused, or its
-   volume is away, but replaced when its games are gone.
+   reported, and the old playlist kept when no game could be read, reads were refused, its
+   volume is away, or a guarded place came up empty, but replaced when its games are gone. The
+   access check, with the volumes and reads injected, never the real Documents or volumes: the
+   places chosen, an update by itself never asking, the click asking about each place before
+   Spotlight, and what the window says for each outcome.
 7. **The library:** the order playlist, direct, own game; no game on two screens at once; no
    repeats among the last 200; no game twice in a row on a screen, for playlists of 2 to 150
    games and in direct mode; the playlist read again when it's replaced, and a playlist that
@@ -724,11 +777,12 @@ pass.
    and it may not read the playlist's folder as the probe did. The `playlist` log line shows
    `EPERM`, and the saver falls back to direct mode. The fix is `/Users/Shared/SGF Tools/`, which
    the host-like probe could list, with the app's exception changed to that absolute path.
-2. **The app's permission requests.** Whether macOS asks at all for the fixed external disk, and
-   whether a request appears for each read or once, is untested. An ad hoc signed app is a new
-   client for TCC after every build, so macOS may ask again. If John declines, the app keeps the
-   playlist it had, if that has more games, or else writes only what it could read, and the
-   window says what it couldn't.
+2. **The app's permission requests.** Spotlight never asks, so without the reads of 1.5 the app
+   finds nothing (John's test of 2.1.0). Whether reading a volume's top level asks for the fixed
+   external disk, and whether Spotlight answers with a place's files as soon as it's allowed, are
+   untested. An ad hoc signed app is a new client for TCC after every build, so macOS asks again.
+   If John declines, the app keeps the playlist it had, if that has more games, or else writes
+   only what it could read, and the window names the places refused and opens their settings.
 3. **Direct mode can raise a request for legacyScreenSaver**, perhaps when nobody is there to
    answer it, and a read waiting on it blocks a thread. The 3-second limit, denying a class
    after 3 time-outs in a row, and giving up when 6 abandoned reads haven't come back bound the
@@ -837,6 +891,17 @@ Checked headlessly, on 2026-09-25, after the review's fixes:
 
 Not checked, and left for John's test (section 11): anything under TCC, since the tool read with
 the terminal's access; the real host, System Settings, and the app itself, which wasn't built.
+
+**After John's first test**, 2.1.1 (9), on 2026-09-26:
+1. **The app asks for access before it asks Spotlight.** 2.1.0 found no games, since Spotlight
+   hides the files an app may not read and never asks (1.2). On the click, the app now reads the
+   top level of Documents and of each local volume first, so that macOS asks, and names the
+   places refused, with a button that opens Files & Folders (1.5). An update when the app opens
+   never asks.
+2. **A place that comes up empty keeps the playlist.** An update that finds no games in a place
+   TCC guards, where the playlist has some, keeps the playlist unless it may read the place and
+   the games are gone (1.5), since 2.1.0's rules would have replaced 10,000 games with the few in
+   the places the app could still read.
 
 ## Appendix: what was checked
 

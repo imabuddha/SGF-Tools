@@ -196,6 +196,19 @@ final class Counter: @unchecked Sendable {
     var value: Int { lock.withLock { count } }
 }
 
+/// A thread-safe list of what happened, in order, for closures that tests hand to the code
+/// under test.
+final class Recorder<Element: Sendable>: @unchecked Sendable {
+    private let lock = NSLock()
+    private var elements: [Element] = []
+
+    func append(_ element: Element) {
+        lock.withLock { elements.append(element) }
+    }
+
+    var values: [Element] { lock.withLock { elements } }
+}
+
 /// A temporary folder, removed when the test ends.
 final class TemporaryFolder {
     let url: URL
