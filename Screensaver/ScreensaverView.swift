@@ -114,10 +114,12 @@ final class ScreensaverView: ScreenSaverView, SaverInstance {
             MainActor.assumeIsolated { self?.screenChanged() }
         })
         occlusionChanged()
-        DispatchQueue.main.asyncAfter(deadline: .now() + InstanceRegistry.startFallbackDelay) { [weak self] in
-            MainActor.assumeIsolated {
-                guard let self else { return }
-                self.registry.checkStartFallback(self.serial)
+        for delay in [InstanceRegistry.previewStartFallbackDelay, InstanceRegistry.startFallbackDelay] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    self.registry.checkStartFallback(self.serial)
+                }
             }
         }
     }

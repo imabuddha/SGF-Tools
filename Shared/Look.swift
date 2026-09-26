@@ -81,6 +81,19 @@ enum Look {
     /// When the first move is played, in seconds after the board starts to fade in.
     static let screensaverFirstMove: Double = 3
 
+    /// The first game after the screensaver starts comes in quicker than the rest, so that
+    /// there's something to see almost at once: how long its board takes to fade in, in seconds.
+    static let screensaverStartFadeIn: Double = 1
+
+    /// When the first game's details start to fade in, in seconds after its board starts.
+    static let screensaverStartDetailsDelay: Double = 0.3
+
+    /// How long the first game's details take to fade in, in seconds.
+    static let screensaverStartDetailsFadeIn: Double = 1
+
+    /// When the first game's first move is played, in seconds after its board starts to fade in.
+    static let screensaverStartFirstMove: Double = 2
+
     /// The time between moves, in seconds.
     static let screensaverMoveInterval: Double = 1
 
@@ -96,9 +109,13 @@ enum Look {
     /// How long the screen stays black before the next game, in seconds.
     static let screensaverPause: Double = 1
 
-    /// The longest random wait before a screen's first game, in seconds, so that screens don't
-    /// fade in together.
-    static let screensaverMaximumStartDelay: Double = 3
+    /// How long a screen stays black before its first game, in seconds.
+    static let screensaverStartDelay: Double = 0.4
+
+    /// The most that a screen's first game holds its last position longer than the others, in
+    /// seconds. Each screen holds it a random time longer, so that screens that start together
+    /// don't fade out and in together afterward.
+    static let screensaverMaximumStagger: Double = 3
 
     /// A view whose shorter side is under this, in points, is a preview, such as the one in
     /// System Settings.

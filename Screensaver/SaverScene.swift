@@ -9,7 +9,8 @@ import SGFRendering
 struct PreparedGame: Sendable {
     let game: SaverGame
     let layout: SaverLayout
-    let timeline: SaverTimeline
+    /// The game's timeline; the player gives the first game after it starts a quicker one.
+    var timeline: SaverTimeline
     /// The screen's backing scale, which the images are drawn at.
     let scale: CGFloat
     let details: CGImage?
@@ -120,7 +121,7 @@ final class SaverScene {
         CATransaction.setDisableActions(true)
         if animated {
             if state.showsGame != applied?.showsGame {
-                let end = state.showsGame ? Look.screensaverFadeIn : timeline.fadeOutEnd
+                let end = state.showsGame ? timeline.opening.fadeIn : timeline.fadeOutEnd
                 fade(gameLayer, to: state.showsGame ? 1 : 0, from: timeline.gameOpacity(at: time), over: end - time)
             }
             if state.showsDetails != applied?.showsDetails {

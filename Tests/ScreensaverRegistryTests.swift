@@ -147,6 +147,38 @@ struct ScreensaverRegistryTests {
         #expect(!view.playing && view.reasons.last == "not started")
     }
 
+    /// The host doesn't call `startAnimation` for the preview, which plays after half a second,
+    /// while a view on a display still waits for it.
+    @Test func aPreviewPlaysAfterHalfASecond() {
+        func view(on key: InstanceRegistry.Key) -> FakeInstance {
+            let view = FakeInstance(serial: registry.makeSerial())
+            registry.add(view)
+            let now = clock.now
+            registry.update(view.serial) { facts in
+                facts.windowSince = now
+                facts.hasSize = true
+                facts.key = key
+            }
+            return view
+        }
+        let preview = view(on: .preview)
+        let screen = view(on: .display(1))
+        clock.now += 0.4
+        registry.checkStartFallback(preview.serial)
+        #expect(!preview.playing, "too early")
+        clock.now += 0.1
+        registry.checkStartFallback(preview.serial)
+        registry.checkStartFallback(screen.serial)
+        #expect(preview.playing && !screen.playing)
+        #expect(log.messages(.lifecycle).contains("View 1: 0.5 s in a window without startAnimation; playing anyway"))
+        // A second preview, as while the picker is open: the newer one plays once it may.
+        let newer = view(on: .preview)
+        #expect(preview.playing && !newer.playing)
+        clock.now += 0.5
+        registry.checkStartFallback(newer.serial)
+        #expect(!preview.playing && newer.playing)
+    }
+
     @Test func aViewThatHasStartedAndStoppedWaitsForStartAnimation() {
         let view = FakeInstance(serial: registry.makeSerial())
         registry.add(view)

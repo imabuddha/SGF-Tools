@@ -9,7 +9,8 @@ import QuartzCore
 /// before it plays: its layout, its details, and, once the game before it has reached its last
 /// move, its first board. Each move's board is drawn off the main thread, one move ahead, and
 /// only the board shown and the next are kept, so a screen holds two boards at a time. The first
-/// game starts after a random delay, so that screens don't fade in together.
+/// game after starting comes in quickly, after a short black, and holds its last position a
+/// random time longer, so that screens that start together don't fade out and in together.
 @MainActor
 final class SaverPlayer {
     /// The screen's number in the library: the view's serial number.
@@ -28,8 +29,12 @@ final class SaverPlayer {
     private(set) var isPlaying = false
     /// Bumped whenever the work under way no longer counts: on stopping, and for each new game.
     private var generation = 0
-    /// When the next game may start: after a random delay on starting, and at once after a game.
+    /// When the next game may start: shortly after starting, and at once after a game.
     private var nextStart: Double = 0
+    /// Whether the next game is the first since starting, which comes in quicker.
+    private var nextIsFirst = false
+    /// How much longer the first game since starting holds its last position, in seconds.
+    private var firstExtraHold: Double = 0
     private var current: PreparedGame?
     private var currentStart: Double = 0
     private var appliedState: SaverTimeline.State?
@@ -48,9 +53,9 @@ final class SaverPlayer {
     ///   - scale: The screen's backing scale, when a game is prepared.
     ///   - describeScreen: The screen, for the log.
     ///   - clock: Seconds, as `CACurrentMediaTime`; the tests set it.
-    ///   - generator: Chooses the random delay before the first game, and nothing else: each
-    ///     game's layout is chosen on the drawing queue with the system's generator, so a seed
-    ///     doesn't repeat the layouts.
+    ///   - generator: Chooses how much longer the first game holds its last position, and nothing
+    ///     else: each game's layout is chosen on the drawing queue with the system's generator, so
+    ///     a seed doesn't repeat the layouts.
     init(scene: SaverScene, screen: Int, library: GameLibrary, log: any SaverLogging,
          screenSize: @escaping () -> CGSize, scale: @escaping () -> CGFloat,
          describeScreen: @escaping () -> String = { "" }, clock: @escaping () -> Double = { CACurrentMediaTime() },
@@ -74,6 +79,9 @@ final class SaverPlayer {
     /// The scale the current game was drawn at.
     var currentScale: CGFloat? { current?.scale }
 
+    /// The current game's timeline.
+    var currentTimeline: SaverTimeline? { current?.timeline }
+
     /// The number of the current game's boards kept.
     var boardCount: Int { boards.count }
 
@@ -87,8 +95,10 @@ final class SaverPlayer {
         isPlaying = true
         generation += 1
         var wrapped = AnyGenerator(base: generator)
-        nextStart = clock() + Double.random(in: 0 ... Look.screensaverMaximumStartDelay, using: &wrapped)
+        firstExtraHold = Double.random(in: 0 ... Look.screensaverMaximumStagger, using: &wrapped)
         generator = wrapped.base
+        nextStart = clock() + Look.screensaverStartDelay
+        nextIsFirst = true
         requestNextGame()
     }
 
@@ -194,6 +204,11 @@ final class SaverPlayer {
     }
 
     private func begin(_ prepared: PreparedGame, at now: Double) {
+        var prepared = prepared
+        if nextIsFirst {
+            prepared.timeline = SaverTimeline(moveCount: prepared.timeline.moveCount, opening: .start, extraHold: firstExtraHold)
+            nextIsFirst = false
+        }
         generation += 1
         current = prepared
         next = nil

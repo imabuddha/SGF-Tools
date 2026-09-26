@@ -83,6 +83,25 @@ struct ScreensaverTimelineTests {
         #expect(shown == Array((shown.first ?? 0) ... 50))
     }
 
+    /// The first game after the screensaver starts: in a second, and its first move a second
+    /// later; the rest as usual, with its last position held longer.
+    @Test func theFirstGameComesInQuicker() {
+        let usual = SaverTimeline(moveCount: 50)
+        let timeline = SaverTimeline(moveCount: 50, opening: .start, extraHold: 2)
+        #expect(timeline.gameOpacity(at: 0.5) == 0.5)
+        #expect(timeline.gameOpacity(at: 1) == 1)
+        #expect(!timeline.state(at: 0.29).showsDetails)
+        #expect(timeline.state(at: 0.3).showsDetails)
+        #expect(timeline.detailsOpacity(at: 1.3) == 1)
+        #expect(timeline.detailsFadeInEnd == 1.3)
+        #expect(timeline.state(at: 1.99).movesShown == 0)
+        #expect(timeline.state(at: 2).movesShown == 1)
+        #expect(timeline.time(ofMove: 50) == usual.time(ofMove: 50) - 1)
+        #expect(timeline.fadeOutStart == usual.fadeOutStart - 1 + 2)
+        #expect(timeline.duration == usual.duration - 1 + 2)
+        #expect(SaverTimeline(moveCount: 50, extraHold: -1) == usual, "never a shorter hold")
+    }
+
     @Test func aGameWithNoMovesStillEnds() {
         let timeline = SaverTimeline(moveCount: 0)
         #expect(timeline.state(at: 100).isOver)

@@ -514,6 +514,13 @@ the number of moves played, 50 or the whole main line if it's shorter, passes co
 | N + 9 | Black for 1 s |
 | N + 10 | The next game starts (60 s for N = 50) |
 
+**The first game after a start**, whenever a screen starts playing (full screen, the preview, or
+a new size), comes in quicker, so that there's something to see almost at once: the screen is
+black for 0.4 s, then the board fades in over 1 s, the details start at 0.3 s and take 1 s, and
+move 1 comes at 2 s. So the board is there about 1.4 s after the screen starts, not up to 5 s.
+That game's last position holds a random 0 to 3 s longer on each screen, so that screens that
+start together don't fade out and in together afterward. The games after it follow the table.
+
 All 50 moves on every board size, as the plan says (question 5). No sound. The fades are Core
 Animation animations, so the CPU does nothing between moves.
 
@@ -560,10 +567,11 @@ So the board moves a little from game to game, which also spares the screen a fi
 
 The host makes one view per screen, in one process (reported: ScreenSaverMinimal). They share
 the game library: one query, one playlist, one read queue. Each screen picks its own game,
-never one on another screen, has its own layout and generator, and starts its first game after
-a random 0 to 3 seconds so the screens don't fade in step. Each view logs its display's ID,
-frame, and scale. A reported macOS 26 bug hides a third-party saver on a second display
-(FB19206021); that's out of our hands, and the log shows which screens got a view.
+never one on another screen, and has its own layout and generator. The screens start their
+first games together, quickly, and each holds its first game's last position a random 0 to 3
+seconds longer, so the screens don't fade in step afterward (section 4). Each view logs its
+display's ID, frame, and scale. A reported macOS 26 bug hides a third-party saver on a second
+display (FB19206021); that's out of our hands, and the log shows which screens got a view.
 
 ## 7. Preview mode
 
@@ -573,7 +581,10 @@ logs the flag. In a preview it:
 - plays games with the board at 90% of the shorter side and no details
 - plays from the playlist or its own game, and **never runs direct mode**, so opening System
   Settings can't raise a permission request
-- does nothing while its bounds are empty.
+- does nothing while its bounds are empty
+- starts half a second after it's in a window, since the host doesn't call `startAnimation` for
+  it (John's test: "5 s in a window without startAnimation; playing anyway"), with the quick
+  first game of section 4.
 
 ## 8. The host's quirks
 
@@ -586,7 +597,11 @@ that the saver is ending, though it's sometimes missed when the saver starts and
 **The rule:** a view plays only while
 - `startAnimation` has been called and `stopAnimation` hasn't since; or it has been in a window
   for 5 seconds without `startAnimation` ever being called, which is logged, so a host that never
-  calls it doesn't leave the screen black. The host's calls win over this fallback.
+  calls it doesn't leave the screen black. The host's calls win over this fallback. A preview
+  waits only half a second, since the host doesn't call `startAnimation` there (section 7). On a
+  display the host calls it about half a second after `didstart` (John's test), and the longer
+  wait lets its call come first, so that a view it started has the `willstop` grace below. The
+  other rules, which keep hidden and duplicate views from playing, apply to both.
 - it has a window and a size that isn't empty
 - no `willstop` has arrived since its last `startAnimation`, or since `didstart`. A `willstop`
   less than 2 seconds after a view's `startAnimation` doesn't stop that view (logged): the
@@ -605,7 +620,7 @@ change, an occlusion change, a size change, a new view, a view's `deinit`, `will
 
 **Pausing** cancels the timer and pending drawing, drops the layers' images, and gives the game
 back to the library, so a forgotten view costs a few kilobytes and no CPU. **Resuming** starts a
-new game after the random delay. `didstop` is only logged, and `deinit` logs, so the log shows
+new game, the quick first game of section 4. `didstop` is only logged, and `deinit` logs, so the log shows
 whether the host ever frees a view.
 
 **No `exit(0)`.** Aerial and ScreenSaverMinimal exit the host on `willstop`, but that's reported
@@ -675,8 +690,9 @@ Fixtures are synthetic, made in code as the existing tests make theirs, plus joh
    (two `denied` deny a class, `missing` doesn't, time-outs, a late success clears a class, a
    blocked class denied while another plays, late reads no longer counting, giving up); and the
    log lines, through a logger protocol.
-8. **The timeline:** the state at chosen times for a 50-move and a 23-move game; ticks at
-   irregular times land on the right move.
+8. **The timeline:** the state at chosen times for a 50-move and a 23-move game, and the quick
+   first game; ticks at irregular times land on the right move. The player gives each start a
+   quick first game, and the screens different holds.
 9. **The layout:** for 1920x1080, 2560x1440, 1728x1117, 3440x1440, 1080x1920, 1024x768, 1024x1024,
    300x190, and 0x0, over 1,000 seeds: the board fits, the details are on screen, at least m from
    the board and every edge, and on more than one side over the seeds; a preview has no details;
@@ -685,7 +701,9 @@ Fixtures are synthetic, made in code as the existing tests make theirs, plus joh
     `startAnimation` or `didstart`, except a view that has just started; `startAnimation` on an
     older view is ignored; `stopAnimation` stops a view the fallback started, and the fallback
     never starts a view that has had `startAnimation`; a newer view that can't play doesn't pause
-    an older one; a preview is its own key; occlusion before the first "visible" is ignored.
+    an older one; a preview is its own key, and plays after half a second without
+    `startAnimation`, when a view on a display doesn't yet; occlusion before the first "visible"
+    is ignored.
 11. **The details:** the wording and order, missing fields, and truncation.
 
 **Rendering tests**, as `PreviewRenderingTests` does: build one screen's layer tree without a
@@ -851,8 +869,8 @@ The first draft, 2.1.0 (8), follows the design above, except:
 3. **Direct mode's errors.** `unreadable` also covers errors other than `EACCES`, with their
    `errno` in the log, and `ENOTDIR` counts as missing.
 4. **A pick relaxes what it avoids** in steps, so that a small playlist still plays (1.8).
-5. **A new size or backing scale** starts a new game after the random delay, rather than drawing
-   the current one again.
+5. **A new size or backing scale** starts a new game, as a start does, rather than drawing the
+   current one again.
 6. **The thumbnails stay PNGs** (`COMBINE_HIDPI_IMAGES` is off), as in Apple's own savers; Xcode
    would otherwise combine them into `thumbnail.tiff`.
 7. **The bundle test doesn't link ScreenSaver.framework.** It declares the view's initializer in
@@ -902,6 +920,10 @@ the terminal's access; the real host, System Settings, and the app itself, which
    TCC guards, where the playlist has some, keeps the playlist unless it may read the place and
    the games are gone (1.5), since 2.1.0's rules would have replaced 10,000 games with the few in
    the places the app could still read.
+3. **The first game after a start comes in quickly** (section 4). With 2.1.0, the board was
+   readable about 5 s after the saver started, after a random wait of up to 3 s and a 2 s fade,
+   and John dismissed it twice before then; the preview waited 5 s more for a `startAnimation`
+   that never came, and now waits half a second (sections 7 and 8).
 
 ## Appendix: what was checked
 

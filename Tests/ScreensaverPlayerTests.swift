@@ -46,22 +46,26 @@ struct ScreensaverPlayerTests {
         await settle(player) { player.nextGame.hasFirstBoard }
         #expect(player.nextGame == (true, true), "nothing plays yet, so the first board is drawn at once")
         player.tick()
-        #expect(player.currentGame == nil, "the random delay hasn't passed")
+        #expect(player.currentGame == nil, "the start delay hasn't passed")
 
-        clock.now += Look.screensaverMaximumStartDelay
+        clock.now += Look.screensaverStartDelay
         player.tick()
+        let start = clock.now
         let first = try #require(player.currentGame)
         #expect(first.moveCount == 30)
+        let timeline = try #require(player.currentTimeline)
+        #expect(timeline.opening == .start, "the first game comes in quickly")
+        #expect(timeline.extraHold > 0 && timeline.extraHold <= Look.screensaverMaximumStagger)
         await settle(player) { player.nextGame.isReady }
         #expect(player.nextGame == (true, false), "the next game's board waits for the last move")
 
-        // Through the game, half a second at a time: the moves come in order, and the screen
-        // never holds more than two boards.
+        // Through the game, a quarter of a second at a time: the moves come in order, and the
+        // screen never holds more than two boards.
         var seen: [Int] = []
         while player.currentGame?.identity == first.identity {
-            clock.now += 0.5
+            clock.now += 0.25
             player.tick()
-            let wanted = SaverTimeline(moveCount: 30).state(at: clock.now - 1003).movesShown
+            let wanted = timeline.state(at: clock.now - start).movesShown
             await settle(player) { player.shownMoves == wanted || player.currentGame?.identity != first.identity }
             if player.currentGame?.identity == first.identity {
                 #expect(player.shownMoves == wanted)
@@ -74,11 +78,12 @@ struct ScreensaverPlayerTests {
                     #expect(player.nextGame.hasFirstBoard)
                 }
             }
-            #expect(clock.now < 1003 + 41, "the game ends after 30 + 10 seconds")
+            #expect(clock.now < start + timeline.duration + 0.5, "the game ends on time")
         }
         #expect(seen == Array(0 ... 30))
         let second = try #require(player.currentGame)
         #expect(second.identity != first.identity)
+        #expect(player.currentTimeline == SaverTimeline(moveCount: second.moveCount), "the next game comes in as usual")
         #expect(log.messages(.play, level: .notice).count { $0.contains("played a game from the playlist, 19x19, 30 moves") } == 1)
 
         player.stop()
@@ -91,14 +96,29 @@ struct ScreensaverPlayerTests {
         let two = player(screen: 2, size: CGSize(width: 1080, height: 1920))
         let preview = player(screen: 3, size: CGSize(width: 300, height: 190))
         for player in [one, two, preview] { player.start() }
-        clock.now += Look.screensaverMaximumStartDelay
+        clock.now += Look.screensaverStartDelay
         for player in [one, two, preview] {
             await settle(player) { player.currentGame != nil }
         }
         let games = [one, two, preview].compactMap(\.currentGame?.identity)
         #expect(Set(games).count == 3)
+        let holds = [one, two, preview].compactMap(\.currentTimeline?.extraHold)
+        #expect(Set(holds).count == 3, "the screens start together, and fade out apart")
         for player in [one, two, preview] { player.stop() }
         #expect([1, 2, 3].allSatisfy { library.games(on: $0).isEmpty })
+    }
+
+    @Test func everyStartBeginsWithAQuickGame() async throws {
+        let player = player()
+        for _ in 0 ..< 2 {
+            player.start()
+            clock.now += Look.screensaverStartDelay
+            await settle(player) { player.currentGame != nil }
+            let timeline = try #require(player.currentTimeline)
+            #expect(timeline.opening == .start)
+            #expect(timeline.gameOpacity(at: Look.screensaverStartFadeIn) == 1, "the board is in after a second")
+            player.stop()
+        }
     }
 
     @Test func stoppingDropsWorkUnderWay() async throws {

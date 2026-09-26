@@ -20,7 +20,8 @@ protocol SaverInstance: AnyObject {
 /// is ending, though it's sometimes missed. So a view plays only while:
 /// - `startAnimation` has been called and `stopAnimation` hasn't since, or it has been in a
 ///   window for 5 seconds without `startAnimation` ever being called, so that a host that never
-///   calls it doesn't leave the screen black
+///   calls it doesn't leave the screen black. The preview waits half a second: the host doesn't
+///   call it there.
 /// - it has a window and a size that isn't empty
 /// - no `willstop` has arrived since it last started, or since `didstart`. A `willstop` less
 ///   than 2 seconds after a view's `startAnimation` doesn't stop that view: the notifications
@@ -55,7 +56,8 @@ final class InstanceRegistry {
         var startedAt: Double?
         /// When the view got its window, by the registry's clock, or `nil` if it has none.
         var windowSince: Double?
-        /// The view has been in a window for 5 seconds without `startAnimation`.
+        /// The view has been in a window long enough without `startAnimation` (see
+        /// ``InstanceRegistry/startFallbackDelay(for:)``).
         var startedByFallback = false
         var hasSize = false
         var key: Key?
@@ -73,8 +75,21 @@ final class InstanceRegistry {
         var isEligible: Bool { (started || startedByFallback) && !stoppedByWillStop && hasWindow && hasSize }
     }
 
-    /// How long a view waits in a window for `startAnimation` before playing anyway, in seconds.
+    /// How long a view on a display waits in a window for `startAnimation` before playing anyway,
+    /// in seconds. The host calls it there about half a second after the screensaver starts, and
+    /// the wait lets its call come first, so that a `willstop` left from the session before
+    /// finds the view started by the host (see ``willStopGrace``).
     static let startFallbackDelay: Double = 5
+
+    /// How long the preview waits, in seconds: the host doesn't call `startAnimation` for it (John's
+    /// test, 2026-09-26), so it plays almost at once.
+    static let previewStartFallbackDelay: Double = 0.5
+
+    /// How long a view waits in a window for `startAnimation` before playing anyway, by its key.
+    /// A view with no key yet waits as long as one on a display.
+    static func startFallbackDelay(for key: Key?) -> Double {
+        key == .preview ? previewStartFallbackDelay : startFallbackDelay
+    }
 
     /// How soon after a view's `startAnimation` a `willstop` is taken for the previous
     /// session's, and doesn't stop the view, in seconds.
@@ -151,13 +166,16 @@ final class InstanceRegistry {
         }
     }
 
-    /// Plays a view that has been in a window for ``startFallbackDelay`` seconds without
-    /// `startAnimation` ever being called. Views call this that long after they get a window.
+    /// Plays a view that has been in a window for its key's ``startFallbackDelay(for:)`` without
+    /// `startAnimation` ever being called. Views call this after each key's delay, from when they
+    /// get a window.
     func checkStartFallback(_ serial: Int) {
         guard let facts = entries[serial]?.facts, facts.startedAt == nil, !facts.startedByFallback,
-              let since = facts.windowSince, clock() - since >= Self.startFallbackDelay - 0.01
+              let since = facts.windowSince
         else { return }
-        log.notice(.lifecycle, "View \(serial): \(Int(Self.startFallbackDelay)) s in a window without startAnimation; playing anyway")
+        let delay = Self.startFallbackDelay(for: facts.key)
+        guard clock() - since >= delay - 0.01 else { return }
+        log.notice(.lifecycle, "View \(serial): \(String(format: "%g", delay)) s in a window without startAnimation; playing anyway")
         update(serial) { $0.startedByFallback = true }
     }
 
