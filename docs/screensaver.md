@@ -440,10 +440,11 @@ the view, so the view's Objective-C class exists only in the bundle. It already 
   loads it because it has `disable-library-validation`. arm64 only, macOS 26, from the project's
   settings.
 - A copy downloaded from GitHub would be quarantined and need notarization (reported, forum
-  thread 117136); a local build isn't.
-- The saver makes the version 2.1.0 (8), and the README gets a "Screensaver" section
-  (installing it, what it shows, the playlist, and the log command) before the push.
-  `plan.md`'s open question points here.
+  thread 117136); a local build isn't. The release isn't notarized, so the README has the
+  quarantine cleared with `xattr -dr com.apple.quarantine` before the saver is installed.
+- The saver makes the version 2.1.0 (8) (released as 2.0.7; section 15), and the README gets a
+  "Screensaver" section (installing it, what it shows, the playlist, and the log command) before
+  the push. `plan.md`'s open question points here.
 
 **Files:**
 
@@ -747,7 +748,7 @@ pass.
 
 ## 11. John's manual test
 
-1. **The app.** Build and install SGF Tools as usual (README, "Trying it out"), and check its
+1. **The app.** Build and install SGF Tools as usual (README, "Building from source"), and check its
    entitlements with `codesign -d --entitlements - "/Applications/SGF Tools.app"`. Open it and
    click **Update Screensaver Games**; allow each permission request (Documents, the external
    volume). The window should say how many games it chose. Because the app is signed ad hoc,
@@ -935,6 +936,12 @@ the terminal's access; the real host, System Settings, and the app itself, which
 4. **Two moves a second**, not one, and the last position held for 10 s, not 5, John's choice
    after watching it: a 50-move game takes about 40 s, not a minute (section 4). The playlist
    still holds 50 moves a game.
+
+John tested 2.1.1 (9) by hand and approved it: both permission requests came up, 10,000 games of
+about 64,000 were chosen, and the saver played on both displays, started quickly, and kept the
+new pace. **It was released as 2.0.7 (10)**, the first public release, numbered so that it reads
+as 2.0; the code is 2.1.1's. The release's disk image holds the app and the saver, signed ad hoc
+and not notarized (section 2).
 
 ## Appendix: what was checked
 

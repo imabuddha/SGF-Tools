@@ -4,17 +4,12 @@ Tools for SGF (Smart Game Format) Go game files on the Mac: board thumbnails and
 Finder and Quick Look, Spotlight search on players, events, dates, and results, and a screensaver
 that replays games.
 
-## Status
+## What it does
 
-**Version 2.0 is being written from scratch** for Apple Silicon Macs running macOS 26 or later.
-There is no release yet, but it can be built and tried. So far:
+**SGF Tools 2.0** is a rewrite from scratch for Macs with Apple silicon running macOS 26 or
+later. Its first release is 2.0.7, on the [Releases](https://github.com/imabuddha/SGF-Tools/releases)
+page. It has:
 
-- **SGFKit**, a Swift package with no dependencies:
-  - a tolerant SGF parser: every SGF version, collections, any charset (with detection for
-    files that claim UTF-8 but aren't), and damaged or mislabeled files
-  - the game model, with captures
-  - the game information that Spotlight indexes.
-- **SGFRendering**, the board drawing that the thumbnails, the previews, and the screensaver share.
 - **SGF Tools.app**, a small app that holds two Quick Look extensions and a Spotlight importer,
   and chooses the screensaver's games:
   - **thumbnails**: Finder shows the first game's board after the opening moves (50 moves on
@@ -26,96 +21,50 @@ There is no release yet, but it can be built and tried. So far:
     several games rather than how many
   - **search**: Spotlight indexes the players, event, date, result, comments, and more of each
     game, so Finder, Spotlight, and `mdfind` find games (see [Searching](#searching)).
-- **SGF Tools.saver**, new in 2.1, a screensaver that plays the first 50 moves of random games
-  from your collection, a different game on each display (see [Screensaver](#screensaver)). It
-  is a first draft, tried once in macOS's screensaver host so far.
+- **SGF Tools.saver**, a screensaver that plays the first 50 moves of random games from your
+  collection, a different game on each display (see [Screensaver](#screensaver)).
+
+Underneath are two Swift packages, in `SGFKit/`:
+
+- **SGFKit**, with no dependencies:
+  - a tolerant SGF parser: every SGF version, collections, any charset (with detection for
+    files that claim UTF-8 but aren't), and damaged or mislabeled files
+  - the game model, with captures
+  - the game information that Spotlight indexes.
+- **SGFRendering**, the board drawing that the thumbnails, the previews, and the screensaver share.
 
 The plan is in [docs/plan.md](docs/plan.md), and the screensaver's design in
 [docs/screensaver.md](docs/screensaver.md).
 
-## Building
+## Installing
 
-You need Xcode 27 and [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
-The Xcode project is generated from `project.yml` and isn't in the repository:
+You need a Mac with Apple silicon and macOS 26 or later.
 
-```bash
-xcodegen generate
-open SGFTools.xcodeproj
-```
+1. Download the disk image, such as `SGF-Tools-2.0.7.dmg`, from
+   [Releases](https://github.com/imabuddha/SGF-Tools/releases), and open it.
+2. Drag **SGF Tools** to the Applications folder beside it.
+3. **Let macOS open it.** SGF Tools is signed to run on your Mac (ad hoc), but it isn't
+   notarized by Apple, so macOS won't open a downloaded copy until you allow it. Either way works:
+   - **In Terminal**, the surest way, since it also clears the Quick Look and Spotlight
+     extensions inside the app:
 
-Or from the command line:
+     ```bash
+     xattr -dr com.apple.quarantine "/Applications/SGF Tools.app"
+     ```
 
-```bash
-xcodebuild -project SGFTools.xcodeproj -scheme "SGF Tools" -configuration Release build
-xcodebuild -project SGFTools.xcodeproj -scheme "SGF Tools Screensaver" -configuration Release build
-xcodebuild -project SGFTools.xcodeproj -scheme "SGF Tools" test   # the app's tests
-cd SGFKit && swift test                                            # the package's tests
-```
-
-The screensaver is a scheme of its own and isn't embedded in the app, so building it doesn't
-build the app.
-
-The app's tests are logic tests with no host app, so running them never opens SGF Tools, and
-they don't build the app. They include the screensaver's code, apart from its view. Environment
-variables, set when running `xcodebuild test`, save what they draw or check more:
-
-- `TEST_RUNNER_SGF_PREVIEW_SAMPLES`: a folder for PNGs of the preview in light and dark mode
-- `TEST_RUNNER_SGF_SCREENSAVER_SAMPLES`: a folder for PNGs of the screensaver at chosen moments
-  of a game, on a few screens and in the preview
-- `TEST_RUNNER_SGF_SCREENSAVER_THUMBNAIL="$PWD/Screensaver"`: draws the screensaver's thumbnails
-  again
-- `TEST_RUNNER_SGF_SCREENSAVER_BUNDLE`: the path of a built `SGF Tools.saver`, which a test then
-  loads to make its view as macOS would, without a window.
-
-`Tests/SandboxCheck/check.sh`, run by hand after each macOS update, checks that the screensaver's
-host can still read the playlist the app writes (see [Screensaver](#screensaver)).
-
-Every build of the app registers it with macOS, and Spotlight then uses the build's importer as
-well as, or instead of, the copy in Applications. Before deleting a build (or Xcode's
-DerivedData), unregister it and wait until Spotlight has dropped it. If the build is deleted
-first, Spotlight keeps trying to load the missing importer and stops indexing SGF files:
-
-```bash
-/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
-    -u "path/to/Build/Products/Release/SGF Tools.app"
-mdimport -L 2>&1 | grep SGFToolsSpotlight   # repeat until the build's path is gone
-```
-
-Spotlight looks for new and removed importers a minute or so after an app is registered or
-unregistered, but when that happens often it waits longer each time, up to a quarter of an hour
-or more. Registering the same build again and then unregistering it removes an entry left behind.
-
-The app icon, `App/AppIcon.icon`, is an Icon Composer document, so macOS lights it and shows it
-in the dark, tinted, and clear icon styles. Its two layers, the board and the stones, are drawn by
-SGFRendering: a corner of the position that the thumbnail of John Mifsud's 2009 game against
-GNU Go shows. After a change to the renderer, draw them again with
-`TEST_RUNNER_SGF_APP_ICON_ASSETS="$PWD/App/AppIcon.icon/Assets"` set when running
-`xcodebuild test` (see `Tests/AppIconArtwork.swift`).
-
-The app is signed to run locally (ad hoc), which needs no Apple account, and macOS loads its
-Quick Look extensions that way. To sign with your own team instead, see
-`Config/Signing.xcconfig`.
-
-## Trying it out
-
-1. Build the Release configuration, as above.
-2. Copy `SGF Tools.app` from the build products into `/Applications` (in Xcode: Product > Show
-   Build Folder in Finder, then `Products/Release`). The extensions work only while macOS knows
-   where the app is; opening it once, or copying it into Applications, registers it.
-3. In Finder, SGF files get board thumbnails. Select one and press the Space bar for the preview.
-4. If nothing changes, check that SGF Tools is on in System Settings > General > Login Items &
-   Extensions, under Quick Look, and run `qlmanage -r` and `qlmanage -r cache` in Terminal to
+   - **In System Settings:** open SGF Tools, and when macOS says it can't verify it, click Done.
+     Then in System Settings > Privacy & Security, scroll down to Security, click **Open
+     Anyway** beside the message about SGF Tools, and confirm.
+4. Open SGF Tools once, so that macOS finds its extensions, and run `qlmanage -r` in Terminal to
    reset Quick Look.
-5. Spotlight indexes new and changed SGF files with the importer once it has found it, usually a
-   minute or so after the app is registered (see above). `mdimport -L 2>&1 | grep SGFTools`
-   shows whether it has. To index the games you already have, see
-   [Indexing the games you have](#indexing-the-games-you-have).
+5. In Finder, SGF files get board thumbnails. Select one and press the Space bar for the preview.
+   If nothing changes, check that SGF Tools is on in System Settings > General > Login Items &
+   Extensions, under Quick Look, and run `qlmanage -r` and `qlmanage -r cache` again.
+6. Spotlight indexes new and changed SGF files with SGF Tools' importer a minute or so later.
+   `mdimport -L 2>&1 | grep SGFTools` shows whether it has found it. To index the games you
+   already have, see [Indexing the games you have](#indexing-the-games-you-have).
 
-`qlmanage -t -x -s 512 -o <folder> <file.sgf>` makes a thumbnail PNG without opening a window.
-(Without `-x`, `qlmanage -t` on macOS 27 doesn't use app extensions at all and waits forever.)
-
-`mdimport -t -d2 <file.sgf>` shows what the importer finds in a file without indexing it, and
-`mdls <file.sgf>` shows what Spotlight has stored for it.
+To update, quit SGF Tools, replace it in Applications, and repeat steps 3 and 4.
 
 ## Screensaver
 
@@ -125,21 +74,29 @@ fades out after the last position has held for 10 seconds. Then another game com
 seconds a game. The first game after the screensaver starts comes in within a second or two. The
 board and the details move from game to game. It has no options yet, and no sound.
 
-To try it:
+To set it up:
 
-1. Build and install SGF Tools (see [Trying it out](#trying-it-out)), open it, and click
-   **Update Screensaver Games**. SGF Tools first asks macOS for access to your Documents folder
-   and your other disks, and macOS asks you once for each; allow them. The window then says how
-   many games SGF Tools chose. If you didn't allow a place, the window says which, and **Open
-   System Settings** takes you to Privacy & Security > Files & Folders, where you can turn it on.
-2. Build the "SGF Tools Screensaver" scheme and copy `SGF Tools.saver` from the build products
-   into `~/Library/Screen Savers`.
-3. In System Settings > Wallpaper, choose Screen Saver, and pick SGF Tools (third-party
-   screensavers are under Other). With more than one display, select each display in Wallpaper
-   settings and choose SGF Tools for each.
+1. **Choose its games.** Open SGF Tools and click **Update Screensaver Games**. SGF Tools first
+   asks macOS for access to your Documents folder and your other disks, and macOS asks you once
+   for each; allow them. The window then says how many games SGF Tools chose. If you didn't
+   allow a place, the window says which, and **Open System Settings** takes you to Privacy &
+   Security > Files & Folders, where you can turn it on.
+2. **Install it.** Drag `SGF Tools.saver` from the disk image to your Desktop, and let macOS
+   open it, as for the app:
 
-macOS keeps a screensaver's code loaded until its host exits, so after installing a new build,
-run `killall legacyScreenSaver` first.
+   ```bash
+   xattr -dr com.apple.quarantine ~/Desktop/SGF\ Tools.saver
+   ```
+
+   Then double-click it. System Settings asks whether to install it for you only or for all
+   users; choose this user only. It's copied to `~/Library/Screen Savers`, and you can delete the
+   copy on the Desktop.
+3. **Choose it.** In System Settings > Wallpaper, choose Screen Saver, and pick SGF Tools
+   (third-party screensavers are under Other). With more than one display, select each display
+   in Wallpaper settings and choose SGF Tools for each.
+
+To update it, run `killall legacyScreenSaver` first: macOS keeps a screensaver's code loaded
+until its host exits. Then install the new copy as in step 2.
 
 **Where the games come from.** macOS runs third-party screensavers in a sandboxed host that
 can't ask for access to Documents or other disks, where SGF files usually are. So SGF Tools.app
@@ -153,9 +110,9 @@ makes macOS ask you, so the button first reads the top level of Documents and of
 the Mac, which does; when SGF Tools chooses by itself on opening, it never asks. Games on the
 Desktop or in Downloads are chosen only if SGF Tools has Full Disk Access. If it could read fewer
 games than the list already holds because macOS refused or hid some files, or a disk isn't
-connected, it keeps the games it chose before. Without that file, the
-screensaver asks Spotlight and reads the files itself, which macOS may refuse, and failing that
-plays John Mifsud's 2009 game against GNU Go, with a line saying to open SGF Tools.
+connected, it keeps the games it chose before. Without that file, the screensaver asks Spotlight
+and reads the files itself, which macOS may refuse, and failing that plays John Mifsud's 2009
+game against GNU Go, with a line saying to open SGF Tools.
 
 **The log.** The screensaver logs what it does, and why a screen stays black, under
 `com.pragmaphilia.SGFTools.Screensaver`, and the app logs its choice of games under
@@ -260,6 +217,93 @@ a file has the fields yet.
 Import folders rather than single files: on an external disk, `mdimport` given a single file
 returns without storing anything, so feeding it the SGF files that `mdfind` lists, one by one,
 leaves the games on such a disk unindexed.
+
+## Building from source
+
+You need Xcode 27 and [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
+The Xcode project is generated from `project.yml` and isn't in the repository:
+
+```bash
+xcodegen generate
+open SGFTools.xcodeproj
+```
+
+Or from the command line:
+
+```bash
+xcodebuild -project SGFTools.xcodeproj -scheme "SGF Tools" -configuration Release build
+xcodebuild -project SGFTools.xcodeproj -scheme "SGF Tools Screensaver" -configuration Release build
+xcodebuild -project SGFTools.xcodeproj -scheme "SGF Tools" test   # the app's tests
+cd SGFKit && swift test                                            # the package's tests
+```
+
+The screensaver is a scheme of its own and isn't embedded in the app, so building it doesn't
+build the app.
+
+To try a build, copy `SGF Tools.app` from the build products into `/Applications` (in Xcode:
+Product > Show Build Folder in Finder, then `Products/Release`), and `SGF Tools.saver` into
+`~/Library/Screen Savers`, then go on from step 4 of [Installing](#installing). A local build
+isn't quarantined, so macOS opens it without asking. The extensions work only while macOS knows
+where the app is; opening it once, or copying it into Applications, registers it.
+
+The app is signed to run locally (ad hoc), which needs no Apple account, and macOS loads its
+Quick Look extensions that way. To sign with your own team instead, see
+`Config/Signing.xcconfig`.
+
+A release is built as an archive would be, so that it carries neither the build's paths nor the
+debugging entitlement, and packed in a disk image with the screensaver, an Applications link,
+and `Distribution/Read Me.txt`:
+
+```bash
+xcodebuild -project SGFTools.xcodeproj -scheme "SGF Tools" -configuration Release \
+    DEPLOYMENT_POSTPROCESSING=YES STRIP_STYLE=debugging build
+xcodebuild -project SGFTools.xcodeproj -scheme "SGF Tools Screensaver" -configuration Release \
+    DEPLOYMENT_POSTPROCESSING=YES STRIP_STYLE=debugging build
+hdiutil create -volname "SGF Tools 2.0.7" -srcfolder <folder> -fs HFS+ -format UDZO SGF-Tools-2.0.7.dmg
+```
+
+Every build of the app registers it with macOS, and Spotlight then uses the build's importer as
+well as, or instead of, the copy in Applications. Before deleting a build (or Xcode's
+DerivedData), unregister it and wait until Spotlight has dropped it. If the build is deleted
+first, Spotlight keeps trying to load the missing importer and stops indexing SGF files:
+
+```bash
+/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
+    -u "path/to/Build/Products/Release/SGF Tools.app"
+mdimport -L 2>&1 | grep SGFToolsSpotlight   # repeat until the build's path is gone
+```
+
+Spotlight looks for new and removed importers a minute or so after an app is registered or
+unregistered, but when that happens often it waits longer each time, up to a quarter of an hour
+or more. Registering the same build again and then unregistering it removes an entry left behind.
+
+The app's tests are logic tests with no host app, so running them never opens SGF Tools, and
+they don't build the app. They include the screensaver's code, apart from its view. Environment
+variables, set when running `xcodebuild test`, save what they draw or check more:
+
+- `TEST_RUNNER_SGF_PREVIEW_SAMPLES`: a folder for PNGs of the preview in light and dark mode
+- `TEST_RUNNER_SGF_SCREENSAVER_SAMPLES`: a folder for PNGs of the screensaver at chosen moments
+  of a game, on a few screens and in the preview
+- `TEST_RUNNER_SGF_SCREENSAVER_THUMBNAIL="$PWD/Screensaver"`: draws the screensaver's thumbnails
+  again
+- `TEST_RUNNER_SGF_SCREENSAVER_BUNDLE`: the path of a built `SGF Tools.saver`, which a test then
+  loads to make its view as macOS would, without a window.
+
+`Tests/SandboxCheck/check.sh`, run by hand after each macOS update, checks that the screensaver's
+host can still read the playlist the app writes (see [Screensaver](#screensaver)).
+
+The app icon, `App/AppIcon.icon`, is an Icon Composer document, so macOS lights it and shows it
+in the dark, tinted, and clear icon styles. Its two layers, the board and the stones, are drawn by
+SGFRendering: a corner of the position that the thumbnail of John Mifsud's 2009 game against
+GNU Go shows. After a change to the renderer, draw them again with
+`TEST_RUNNER_SGF_APP_ICON_ASSETS="$PWD/App/AppIcon.icon/Assets"` set when running
+`xcodebuild test` (see `Tests/AppIconArtwork.swift`).
+
+`qlmanage -t -x -s 512 -o <folder> <file.sgf>` makes a thumbnail PNG without opening a window.
+(Without `-x`, `qlmanage -t` on macOS 27 doesn't use app extensions at all and waits forever.)
+
+`mdimport -t -d2 <file.sgf>` shows what the importer finds in a file without indexing it, and
+`mdls <file.sgf>` shows what Spotlight has stored for it.
 
 ## History
 

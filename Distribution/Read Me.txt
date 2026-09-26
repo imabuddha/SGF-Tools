@@ -1,0 +1,65 @@
+SGF Tools 2.0.7
+
+Board thumbnails and previews of SGF (Go game) files in Finder and Quick Look, Spotlight
+search on players, events, dates, and results, and a screensaver that replays games.
+
+Requires a Mac with Apple silicon and macOS 26 or later.
+
+
+INSTALLING THE APP
+
+1. Drag SGF Tools to the Applications folder.
+
+2. Let macOS open it. SGF Tools is signed to run on your Mac, but it isn't notarized by
+   Apple, so macOS won't open it until you allow it. Either:
+
+   - In Terminal (the surest way, since it also clears the Quick Look and Spotlight
+     extensions inside the app):
+
+       xattr -dr com.apple.quarantine "/Applications/SGF Tools.app"
+
+   - Or open SGF Tools, and when macOS says it can't verify it, click Done. Then in
+     System Settings > Privacy & Security, scroll down to Security, click Open Anyway
+     beside the message about SGF Tools, and confirm.
+
+3. Open SGF Tools once, then run this in Terminal to reset Quick Look:
+
+       qlmanage -r
+
+4. In Finder, SGF files now show board thumbnails; select one and press the Space bar
+   for the preview. If they don't, check that SGF Tools is on in System Settings >
+   General > Login Items & Extensions, under Quick Look.
+
+5. Spotlight indexes new and changed SGF files a minute or so later. To index the games
+   you already have, run "mdimport -i" on each folder that holds them, for example:
+
+       mdimport -i ~/Documents/Go
+
+
+INSTALLING THE SCREENSAVER
+
+1. Open SGF Tools and click Update Screensaver Games. macOS asks whether SGF Tools may
+   read your Documents folder and your other disks; allow each. The window then says
+   how many games it chose.
+
+2. Drag SGF Tools.saver to your Desktop, and let macOS open it:
+
+       xattr -dr com.apple.quarantine ~/Desktop/SGF\ Tools.saver
+
+   Then double-click it, and choose to install it for this user only. You can then
+   delete the copy on the Desktop.
+
+3. In System Settings > Wallpaper, choose Screen Saver, and pick SGF Tools (under
+   Other). With more than one display, select each display and choose SGF Tools for
+   each.
+
+To update the screensaver later, first run "killall legacyScreenSaver" in Terminal, then
+install the new copy as in step 2.
+
+
+MORE
+
+The README, the source code, and help: https://github.com/imabuddha/SGF-Tools
+
+SGF Tools 2.0 is by John Mifsud (Pragmaphilia Labs). It's a rewrite of SGF Tools 1.x,
+started in 2009 by Jason Foreman. MIT License.

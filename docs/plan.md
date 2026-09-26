@@ -30,7 +30,12 @@ Decisions as of 2026-09-25. The background is in `old-version-analysis.md`.
    attributes of 1.x under their 1.x names, so old saved searches work, with values from
    SGFKit's game information, and names them in the 10 languages of 1.x (from the
    `legacy-1.x` branch's `SpotlightImporter/*.lproj/schema.strings`).
-5. **The screensaver**: a first draft in 2.1.0 (8), designed in `screensaver.md`.
+5. **The screensaver** (done): designed in `screensaver.md`, first drafted as 2.1.0 (8), and
+   approved by John as 2.1.1 (9) after his hands-on test.
+6. **The first public release**: 2.0.7 (10), so that it reads as 2.0, with the build number still
+   rising. A disk image on GitHub holds the app and the screensaver, signed ad hoc as before, and
+   not notarized; the README says how to let macOS open them. Notarization waits for a Developer
+   ID.
 
 ## Look
 
@@ -72,7 +77,8 @@ Decided by John on 2026-09-24:
 - It picks a random game from the SGF files Spotlight has indexed, reads the actual file, and plays
   out the first 50 moves:
   - the board fades in
-  - it plays about one move per second, with no sound
+  - it plays two moves a second, with no sound (the plan said about one; John chose two after
+    trying it, on 2026-09-26)
   - it fades out and picks another random game.
 - As each game fades in, its details appear at a random place on the screen: the players and their
   ranks, the result (who won), the event, and the date.
