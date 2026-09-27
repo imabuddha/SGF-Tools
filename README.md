@@ -7,7 +7,7 @@ that replays games.
 ## What it does
 
 **SGF Tools 2.0** is a rewrite from scratch for Macs with Apple silicon running macOS 26 or
-later. Its first release is 2.0.7, on the [Releases](https://github.com/imabuddha/SGF-Tools/releases)
+later. The latest release is on the [Releases](https://github.com/imabuddha/SGF-Tools/releases)
 page. It has:
 
 - **SGF Tools.app**, a small app that holds two Quick Look extensions and a Spotlight importer,
