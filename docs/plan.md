@@ -36,6 +36,10 @@ Decisions as of 2026-09-25. The background is in `old-version-analysis.md`.
    rising. A disk image on GitHub holds the app and the screensaver, signed ad hoc as before, and
    not notarized; the README says how to let macOS open them. Notarization waits for a Developer
    ID.
+7. **Signed and notarized**: 2.0.8 (11), the same code as 2.0.7. The app, the screensaver, and
+   the disk image are signed with a Developer ID, with the hardened runtime, and notarized and
+   stapled (`scripts/build-release.sh`), so macOS opens them without the quarantine steps, which
+   the README no longer has.
 
 ## Look
 

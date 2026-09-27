@@ -40,31 +40,23 @@ The plan is in [docs/plan.md](docs/plan.md), and the screensaver's design in
 
 You need a Mac with Apple silicon and macOS 26 or later.
 
-1. Download the disk image, such as `SGF-Tools-2.0.7.dmg`, from
+1. Download the disk image, such as `SGF-Tools-2.0.8.dmg`, from
    [Releases](https://github.com/imabuddha/SGF-Tools/releases), and open it.
 2. Drag **SGF Tools** to the Applications folder beside it.
-3. **Let macOS open it.** SGF Tools is signed to run on your Mac (ad hoc), but it isn't
-   notarized by Apple, so macOS won't open a downloaded copy until you allow it. Either way works:
-   - **In Terminal**, the surest way, since it also clears the Quick Look and Spotlight
-     extensions inside the app:
-
-     ```bash
-     xattr -dr com.apple.quarantine "/Applications/SGF Tools.app"
-     ```
-
-   - **In System Settings:** open SGF Tools, and when macOS says it can't verify it, click Done.
-     Then in System Settings > Privacy & Security, scroll down to Security, click **Open
-     Anyway** beside the message about SGF Tools, and confirm.
-4. Open SGF Tools once, so that macOS finds its extensions, and run `qlmanage -r` in Terminal to
-   reset Quick Look.
-5. In Finder, SGF files get board thumbnails. Select one and press the Space bar for the preview.
+3. Open SGF Tools once, so that macOS finds its extensions. SGF Tools and its screensaver are
+   signed with a Developer ID and notarized by Apple, so macOS opens them without a warning; the
+   first time, it asks whether you want to open an app downloaded from the internet: click
+   **Open**. If macOS still won't open it, go to System Settings > Privacy & Security, scroll
+   down to Security, and click **Open Anyway** beside the message about SGF Tools. Then run
+   `qlmanage -r` in Terminal to reset Quick Look.
+4. In Finder, SGF files get board thumbnails. Select one and press the Space bar for the preview.
    If nothing changes, check that SGF Tools is on in System Settings > General > Login Items &
    Extensions, under Quick Look, and run `qlmanage -r` and `qlmanage -r cache` again.
-6. Spotlight indexes new and changed SGF files with SGF Tools' importer a minute or so later.
+5. Spotlight indexes new and changed SGF files with SGF Tools' importer a minute or so later.
    `mdimport -L 2>&1 | grep SGFTools` shows whether it has found it. To index the games you
    already have, see [Indexing the games you have](#indexing-the-games-you-have).
 
-To update, quit SGF Tools, replace it in Applications, and repeat steps 3 and 4.
+To update, quit SGF Tools, replace it in Applications, and repeat step 3.
 
 ## Screensaver
 
@@ -81,16 +73,10 @@ To set it up:
    for each; allow them. The window then says how many games SGF Tools chose. If you didn't
    allow a place, the window says which, and **Open System Settings** takes you to Privacy &
    Security > Files & Folders, where you can turn it on.
-2. **Install it.** Drag `SGF Tools.saver` from the disk image to your Desktop, and let macOS
-   open it, as for the app:
-
-   ```bash
-   xattr -dr com.apple.quarantine ~/Desktop/SGF\ Tools.saver
-   ```
-
-   Then double-click it. System Settings asks whether to install it for you only or for all
-   users; choose this user only. It's copied to `~/Library/Screen Savers`, and you can delete the
-   copy on the Desktop.
+2. **Install it.** Drag `SGF Tools.saver` from the disk image to your Desktop, and double-click
+   it (if macOS asks whether to open it, confirm). System Settings asks whether to install it for
+   you only or for all users; choose this user only. It's copied to `~/Library/Screen Savers`, and
+   you can delete the copy on the Desktop.
 3. **Choose it.** In System Settings > Wallpaper, choose Screen Saver, and pick SGF Tools
    (third-party screensavers are under Other). With more than one display, select each display
    in Wallpaper settings and choose SGF Tools for each.
@@ -242,25 +228,28 @@ build the app.
 
 To try a build, copy `SGF Tools.app` from the build products into `/Applications` (in Xcode:
 Product > Show Build Folder in Finder, then `Products/Release`), and `SGF Tools.saver` into
-`~/Library/Screen Savers`, then go on from step 4 of [Installing](#installing). A local build
+`~/Library/Screen Savers`, then go on from step 3 of [Installing](#installing). A local build
 isn't quarantined, so macOS opens it without asking. The extensions work only while macOS knows
 where the app is; opening it once, or copying it into Applications, registers it.
 
-The app is signed to run locally (ad hoc), which needs no Apple account, and macOS loads its
-Quick Look extensions that way. To sign with your own team instead, see
-`Config/Signing.xcconfig`.
+A build from Xcode or `xcodebuild` is signed to run locally (ad hoc), which needs no Apple
+account, and macOS loads its Quick Look extensions that way. To sign with your own team instead,
+see `Config/Signing.xcconfig`.
 
-A release is built as an archive would be, so that it carries neither the build's paths nor the
-debugging entitlement, and packed in a disk image with the screensaver, an Applications link,
-and `Distribution/Read Me.txt`:
+A release is made by `scripts/build-release.sh`. It builds the app and the screensaver as an
+archive would, so that they carry neither the build's paths nor the debugging entitlement, signs
+every piece of code with a Developer ID, with the hardened runtime and a secure timestamp, has
+Apple notarize the app and the screensaver, and staples them. Then it packs both in a disk image
+with an Applications link and `Distribution/Read Me.txt`, and signs, notarizes, and staples the
+image too:
 
 ```bash
-xcodebuild -project SGFTools.xcodeproj -scheme "SGF Tools" -configuration Release \
-    DEPLOYMENT_POSTPROCESSING=YES STRIP_STYLE=debugging build
-xcodebuild -project SGFTools.xcodeproj -scheme "SGF Tools Screensaver" -configuration Release \
-    DEPLOYMENT_POSTPROCESSING=YES STRIP_STYLE=debugging build
-hdiutil create -volname "SGF Tools 2.0.7" -srcfolder <folder> -fs HFS+ -format UDZO SGF-Tools-2.0.7.dmg
+scripts/build-release.sh [output-folder]   # SGF Tools.app, SGF Tools.saver, SGF-Tools-<version>.dmg
 ```
+
+It needs a Developer ID Application identity in the keychain and notary credentials stored with
+`xcrun notarytool store-credentials`; the script's comments say how to name your own. Its build
+is in `build/release-derived`: unregister its app, as below, before deleting it.
 
 Every build of the app registers it with macOS, and Spotlight then uses the build's importer as
 well as, or instead of, the copy in Applications. Before deleting a build (or Xcode's

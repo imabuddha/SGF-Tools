@@ -441,7 +441,8 @@ the view, so the view's Objective-C class exists only in the bundle. It already 
   settings.
 - A copy downloaded from GitHub would be quarantined and need notarization (reported, forum
   thread 117136); a local build isn't. The release isn't notarized, so the README has the
-  quarantine cleared with `xattr -dr com.apple.quarantine` before the saver is installed.
+  quarantine cleared with `xattr -dr com.apple.quarantine` before the saver is installed. (Since
+  2.0.8 the release is signed with a Developer ID and notarized, and that step is gone.)
 - The saver makes the version 2.1.0 (8) (released as 2.0.7; section 15), and the README gets a
   "Screensaver" section (installing it, what it shows, the playlist, and the log command) before
   the push. `plan.md`'s open question points here.
@@ -942,6 +943,10 @@ about 64,000 were chosen, and the saver played on both displays, started quickly
 new pace. **It was released as 2.0.7 (10)**, the first public release, numbered so that it reads
 as 2.0; the code is 2.1.1's. The release's disk image holds the app and the saver, signed ad hoc
 and not notarized (section 2).
+
+2.0.8 (11) is the same code, signed with a Developer ID and the hardened runtime, and notarized
+and stapled: the saver on its own (sent to Apple as a zip, the ticket stapled to the bundle), the
+app, and the disk image (`scripts/build-release.sh`).
 
 ## Appendix: what was checked
 
