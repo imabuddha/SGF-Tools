@@ -48,6 +48,21 @@ final class SaverScene {
     private let detailsLayer = CALayer()
     private var applied: SaverTimeline.State?
 
+    /// What the scene has asked of Core Animation, for the tests that measure the load.
+    struct Stats: Sendable, Equatable {
+        /// The transactions committed.
+        var commits = 0
+        /// The pixels of the images set as layers' contents, each one uploaded to the GPU.
+        var uploadedPixels = 0
+        /// The fades of moves, and the pixels they animate, each for ``Look/screensaverMoveFade``.
+        var moveFades = 0
+        var moveFadePixels = 0
+        /// The fades of the game and details layers.
+        var gameFades = 0
+    }
+
+    private(set) var stats = Stats()
+
     /// The game shown, if any.
     private(set) var prepared: PreparedGame?
 
@@ -105,11 +120,12 @@ final class SaverScene {
         gameLayer.opacity = 0
         boardLayer.frame = prepared.layout.board
         boardLayer.contents = prepared.firstBoard
+        stats.uploadedPixels += Self.pixels(of: prepared.firstBoard) + Self.pixels(of: prepared.details)
         boardLayer.opacity = 1
         detailsLayer.frame = prepared.layout.details ?? .zero
         detailsLayer.contents = prepared.details
         detailsLayer.opacity = 0
-        CATransaction.commit()
+        commit()
     }
 
     /// Shows a moment of the game: the fades that start or end there. Animated, each fade runs
@@ -134,7 +150,7 @@ final class SaverScene {
             gameLayer.opacity = Float(timeline.gameOpacity(at: time))
             detailsLayer.opacity = Float(timeline.detailsOpacity(at: time))
         }
-        CATransaction.commit()
+        commit()
         applied = state
     }
 
@@ -147,9 +163,12 @@ final class SaverScene {
             transition.type = .fade
             transition.duration = Look.screensaverMoveFade
             boardLayer.add(transition, forKey: "move")
+            stats.moveFades += 1
+            stats.moveFadePixels += Self.pixels(of: image)
         }
         boardLayer.contents = image
-        CATransaction.commit()
+        stats.uploadedPixels += Self.pixels(of: image)
+        commit()
     }
 
     /// Lets go of the game and its images, leaving the screen black.
@@ -160,9 +179,18 @@ final class SaverScene {
         gameLayer.opacity = 0
         boardLayer.contents = nil
         detailsLayer.contents = nil
-        CATransaction.commit()
+        commit()
         prepared = nil
         applied = nil
+    }
+
+    private func commit() {
+        CATransaction.commit()
+        stats.commits += 1
+    }
+
+    private static func pixels(of image: CGImage?) -> Int {
+        image.map { $0.width * $0.height } ?? 0
     }
 
     /// Sets a layer's opacity, fading to it from `from` over `duration` seconds if that is more
@@ -176,5 +204,6 @@ final class SaverScene {
         animation.toValue = target
         animation.duration = duration
         layer.add(animation, forKey: "fade")
+        stats.gameFades += 1
     }
 }

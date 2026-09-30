@@ -282,3 +282,66 @@ func writePlaylist(_ count: Int, prefix: String = "game", to url: URL) throws {
 /// The screensaver's own game, from the test bundle, which carries johnVsGnu.sgf as the
 /// screensaver's does.
 let ownGame: @Sendable () -> SaverGame? = { SaverGame.own(in: Bundle(for: RecordingLog.self)) }
+
+/// A made-up game full of fights, as SGF text with both players named: each move takes a
+/// capture when there is one, half the time, and otherwise plays next to an opponent stone most
+/// of the time, so stones are captured all through it. The same seed gives the same game.
+func capturingGame(size: Int = 19, moves count: Int = 50, seed: UInt64) -> String {
+    let letters = Array("abcdefghijklmnopqrstuvwxyz")
+    var generator = SeededGenerator(seed: seed)
+    var board = Board(size: BoardSize(columns: size, rows: size)!)
+    var sgf = "(;GM[1]FF[4]SZ[\(size)]PB[Black Tester]BR[3d]PW[White Tester]WR[5d]RE[B+R]EV[Fixture Cup]DT[2009-05-01]"
+    let points = (1 ... size).flatMap { row in (1 ... size).map { SGFPoint(column: $0, row: row) } }
+    for number in 1 ... count {
+        let color: StoneColor = number % 2 == 1 ? .black : .white
+        let empty = points.filter { board[$0] == nil }
+        guard !empty.isEmpty else { break }
+        let captures = empty.filter { point in
+            var trial = board
+            return trial.play(color, at: point).contains { board[$0] != nil && board[$0] != color }
+        }
+        let touching = empty.filter { point in
+            [(0, 1), (0, -1), (1, 0), (-1, 0)].contains { dx, dy in
+                let neighbor = SGFPoint(column: point.column + dx, row: point.row + dy)
+                return board[neighbor] != nil && board[neighbor] != color
+            }
+        }
+        let point: SGFPoint = if !captures.isEmpty, Bool.random(using: &generator) {
+            captures.randomElement(using: &generator)!
+        } else if !touching.isEmpty, Int.random(in: 0 ..< 10, using: &generator) < 7 {
+            touching.randomElement(using: &generator)!
+        } else {
+            empty.randomElement(using: &generator)!
+        }
+        board.play(color, at: point)
+        sgf += ";\(color == .black ? "B" : "W")[\(letters[point.column - 1])\(letters[point.row - 1])]"
+    }
+    return sgf + ")"
+}
+
+/// A screensaver game source of games made in code, so that a test never reaches the real
+/// playlist, Spotlight, or the user's folders. Each request gets the next game in turn, under a
+/// new identity.
+final class SyntheticGames: SaverGameSource, @unchecked Sendable {
+    private let lock = NSLock()
+    private let games: [SGFGame]
+    private var requests = 0
+
+    init(_ sgf: [String]) throws {
+        games = try sgf.map { try game($0) }
+    }
+
+    func requestGame(for screen: Int, allowsDirect: Bool, completion: @escaping @Sendable (SaverGame?) -> Void) {
+        let number = lock.withLock {
+            requests += 1
+            return requests
+        }
+        let game = SaverGame(game: games[(number - 1) % games.count], source: .playlist,
+                             identity: "synthetic \(number)", locale: Locale(identifier: "en_US"))
+        DispatchQueue.global(qos: .utility).async { completion(game) }
+    }
+
+    func release(_ identity: String, from screen: Int) {}
+
+    func releaseAll(from screen: Int) {}
+}

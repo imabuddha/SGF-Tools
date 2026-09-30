@@ -149,6 +149,21 @@ final class GameLibrary: @unchecked Sendable {
     }
 }
 
+/// Where a screen's player gets its games: the process's ``GameLibrary``, or a test's own games,
+/// so that a test never reaches the real playlist or the user's folders.
+protocol SaverGameSource: AnyObject, Sendable {
+    /// Picks a game for a screen, off the main thread, and hands it to `completion` there.
+    func requestGame(for screen: Int, allowsDirect: Bool, completion: @escaping @Sendable (SaverGame?) -> Void)
+
+    /// A screen has finished with a game.
+    func release(_ identity: String, from screen: Int)
+
+    /// A screen has stopped: it holds no games.
+    func releaseAll(from screen: Int)
+}
+
+extension GameLibrary: SaverGameSource {}
+
 /// Any random number generator, as a concrete type that generic code can take `inout`.
 struct AnyGenerator: RandomNumberGenerator {
     var base: any RandomNumberGenerator

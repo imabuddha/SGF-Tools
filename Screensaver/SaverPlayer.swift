@@ -4,6 +4,7 @@ import QuartzCore
 
 /// Plays one screen's games, one after another, on its scene (see `docs/screensaver.md`,
 /// sections 3 and 4). The view starts and stops it, and calls ``tick()`` ten times a second.
+/// Its games come from a ``SaverGameSource``: the process's ``GameLibrary``.
 ///
 /// Each game comes from the ``GameLibrary`` and is prepared off the main thread while the one
 /// before it plays: its layout, its details, and, once the game before it has reached its last
@@ -17,7 +18,7 @@ final class SaverPlayer {
     let screen: Int
     let scene: SaverScene
 
-    private let library: GameLibrary
+    private let library: any SaverGameSource
     private let log: any SaverLogging
     private let clock: () -> Double
     private let screenSize: () -> CGSize
@@ -48,6 +49,16 @@ final class SaverPlayer {
     private var wantedMoves: Int?
     private var drawTimes: [Double] = []
 
+    /// What the player has drawn, for the tests that measure the load (see ``SaverScene/Stats``).
+    struct Stats: Sendable, Equatable {
+        /// The boards drawn, whole or in part.
+        var boardDraws = 0
+        /// The pixels those draws covered.
+        var drawnPixels = 0
+    }
+
+    private(set) var stats = Stats()
+
     /// - Parameters:
     ///   - screenSize: The screen's size in points, when a game is prepared.
     ///   - scale: The screen's backing scale, when a game is prepared.
@@ -56,7 +67,7 @@ final class SaverPlayer {
     ///   - generator: Chooses how much longer the first game holds its last position, and nothing
     ///     else: each game's layout is chosen on the drawing queue with the system's generator, so
     ///     a seed doesn't repeat the layouts.
-    init(scene: SaverScene, screen: Int, library: GameLibrary, log: any SaverLogging,
+    init(scene: SaverScene, screen: Int, library: any SaverGameSource, log: any SaverLogging,
          screenSize: @escaping () -> CGSize, scale: @escaping () -> CGFloat,
          describeScreen: @escaping () -> String = { "" }, clock: @escaping () -> Double = { CACurrentMediaTime() },
          generator: any RandomNumberGenerator = SystemRandomNumberGenerator()) {
@@ -81,6 +92,12 @@ final class SaverPlayer {
 
     /// The current game's timeline.
     var currentTimeline: SaverTimeline? { current?.timeline }
+
+    /// The current game's layout.
+    var currentLayout: SaverLayout? { current?.layout }
+
+    /// Whether drawing or picking is under way, which the tests wait for.
+    var hasWorkUnderWay: Bool { !boardsDrawing.isEmpty || isRequestingNext || isDrawingNextFirstBoard }
 
     /// The number of the current game's boards kept.
     var boardCount: Int { boards.count }
@@ -279,6 +296,8 @@ final class SaverPlayer {
         boardsDrawing.remove(moves)
         drawTimes.append(milliseconds)
         guard let image else { return }
+        stats.boardDraws += 1
+        stats.drawnPixels += image.width * image.height
         boards[moves] = image
         if wantedMoves == moves { show(moves: moves) }
     }
