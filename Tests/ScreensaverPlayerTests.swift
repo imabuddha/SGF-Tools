@@ -73,9 +73,14 @@ struct ScreensaverPlayerTests {
                 #expect(player.boardCount <= 2)
                 let bothBoards = player.boardCount + (player.nextGame.hasFirstBoard ? 1 : 0)
                 #expect(bothBoards <= 2, "at move \(player.shownMoves)")
-                if player.shownMoves == 30 {
+                if player.shownMoves == 30, !player.nextGame.hasFirstBoard {
+                    // Once the last move has faded in, the last position is whole in the board
+                    // layer, the canvas goes, and the next game's board is drawn.
+                    clock.now += Look.screensaverMoveFade + 0.2
                     await settle(player) { player.nextGame.hasFirstBoard }
                     #expect(player.nextGame.hasFirstBoard)
+                    #expect(player.isBoardWhole && player.boardCount == 1)
+                    #expect(player.scene.tileCount == 0)
                 }
             }
             #expect(clock.now < start + timeline.duration + 0.5, "the game ends on time")

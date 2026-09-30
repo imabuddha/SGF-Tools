@@ -40,6 +40,8 @@ Decisions as of 2026-09-25. The background is in `old-version-analysis.md`.
    the disk image are signed with a Developer ID, with the hardened runtime, and notarized and
    stapled (`scripts/build-release.sh`), so macOS opens them without the quarantine steps, which
    the README no longer has.
+8. **A lighter screensaver**: 2.0.9 (12). Each move draws and fades only the part of the board
+   it changes, with the same look, so WindowServer does far less (`screensaver.md`, section 3).
 
 ## Look
 

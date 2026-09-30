@@ -77,7 +77,7 @@ struct ScreensaverRenderingTests {
         scene.show(prepared)
         let state = prepared.timeline.state(at: time)
         scene.setBoard(SaverScene.boardImage(of: game, afterMoves: state.movesShown, side: prepared.layout.board.width,
-                                             scale: scale), animated: false)
+                                             scale: scale))
         scene.apply(state, at: time, animated: false)
         let bitmap = Bitmap(width: Int(screen.width * scale), height: Int(screen.height * scale))
         bitmap.context.scaleBy(x: scale, y: scale)

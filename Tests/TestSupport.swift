@@ -284,9 +284,10 @@ func writePlaylist(_ count: Int, prefix: String = "game", to url: URL) throws {
 let ownGame: @Sendable () -> SaverGame? = { SaverGame.own(in: Bundle(for: RecordingLog.self)) }
 
 /// A made-up game full of fights, as SGF text with both players named: each move takes a
-/// capture when there is one, half the time, and otherwise plays next to an opponent stone most
-/// of the time, so stones are captured all through it. The same seed gives the same game.
-func capturingGame(size: Int = 19, moves count: Int = 50, seed: UInt64) -> String {
+/// capture when there is one, half the time or always, and otherwise plays next to an opponent
+/// stone most of the time, so stones are captured all through it. The same seed gives the same
+/// game.
+func capturingGame(size: Int = 19, moves count: Int = 50, seed: UInt64, alwaysCapturing: Bool = false) -> String {
     let letters = Array("abcdefghijklmnopqrstuvwxyz")
     var generator = SeededGenerator(seed: seed)
     var board = Board(size: BoardSize(columns: size, rows: size)!)
@@ -306,7 +307,7 @@ func capturingGame(size: Int = 19, moves count: Int = 50, seed: UInt64) -> Strin
                 return board[neighbor] != nil && board[neighbor] != color
             }
         }
-        let point: SGFPoint = if !captures.isEmpty, Bool.random(using: &generator) {
+        let point: SGFPoint = if !captures.isEmpty, alwaysCapturing || Bool.random(using: &generator) {
             captures.randomElement(using: &generator)!
         } else if !touching.isEmpty, Int.random(in: 0 ..< 10, using: &generator) < 7 {
             touching.randomElement(using: &generator)!

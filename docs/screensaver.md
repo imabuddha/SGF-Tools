@@ -453,11 +453,13 @@ the view, so the view's Objective-C class exists only in the bundle. It already 
 |---|---|
 | `Screensaver/Info.plist` | The bundle's description |
 | `Screensaver/ScreensaverView.swift` | `@objc(SGFToolsScreenSaverView) final class ScreensaverView: ScreenSaverView`: lifecycle, the timer, visibility, one screen's scene |
-| `Screensaver/SaverScene.swift` | One screen's layers (game, board, details) and applying a timeline state to them |
+| `Screensaver/SaverScene.swift` | One screen's layers (game, board, the board's tiles, details) and applying a timeline state to them |
+| `Screensaver/SaverPlayer.swift` | One screen's game loop: preparing games, drawing moves ahead, and showing them |
+| `Screensaver/BoardCanvas.swift` | A game's board as one bitmap, redrawn only where a move changes it, and cut into tiles (section 3) |
 | `Screensaver/SaverTimeline.swift` | Pure: elapsed time to what's shown (section 4) |
 | `Screensaver/SaverLayout.swift` | Pure: screen size, details size, and a random number generator to the board's and the details' rects (section 5) |
 | `Screensaver/SaverGame.swift` | A playable game: its positions from 0 to N moves, their last moves, its details, and its source |
-| `Screensaver/GameLibrary.swift` | Per process: the three sources, picking for each screen, the recent list |
+| `Screensaver/GameLibrary.swift` | Per process: the three sources, picking for each screen, the recent list; `SaverGameSource`, which the tests' own games also follow |
 | `Screensaver/PlaylistStore.swift` | Reads and indexes the playlist, and reads it again when it's replaced |
 | `Screensaver/DirectSource.swift` | Direct mode: the classes' health, time-outs, giving up |
 | `Screensaver/InstanceRegistry.swift` | Which views may play (section 8) |
@@ -483,22 +485,70 @@ on synthetic files and paths.
 
 - **A layer-backed view:** `wantsLayer = true`, `layerContentsRedrawPolicy = .never`, and a black
   root layer holding one **game layer**, whose opacity makes the fades, with two sublayers: the
-  **board** and the **details**. `draw(_:)` fills black, for the moment before the layers exist.
+  **board** and the **details**. The view sets `wantsUpdateLayer` and colors its layer black in
+  `updateLayer()` rather than overriding `draw(_:)`, so AppKit gives it no screen-sized backing
+  store.
 - **The board** is `BoardRenderer(style: .shaded, margin: 0)`, as the preview draws it, without
-  coordinates, the last move marked with a ring: `makeImage(of:lastMove:size:scale:)` at the
-  board's size and the window's backing scale. A game's positions are all computed when it's read
-  (about 0.5 ms for 50 moves, verified); each move's image is drawn off the main thread, one move
-  ahead, and only the current and next images are kept. A shaded board of 2,800 pixels a side
-  took 42 ms (median) in a release build on the test Mac, and 18 ms at 1,800 pixels (verified):
-  about 8% of one core at two moves a second.
-- **A move** sets the board layer's contents inside a 0.3-second `CATransition` fade, so the new
-  stone appears and captured stones vanish together. A pass is half a second with no new stone
-  and no ring.
+  coordinates, the last move marked with a ring, at the board's size and the window's backing
+  scale. A game's positions are all computed when it's read (about 0.5 ms for 50 moves,
+  verified). Each game has a **canvas** (`BoardCanvas`), one bitmap, opaque RGBX (no alpha, in
+  the wood texture's own format), on which the first position is drawn in full, as
+  `makeImage(of:lastMove:size:scale:)` draws it, on black. A shaded board of 2,800 pixels a side
+  took 42 ms (median) in a release build on the test Mac, and 18 ms at 1,800 pixels (verified).
+- **A move is drawn only where it changes the board**, off the main thread, one move ahead: in a
+  square around each point that changed (a stone played or captured, and the last-move ring's old
+  and new points), reaching 0.75 cells from the point's center plus 2 pixels, past the stone
+  (0.475 cells) and its shadow (about 0.63 cells down and to the right). Each square is grown
+  until every stone shading and shadow it touches lies wholly inside it, and drawn with a clip of
+  that one rect: Core Graphics shades a gradient cut by the clip a level or two differently from
+  the whole gradient, and a clip of several rects cuts the renderer's own clips differently too.
+  So the bitmap is always, byte for byte, the full drawing of the position; a test checks this
+  over whole games with captures, passes, handicap stones, and three sizes (a regression guard
+  against the full drawing, not a check of the drawing itself). A move draws about a tenth of
+  the board's pixels (measured below). SGFRendering is unchanged.
+- **A move fades only the tiles it changes.** The board is cut into a fixed grid of tiles of
+  about 1.5 cells. A move's update holds the tiles its changed squares touch, copied out of the
+  bitmap, a few kilobytes to a few hundred. Each tile is a small layer over the board layer: the
+  first time a tile changes, its layer fades in over the board, which still shows the tile as it
+  was; after that, the layer fades from its old image to the new one with a 0.3-second
+  `CATransition`. Either way each pixel goes from old to new as the whole board's fade took it,
+  and crossfading unchanged pixels would show nothing, so the look is the same while the area
+  animated drops to about 5% of the board (an offscreen test renders both ways mid-fade and
+  compares them). A pass is half a second with no new stone and no ring.
+- **The last position is made whole again.** Once the last move has faded in, the player puts the
+  canvas's image of the last position in the board layer, removes the tiles, and lets the canvas
+  go, which looks the same. So the game layer fades out over one flat board layer and the details,
+  which don't overlap, and the game layer has no group opacity, which would render it offscreen
+  for each frame of the fades. (If the fade-out ever starts with tiles still there, the game layer
+  fades as a group for that fade.)
+- **Each moment is one transaction, or none:** the fades that start there and the move's tiles
+  go together, and a tick where nothing changes commits nothing. **Frames are on whole pixels:**
+  the board's and the details' origins are rounded to the screen's pixels, and the board layer is
+  exactly its image's size, so the images are shown pixel for pixel.
 - **The details** are drawn once per game into an image at the screen's scale, by the same code
   that makes the tests' PNGs.
-- **Memory:** one board image is 15 to 31 MB on today's screens, two per screen. They're
-  released whenever the screen pauses (section 8), and drawn again when the backing scale changes.
-- SGFRendering needs no change.
+- **Memory:** one board is 15 to 31 MB on today's screens, two per screen: the board layer's
+  image and the canvas, or the last position and the next game's first board, which is drawn only
+  once the last position is whole. They're released whenever the screen pauses (section 8), and
+  drawn again when the backing scale changes.
+
+**The load, measured** by `Tests/ScreensaverLoadTests.swift`: a screen played for 90 s with a
+clock the test moves and games made in code (never the real library), before this design (2.0.8)
+and after it (2.0.9). Per move, and per second while the moves play:
+
+| 1728x1117 at 2x (board 1,921 pixels a side) | 2.0.8 | 2.0.9 |
+|---|---|---|
+| Commits per move | 2 | 1 |
+| Uploaded per move | 14.8 MB (the whole board) | 0.75 MB (the changed tiles) |
+| Area fading per move | 100% of the board | 5.1% |
+| Board pixels drawn per move | 3.6 million | 0.36 million |
+| Rendered offscreen at 60 frames a second, the 0.4 s after a move | 2.70 million pixels damaged a frame, 1.03 ms | 0.24 million, 0.79 ms |
+
+On a 2560x1440 screen at 2x the ratios are the same (24.5 MB and 1.25 MB uploaded per move).
+Holding, nothing is committed, uploaded, or drawn, before and after. Each game adds two whole
+uploads, its first board and its last position, so the uploads between games rise from about 3
+to 5 MB a second on the first screen. The offscreen numbers come from a `CARenderer`, a stand-in
+for WindowServer's work, not a measure of it.
 
 ## 4. Playback timeline
 
@@ -744,6 +794,16 @@ both count the screensaver's games in Spotlight, with the query a test keeps equ
 is removed. It never opens an SGF file, so it can't raise a permission request. It leaves two
 small containers, `com.pragmaphilia.SGFTools.SandboxCheck.*`, in `~/Library/Containers`.
 
+**The load and the drawing**, since 2.0.9 (section 3): `ScreensaverCanvasTests` checks that a
+game's canvas, drawn a move at a time and in jumps, is byte for byte the full drawing, and that its
+tiles laid over the first board rebuild it, over whole games; that the canvas draws what the
+renderer draws; that a moment is one commit or none; and, rendered offscreen by a `CARenderer`,
+that the tiles' fades and the fade-out look as the whole board's did, to within 2 levels of 255.
+`ScreensaverLoadTests` plays a screen for 90 s with games made in code and reports the commits,
+uploads, area fading, and board drawing of each phase, and checks that nothing is committed,
+uploaded, or drawn while the last position holds. With `TEST_RUNNER_SGF_SCREENSAVER_LOAD` naming
+a file, the report is appended to it.
+
 **The existing suites**, `swift test` in SGFKit and `xcodebuild … test` for the app's tests, still
 pass.
 
@@ -861,8 +921,6 @@ Each has a default, which the first draft builds.
   with no permission requests, and direct mode play without opening files. It needs a schema entry
   and every SGF file imported again (`mdimport -i`), so it waits for the first run's findings.
 - **Direct mode first,** if the first run shows the host reads every location without a request.
-- Drawing the empty board once and only the stones for each move (a new SGFRendering option), if
-  the timings call for it.
 - The plan's later options: move sounds, games from a chosen folder, and board and stone sets.
 
 ## 15. As built
@@ -947,6 +1005,16 @@ and not notarized (section 2).
 2.0.8 (11) is the same code, signed with a Developer ID and the hardened runtime, and notarized
 and stapled: the saver on its own (sent to Apple as a zip, the ticket stapled to the bundle), the
 app, and the disk image (`scripts/build-release.sh`).
+
+**2.0.9 (12)** makes the screensaver lighter, with no change to what it shows. With the saver on
+John's two displays for two minutes, WindowServer had used 92 s of CPU, about 77% of one core:
+each move drew the whole board, uploaded it (15 to 31 MB), and faded it whole, two moves a
+second, so a board-sized area was animating 60% of the time on each screen. Now each move draws
+and fades only the tiles it changes, commits once, and the view has no backing store; the fades
+out no longer need an offscreen pass (section 3, with the numbers before and after). Two things
+changed from the plan: the board is opaque RGBX rather than BGRA, since Core Graphics draws the
+board's wood a level or two differently into BGRA, and the redrawn squares grow to hold whole
+the stone gradients they touch.
 
 ## Appendix: what was checked
 

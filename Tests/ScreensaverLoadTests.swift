@@ -157,6 +157,13 @@ struct ScreensaverLoadTests {
         let holding = try #require(load.scene[.holding])
         #expect(holding.commits == 0 && holding.uploadedPixels == 0 && holding.moveFades == 0)
         #expect(load.player[.holding]?.boardDraws == 0)
+
+        // Playing, one commit a move, and a few tiles each: the last position made whole again
+        // adds one commit and one whole board a game.
+        let moves = try #require(load.scene[.moves])
+        #expect(Double(moves.commits) / Double(moves.moveFades) < 1.1, "one commit a move")
+        #expect(Double(moves.moveFadePixels) / Double(moves.moveFades) < 0.1 * Double(load.boardPixels), "a few tiles a move")
+        #expect(Double(moves.uploadedPixels) / Double(moves.moveFades) < 0.15 * Double(load.boardPixels))
     }
 
     // MARK: - Rendering offscreen

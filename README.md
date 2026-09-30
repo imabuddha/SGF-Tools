@@ -277,6 +277,8 @@ variables, set when running `xcodebuild test`, save what they draw or check more
   again
 - `TEST_RUNNER_SGF_SCREENSAVER_BUNDLE`: the path of a built `SGF Tools.saver`, which a test then
   loads to make its view as macOS would, without a window.
+- `TEST_RUNNER_SGF_SCREENSAVER_LOAD`: a file to which the screensaver's load test appends what a
+  screen asks of Core Animation and of its drawing, per second of a game.
 
 `Tests/SandboxCheck/check.sh`, run by hand after each macOS update, checks that the screensaver's
 host can still read the playlist the app writes (see [Screensaver](#screensaver)).

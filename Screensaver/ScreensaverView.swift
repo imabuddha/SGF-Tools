@@ -63,10 +63,13 @@ final class ScreensaverView: ScreenSaverView, SaverInstance {
         return layer
     }
 
-    override func draw(_ rect: NSRect) {
-        // Black, for the moment before the layers exist.
-        NSColor.black.setFill()
-        rect.fill()
+    /// The view updates its layer instead of drawing, so AppKit gives it no backing store: a
+    /// screen-sized bitmap that would be drawn and composited for nothing.
+    override var wantsUpdateLayer: Bool { true }
+
+    override func updateLayer() {
+        // Black, for the moment before the game's layers exist.
+        layer?.backgroundColor = CGColor(gray: 0, alpha: 1)
     }
 
     override var hasConfigureSheet: Bool { false }
