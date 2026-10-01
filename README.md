@@ -40,7 +40,7 @@ The plan is in [docs/plan.md](docs/plan.md), and the screensaver's design in
 
 You need a Mac with Apple silicon and macOS 26 or later.
 
-1. Download the disk image, such as `SGF-Tools-2.0.8.dmg`, from
+1. Download the disk image, such as `SGF-Tools-2.0.9.dmg`, from
    [Releases](https://github.com/imabuddha/SGF-Tools/releases), and open it.
 2. Drag **SGF Tools** to the Applications folder beside it.
 3. Open SGF Tools once, so that macOS finds its extensions. SGF Tools and its screensaver are
