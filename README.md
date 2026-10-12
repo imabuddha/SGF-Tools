@@ -162,7 +162,7 @@ The fields that SGF Tools adds describe the first game of a file, as in 1.x:
 Their names are in English, French, German, Japanese, Korean, Polish, Russian, Swedish, and
 Simplified and Traditional Chinese, from the translations of 1.x.
 
-Miss Sakamoto — Chief Lab Assistant.
+Miss Sakamoto — Lab Director.
 
 Spotlight's own fields list the values of every game in the file, each once:
 

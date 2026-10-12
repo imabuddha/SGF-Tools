@@ -34,7 +34,7 @@
 	<string>Pragmaphilia Labs
 Copyright © 2026 John Mifsud. SGF Tools 1.x © 2009-2010 Jason Foreman and John Mifsud.
 MIT License.
-Miss Sakamoto — Chief Lab Assistant</string>
+Miss Sakamoto — Lab Director</string>
 	<key>NSNetworkVolumesUsageDescription</key>
 	<string>SGF Tools reads your SGF files to choose games for its screensaver.</string>
 	<key>NSRemovableVolumesUsageDescription</key>
